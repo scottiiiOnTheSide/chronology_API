@@ -1,0 +1,18 @@
+{
+  "name": "chronology-api",
+  "version": "1.0.0",
+  "description": "API for managing Back End Responsibilities of LogSeq, planner + journal based social media application",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "beammeupscottiii",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.1",
+    "mongoose": "^6.3.5"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
+  }
+}
