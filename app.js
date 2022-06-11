@@ -1,10 +1,11 @@
 const express = require('express'),
       app = express(),
       mongoose = require('mongoose'),
-      router = express.Router(),
-      db_link = "mongodb+srv://admin:codeforcandy@cluster0.j9uhp.mongodb.net/?retryWrites=true&w=majority";
+      router = express.Router();
+     // require('dotenv').config(),
+require('dotenv').config();
 
-mongoose.connect(db_link, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.DB_LINK, {useNewUrlParser: true, useUnifiedTopology: true});
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 db.once('open', function () {
@@ -12,11 +13,16 @@ db.once('open', function () {
 });
 
 app.use(router);
+app.use(express.json());
 
 //Routes
 const userRoutes = require('./routes/users');
 app.use('/users', userRoutes);
 
+/*
+const postRoutes = require('./routes/posts);
+app.use('/posts', postRoutes);
+*/
 
 app.listen(3333, '0.0.0.0', ()=> {
 	console.log('API running . . . ');
