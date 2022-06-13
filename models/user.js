@@ -31,8 +31,13 @@ const mongoose = require('mongoose'),
         required: [true, "This field is necessary"], 
         match: [/^[a-zA-Z0-9]+$/, "Invalid entry"],
         index: true,
+    },
+    connections: {
+        type: Schema.Types.ObjectID,
+        ref: 'Users',
     }
 },{timestamps: true});
+
 
 UserSchema.method('password', async (password) => {
     UserSchema[password].required = true;

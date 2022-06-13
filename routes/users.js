@@ -32,7 +32,7 @@ app.post('/newuser', async (req,res) => {
 });
 
 //Simple return all users function
-app.get('/users', async (req, res) => {
+app.get('/login', async (req, res) => {
     const emailExist = await User.findOne({emailAddr:req.body.emailAddr});
     if(!emailExist) {
         return res.status(400).send("This email is not valid");
@@ -45,11 +45,17 @@ app.get('/users', async (req, res) => {
     }
 
     const user = [emailExist];
-    const token = JWT.sign({_id: user._id}, process.env.TOKEN_SECRET);
+    const userName = user.userName;
+    const token = JWT.sign(
+      {
+        _id: user._id, 
+        _username: userName
+      }, process.env.TOKEN_SECRET);
 
     //sets JWT within reponse header and returns 
     //it to the front end
     res.header('auth-token', token).send();
+    //this info needs to be within user request headers whenever performing account operations. 
 });
 
 

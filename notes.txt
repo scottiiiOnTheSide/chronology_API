@@ -1,0 +1,10 @@
+06. 10. 2022
+@1027 Post Model Schema to be created next, along
+      with middleware to parse text. Pretty much
+      would like to make sure new lines are kept
+      and that bold and italics can be used 
+
+      postRoutes should be createPost, getPost.
+      delete and editPost as well. editPost should
+      return text to the user facing form (using 
+      front end code)
