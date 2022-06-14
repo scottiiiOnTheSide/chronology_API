@@ -4,21 +4,18 @@ const mongoose = require('mongoose'),
     UserSchema = new mongoose.Schema({
     firstName: {
         type: String,
-        uppercase: true,
         required: [true, "This field is necessary"], 
         match: [/^[a-zA-Z0-9]+$/, "Invalid entry"],
         index: true,
     },
     lastName: {
         type: String,
-        uppercase: true,
         required: [true, "This field is necessary"], 
         match: [/^[a-zA-Z0-9]+$/, "Invalid entry"],
         index: true,
     },
     userName: {
         type: String,
-        uppercase: true,
         unique: true,
         required: [true, "This field is necessary"], 
         match: [/^[a-zA-Z0-9]+$/, "Invalid entry"],
@@ -26,24 +23,27 @@ const mongoose = require('mongoose'),
     },
     emailAddr: {
         type: String,
-        uppercase: true,
         unique: true,
         required: [true, "This field is necessary"], 
-        match: [/^[a-zA-Z0-9]+$/, "Invalid entry"],
+        match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, "Invalid entry"],
         index: true,
     },
+    password: {
+      type: String,
+      required: [true, "This field is necessary "]
+    },
     connections: {
-        type: Schema.Types.ObjectID,
+        type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
     }
 },{timestamps: true});
 
 
-UserSchema.method('password', async (password) => {
+/*UserSchema.method('password', async (password) => {
     UserSchema[password].required = true;
     const salt = await encrypt.genSalt(20);
     const hash = await encrypt.hash(password, salt);
     return hash;
-});
+}); */
 UserSchema.plugin(uniqueValidator, {message: 'This is already taken'});
 module.exports = mongoose.model('User', UserSchema);

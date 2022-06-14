@@ -1,15 +1,15 @@
 const mongoose = require('mongoose');
 
-const Post = new mongoose.Schema({
+const PostsSchema = new mongoose.Schema({
   owner: {
-      type: Schema.Types.ObjectID,
+      type: mongoose.Schema.Types.ObjectID,
       ref: 'User'
-  }
+  }, 
   author: {
     type: String,
     required: true,
     index: true,
-  }
+  },
   title: {
       type: String,
       required: true,
@@ -21,10 +21,10 @@ const Post = new mongoose.Schema({
       index: true, 
   },
   tags: [{
-      type: Schema.Types.ObjectID,
+      type: mongoose.Schema.Types.ObjectID,
       ref: 'Tags'
-  }]
-  isPersonal: boolean,
+  }],
+  isPersonal: Boolean,
   setEvent_Year: String,
   setEvent_Month: String,
   setEvent_Day: String,

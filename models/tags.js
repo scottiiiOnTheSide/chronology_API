@@ -7,14 +7,14 @@ const TagsSchema = new mongoose.Schema({
   },
   //can we directly access User's connections array?
   haveAccess: [{
-      type: Schema.Types.ObjectID,
+      type: mongoose.Schema.Types.ObjectID,
       ref: 'User'
   }],
   posts: [{
-      type: Schema.Types.ObjectID,
+      type: mongoose.Schema.Types.ObjectID,
       ref: 'Posts'
   }],
-  private: boolean,
+  private: Boolean,
 });
 
 module.exports = mongoose.model('Tags', TagsSchema);

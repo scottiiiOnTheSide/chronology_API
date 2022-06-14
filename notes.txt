@@ -1,3 +1,6 @@
+06. 13. 2022
+@2141 currently having issues with the JWT signing. the returned JWT doesnt include the values I signed it with. may be an issue in how I am implementing it. will check some tutorial or the docs again
+
 06. 10. 2022
 @1027 Post Model Schema to be created next, along
       with middleware to parse text. Pretty much

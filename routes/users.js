@@ -13,13 +13,17 @@ app.post('/newuser', async (req,res) => {
     if(emailExist) {
         return res.status(400).send("This email is already linked to an account")
     }
-
+    
+    const userPass = req.body.password
+    const salt = await encrypt.genSalt(10);
+    const hashedPass = await encrypt.hash(userPass, salt);
+    
     const user = new User({
-        firstName: res.body.firstName,
-        lastName: res.body.lastName,
-        emailAddr: res.body.emailAddr,
-        userName: res.body.userName,
-        password: res.body.password
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        emailAddr: req.body.emailAddr,
+        userName: req.body.userName,
+        password: hashedPass
     });
 
     try {
@@ -27,29 +31,31 @@ app.post('/newuser', async (req,res) => {
       res.send(savedUser)
     }
     catch (error) {
-      response.status(500).send(error);
+      res.status(500).send(error);
     }
 });
 
 //Simple return all users function
-app.get('/login', async (req, res) => {
+app.post('/login', async (req, res) => {
+  
     const emailExist = await User.findOne({emailAddr:req.body.emailAddr});
     if(!emailExist) {
         return res.status(400).send("This email is not valid");
     }
-
-    const passwordValid = await encrypt.compare(req.body.password, user.password);
+    
+    const user = [emailExist];
+  
+    const passwordValid = await encrypt.compare(req.body.password, emailExist.password);
     //decrpyt password
     if(!passwordValid) {
         return res.status(400).send("This password is invalid");
     }
-
-    const user = [emailExist];
+    
     const userName = user.userName;
     const token = JWT.sign(
       {
-        _id: user._id, 
-        _username: userName
+        '_id': user._id, 
+        '_username': userName
       }, process.env.TOKEN_SECRET);
 
     //sets JWT within reponse header and returns 

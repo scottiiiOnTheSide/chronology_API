@@ -10,9 +10,10 @@ require('dotenv').config();
 
 app.use('/createPost', verify, async (req,res) => {
   
-  const auth = req.header.['auth-token'];
+  const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
-  const decoded = JSON.parse(window.atob(base64Url));
+  const decoded = JSON.parse(Buffer.from(base64url, 'base64'))
+  res.send(decoded);
   const [id, username] = decoded; 
   
   let newPost = new Post({
@@ -32,14 +33,14 @@ app.use('/createPost', verify, async (req,res) => {
           check.save(done);
         } else {
           let newTag = new Tag({
-            name = tags.name;
+            name: tags.name
           })
           newTag.posts.push(newPost);
           await newTag.save();
         }
       }
     newPost.tags = req.body.tags;
-}
+});
     //apply parsing middleware to post.content
     /* 
         Check if Tag already exists.
@@ -52,10 +53,9 @@ app.use('/createPost', verify, async (req,res) => {
         get userName and user._id 
         from req.header. Parse the JWT to extract the info
     */
-});
 
 //initially returns all posts. let frontEnd customize
-app.use('/post/:id'), verify, async (req,res) => {
+app.use('/post/:id', verify, async (req,res) => {
     try {
       let singlePost = await Posts.findOne({_id: req.param.id});
       res.send(singlePost);
@@ -64,7 +64,6 @@ app.use('/post/:id'), verify, async (req,res) => {
       res.status(404) 		
       res.send({ error: "Post doesn't exist!" })
     }
-  }
 });
 
 app.use('/returnPost', verify, (req,res) => {
