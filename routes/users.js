@@ -38,29 +38,27 @@ app.post('/newuser', async (req,res) => {
 //Simple return all users function
 app.post('/login', async (req, res) => {
   
-    const emailExist = await User.findOne({emailAddr:req.body.emailAddr});
-    if(!emailExist) {
+    const user = await User.findOne({emailAddr:req.body.emailAddr});
+    if(!user) {
         return res.status(400).send("This email is not valid");
     }
     
-    const user = [emailExist];
-  
-    const passwordValid = await encrypt.compare(req.body.password, emailExist.password);
+    const passwordValid = await encrypt.compare(req.body.password, user.password);
     //decrpyt password
     if(!passwordValid) {
         return res.status(400).send("This password is invalid");
     }
     
     const userName = user.userName;
-    const token = JWT.sign(
-      {
+    let JWTpayload = {
         '_id': user._id, 
         '_username': userName
-      }, process.env.TOKEN_SECRET);
-
+    };
+    const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
     //sets JWT within reponse header and returns 
     //it to the front end
-    res.header('auth-token', token).send();
+    res.header('auth-token', signature).send();
+    //res.send(JWTpayload);
     //this info needs to be within user request headers whenever performing account operations. 
 });
 
