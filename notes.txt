@@ -1,3 +1,13 @@
+06. 20. 2022
+@0806 checking the database, it seems as though my implementation for the tags did actually work! must doubly confirm, of course - but the posts and corresponding tags are present. even better, only the two tags exists, with multiple duplicate posts, meaning the code works thoroughly as intended. 
+
+06. 15. 2022
+@1123 No progress
+
+06. 15. 2022
+@1655 User login now works as intended. The issue was so small 😩😭
+    now having issue with the tags, post thing...
+
 06. 13. 2022
 @2141 currently having issues with the JWT signing. the returned JWT doesnt include the values I signed it with. may be an issue in how I am implementing it. will check some tutorial or the docs again
 

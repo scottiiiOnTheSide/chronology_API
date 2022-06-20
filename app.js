@@ -1,7 +1,8 @@
 const express = require('express'),
       app = express(),
       mongoose = require('mongoose'),
-      router = express.Router();
+      router = express.Router(),
+      cors = require('cors');
      // require('dotenv').config(),
 require('dotenv').config();
 
@@ -14,6 +15,9 @@ db.once('open', function () {
 
 app.use(router);
 app.use(express.json());
+app.use(cors({
+  origin: '*'
+}));
 
 //Routes
 const userRoutes = require('./routes/users');

@@ -57,7 +57,9 @@ app.post('/login', async (req, res) => {
     const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
     //sets JWT within reponse header and returns 
     //it to the front end
-    res.header('auth-token', signature).send();
+    res.status(200).send({
+      'auth-token': signature
+    });
     //res.send(JWTpayload);
     //this info needs to be within user request headers whenever performing account operations. 
 });

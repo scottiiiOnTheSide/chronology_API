@@ -22,29 +22,34 @@ app.use('/createPost', verify, async (req,res) => {
     title: req.body.title,
     content: req.body.content,
   })
+  newPost.save(); 
   
   const tagsExists = req.body.tags;
-  //res.send(tagsExists);
-  tagsExists.forEach(async (tags) => {
-      let check = await Tags.findOne({name: tags.name})
-        if(check) {
-          check.posts.push(newPost);
-          check.save(done);
-        } else {
-          let newTag = new Tags({
-            name: tags.name
-          })
-          newTag.posts.push(newPost);
-          await newTag.save();
-        }
-      });
-    newPost.tags = req.body.tags;
-    await newPost.save();
-    res.send(newPost);
+  JSON.stringify(tagsExists)
+  res.send(tagsExists[0]);
   
-    //for (let tags in tagsExists) {
-    
+  tagsExists.map( (tagsname)=> {
+    Tags.findOne({
+      name: tagsname
+    },function (err, tag) {
+      if(err) {
+        console.log(err);
+        let newTag = new Tags({
+          name: tags,
+          posts: []
+        })
+        newTag.posts.push(newPost._id);
+        newTag.save();
+        newPost.tags.push(newTag);
+    } else {
+      tag.posts.push(newPost);
+      tag.save();
+      }
+    });
+  })    
 });
+  //res.send(tagsExists);
+  
     //apply parsing middleware to post.content
     /* 
         Check if Tag already exists.
