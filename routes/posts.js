@@ -21,52 +21,71 @@ app.use('/createPost', verify, async (req,res) => {
     author: _username,
     title: req.body.title,
     content: req.body.content,
+    tags: []
   })
-  newPost.save(); 
+  //await newPost.save(); 
   
   const tagsExists = req.body.tags;
+  let upsertTags = [];
   JSON.stringify(tagsExists)
-  res.send(tagsExists[0]);
+  //res.send(tagsExists[0]);
   
-  tagsExists.map( (tagsname)=> {
+  tagsExists.map( async (tagsname)=> {
     Tags.findOne({
       name: tagsname
     },function (err, tag) {
       if(err) {
         console.log(err);
+        return res.send(err);
+      } else if(!tag) {
         let newTag = new Tags({
-          name: tags,
+          name: tagsname,
           posts: []
         })
         newTag.posts.push(newPost._id);
-        newTag.save();
-        newPost.tags.push(newTag);
-    } else {
-      tag.posts.push(newPost);
-      tag.save();
+        console.log(newTag._id);
+        newTag.save()
       }
     });
-  })    
-});
-  //res.send(tagsExists);
+  });
+  tagsExists.map( async (tagsname)=> {
+    Tags.findOne({
+      name: tagsname
+    },function (err, tag) {
+      if(err) {
+        console.log(err);
+        return res.send(err);
+      } else if (tag) {
+        let result = tag._id.toString();
+        console.log(result);
+        newPost.tags.push(result);
+        tag.posts.push(newPost._id);
+        tag.save();
+      } else if (!tag) {
+        console.log(tagsname);
+        upsertTags.push(tagsname);
+      }
+    });
+  }) 
   
-    //apply parsing middleware to post.content
-    /* 
-        Check if Tag already exists.
-        if not, create new Tag first.
-        After successful save of post,
-        in new Tag, add post.
-        if tag already exists, save post
-        to tag post list after.
-        
-        get userName and user._id 
-        from req.header. Parse the JWT to extract the info
-    */
+  //await newPost.save();
+  try {
+    let savedPost = await newPost.save();
+    await res.status(200).send(savedPost);
+  } catch (err) {
+    console.log(err)
+    next(err)
+  }
+  
+});
 
-//initially returns all posts. let frontEnd customize
 app.use('/post/:id', verify, async (req,res) => {
     try {
-      let singlePost = await Posts.findOne({_id: req.param.id});
+      let _ID = mongoose.Types.ObjectId(req.params.id);
+      console.log(_ID);
+      //.send(_ID);
+      let singlePost = await Posts.findOne({_id: _ID});
+      console.log(singlePost);
       res.send(singlePost);
     }
     catch {

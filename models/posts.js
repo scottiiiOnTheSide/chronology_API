@@ -21,7 +21,7 @@ const PostsSchema = new mongoose.Schema({
       index: true, 
   },
   tags: [{
-      type: mongoose.Schema.Types.ObjectID,
+      type: String,
       ref: 'Tags'
   }],
   isPersonal: Boolean,

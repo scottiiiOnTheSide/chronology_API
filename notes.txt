@@ -1,4 +1,39 @@
+06. 23. 2022
+@1624 Still having issue where new tag's array doesnt get added to the post. and the array is still empty within the database
+
+    this project isnt moving at a very 
+    significant rate here at all. i am unable 
+    to implement a vital feature into the API
+    and im stubborn about continuing with out 
+    it. May have to put it on the back burner 
+    and dedicate less time until this hurdle is
+    overcome.....
+
+@1617 During the post creation process, all tags are being added. however, the new document doesnt save with the array filled.
+
+@1025 pre existing tags get added, unable to catch name of non pre existing tag out of loop.
+    make new loop just for the non pre existing?
+    then verify posts are actually getting their tags array filled...
+    might add that to getIndividualPost route
+    
+    
+@0929 i may have to make another other function for when a newTag needs to be created 🥲
+@0901 need to ensure non preexisting tags are saved before second loop starts looking for them. 
+
+
 06. 20. 2022
+@2021 still unable to push tags id into newPost tags ObjectId array (._. 
+
+@1103 added await to first newPost.save()
+will see if it works later...
+
+@1055 removing the addition save() for newPosts fixes that parallel save issue, but am getting error message for line 47 in routes/posts despite the tag actually getting the post id saved. 
+
+@1032 a little more progress, wasnt saving the documents correctly before. now being told that .save(); cant be run multiple times 
+
+@1025 Alright so the whole tags thing doesnt work flawlessly. have to ensure the tags code runs after the post has been saved successfully, so that we have access to it for the operations. 
+
+
 @0806 checking the database, it seems as though my implementation for the tags did actually work! must doubly confirm, of course - but the posts and corresponding tags are present. even better, only the two tags exists, with multiple duplicate posts, meaning the code works thoroughly as intended. 
 
 06. 15. 2022
