@@ -4,11 +4,12 @@ const express = require('express'),
       Posts = require('../models/posts'),
       Tags = require('../models/tags'),
       verify = require('../verifyUser');
+      manageTags = require('../manageTags');
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken');
 require('dotenv').config();
 
-app.use('/createPost', verify, async (req,res) => {
+app.use('/createPost', verify, manageTags, async (req,res) => {
   
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
@@ -21,62 +22,31 @@ app.use('/createPost', verify, async (req,res) => {
     author: _username,
     title: req.body.title,
     content: req.body.content,
-    tags: []
+    tags: req.body.tags
   })
   //await newPost.save(); 
   
-  const tagsExists = req.body.tags;
-  let upsertTags = [];
-  JSON.stringify(tagsExists)
-  //res.send(tagsExists[0]);
+  console.log('line 29 '+ req.body.tags);
+  let tags = req.body.tags;
   
-  tagsExists.map( async (tagsname)=> {
-    Tags.findOne({
-      name: tagsname
-    },function (err, tag) {
-      if(err) {
-        console.log(err);
-        return res.send(err);
-      } else if(!tag) {
-        let newTag = new Tags({
-          name: tagsname,
-          posts: []
-        })
-        newTag.posts.push(newPost._id);
-        console.log(newTag._id);
-        newTag.save()
+  tags.forEach((tag) => {
+    Tags.findByIdAndUpdate(
+      tag,
+      {$push: {"posts": newPost}},
+      {upsert: true},
+      function(err,success) {
+        if(err) {
+          console.log(err)
+        } else {
+          console.log("tag updated")
+        }
       }
-    });
-  });
-  tagsExists.map( async (tagsname)=> {
-    Tags.findOne({
-      name: tagsname
-    },function (err, tag) {
-      if(err) {
-        console.log(err);
-        return res.send(err);
-      } else if (tag) {
-        let result = tag._id.toString();
-        console.log(result);
-        newPost.tags.push(result);
-        tag.posts.push(newPost._id);
-        tag.save();
-      } else if (!tag) {
-        console.log(tagsname);
-        upsertTags.push(tagsname);
-      }
-    });
-  }) 
-  
-  //await newPost.save();
-  try {
-    let savedPost = await newPost.save();
-    await res.status(200).send(savedPost);
-  } catch (err) {
-    console.log(err)
-    next(err)
-  }
-  
+    )
+  })
+      
+  console.log('line 44'+ newPost);
+  await newPost.save();
+  res.send(newPost);
 });
 
 app.use('/post/:id', verify, async (req,res) => {

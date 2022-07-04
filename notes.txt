@@ -1,3 +1,22 @@
+06. 27. 2022
+@1057 It all works as intended.
+      will stress test to ensure it works with new tags and such. 
+
+@1004 Weve finally managed to get the tags ID and have access to them in the main route 😭. The hold up was due to lack of more in depth knowledge of promises await / async. 
+    to be fair, the async await async await pattern runs 4 levels deep (._.
+    anyhow, PROGRESS !!!
+    I should now be able to save the post to each tags array and have the tags saved to the post. it only took like a week or so to get this far (._.
+
+06. 24. 2022
+@1735 trying to deal with one part of the tags in middleware function. 
+    or could run it as external function within Model.pre('save', and have the array the tag ids get saved to added to the newPost doc being saved. 
+    
+
+@0801 why do tags in array display as their tags model instead of simply as strings?
+    no progress as of yet.
+    
+    try a promise? 
+
 06. 23. 2022
 @1624 Still having issue where new tag's array doesnt get added to the post. and the array is still empty within the database
 

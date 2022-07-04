@@ -28,7 +28,9 @@ app.post('/newuser', async (req,res) => {
 
     try {
       const savedUser = await user.save();
-      res.send(savedUser)
+      //06.27.2022 Front End takes boolean to confirm signup
+      console.log('new user created');
+      res.send(true);
     }
     catch (error) {
       res.status(500).send(error);
