@@ -27,7 +27,11 @@ const PostsSchema = new mongoose.Schema({
   isPersonal: Boolean,
   setEvent_Year: String,
   setEvent_Month: String,
-  setEvent_Day: String,
+  setEvent_Date: String,
+  usePostedByDate: Boolean,
+  postedOn_month: Number,
+  postedOn_day: Number,
+  postedOn_year: Number
 }, {timestamps: true});
 
 

@@ -59,12 +59,25 @@ app.post('/login', async (req, res) => {
     const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
     //sets JWT within reponse header and returns 
     //it to the front end
-    res.status(200).send({
-      'auth-token': signature
-    });
+    res.status(200).json(signature);
     //res.send(JWTpayload);
     //this info needs to be within user request headers whenever performing account operations. 
 });
+
+app.get('/getuser/:id', async (req,res) => {
+  try {
+      let _ID = mongoose.Types.ObjectId(req.params.id);
+      console.log(_ID);
+      //.send(_ID);
+      let singleUser = await User.findOne({_id: _ID});
+      console.log(singlePost);
+      res.send(singlePost);
+    }
+    catch {
+      res.status(404) 		
+      res.send({ error: "User doesn't exist!" })
+    }
+})
 
 
 module.exports = app;

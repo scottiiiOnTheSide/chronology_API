@@ -1,3 +1,23 @@
+07. 08. 2022
+@1348 controller for returning all posts with certain criteria works as intended.
+there may be an issue with creating posts that have the "admin" tag? im not sure what the true underlying issue is there.
+
+next: work on function on Front end to display all posts as list items (also links?) and display the date when theres a change between post days 
+
+07. 07. 2022
+@1210 issue regarding endpoint fixed. Changed code for getting single post to use query instead of parameter
+
+@1017 New endpoint for getting posts by month and year isnt responding...
+
+
+07. 05. 2022
+@1138 See notes.txt in /gears concerning need for new fields in boolean.
+
+    will have "usePostedByBoolean" that determines whether "postedBy" fields get created for an entry or event. 
+    
+    if "usePostedByDate" is false for a post,
+    it should have setEvent_ fields set and utilized. entries should always have "usePostedByDate" as true. 
+
 06. 27. 2022
 @1057 It all works as intended.
       will stress test to ensure it works with new tags and such. 

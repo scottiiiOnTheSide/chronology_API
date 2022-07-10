@@ -11,7 +11,7 @@ module.exports = async function (req,res,next) {
     .then((tag) => {
       let value = tag._id;
       //console.log("line 29 "+ tag);
-      console.log("line 30 "+ tag._id);
+      console.log("line 30 "+ tag._id +`\n`+ tag.name);
       return value;
     })
     .catch((err) => {

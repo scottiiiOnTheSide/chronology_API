@@ -25,10 +25,6 @@ app.use('/users', userRoutes);
 
 const postRoutes = require('./routes/posts');
 app.use('/posts', postRoutes);
-/*
-const postRoutes = require('./routes/posts);
-app.use('/posts', postRoutes);
-*/
 
 app.listen(3333, '0.0.0.0', ()=> {
 	console.log('API running . . . ');
