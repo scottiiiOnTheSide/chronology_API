@@ -1,3 +1,13 @@
+07. 20. 2022
+@1748 Added update and delete endpoints for post, using patch and delete methods, respectively. 
+
+07. 16. 2022
+@1022 the tags dont update if i send back the names instead of the IDs , so ill either have to rewrite the current updating function, or write a new one somewhere to convert the IDs into their names.
+
+07. 12. 2022
+@1205 edited tags functionality so that names of tags are returned instead of id's
+and content doesnt need to be required for a post
+
 07. 08. 2022
 @1348 controller for returning all posts with certain criteria works as intended.
 there may be an issue with creating posts that have the "admin" tag? im not sure what the true underlying issue is there.

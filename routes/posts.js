@@ -48,7 +48,8 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   //console.log('line 29 '+ req.body.tags);
   let tags = req.body.tags;
   
-  tags.forEach((tag) => {
+  if(tags) {
+    tags.forEach((tag) => {
     Tags.findByIdAndUpdate(
       tag,
       {$push: {"posts": newPost}},
@@ -62,6 +63,8 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       }
     )
   })
+  }
+  
       
   console.log('line 44'+ newPost);
   await newPost.save();
@@ -88,7 +91,9 @@ app.get('/log', verify, async (req,res) => {
       if (err) {
         res.send(err)
       } else {
-        console.log(posts +`\n`+ typeof(posts))
+        console.log(
+          `Log of posts from ${req.query.month} . ${req.query.year} from user: ${_username}`;
+        )
         res.status(200).json(posts);
         //res.send(posts);//sends an array
       }
@@ -119,10 +124,37 @@ app.get('/id', verify, async (req,res) => {
     }
 });
 
-app.use('/deletePost', verify, (req,res) => {
+app.patch('/updatePost', verify, async (req,res) => {
+  
+  const id = mongoose.Types.ObjectId(req.query.id);
+  const updatedContent = {
+    title: req.body.title,
+    content: req.body.content,
+    tags: req.body.tags
+  }
+  
+  Posts.findByIdAndUpdate(id, updatedContent, {useFindandModify: false})
+  .then(data => {
+    if (!data) {
+      res.status(404).send({message: "Error"});
+    } else{
+      res.status(400).send({message: "Post Updated"})
+    }
+  })
 })
 
-app.use('/updatePost', verify, (req,res) => {
+app.delete('/deletePost', verify, (req,res) => {
+  
+  const id = mongoose.Types.ObjectId(req.query.id);
+
+  Posts.findByIdAndRemove(id)
+  .then(data => {
+    if (!data) {
+      res.status(404).send({message: "Error"});
+    } else{
+      res.status(400).send({message: "Post Deleted"})
+    }
+  })
 })
 
 module.exports = app;

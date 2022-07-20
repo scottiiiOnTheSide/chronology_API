@@ -17,7 +17,7 @@ const PostsSchema = new mongoose.Schema({
   },
   content: {
       type: String,
-      required: true,
+      required: false,
       index: true, 
   },
   tags: [{

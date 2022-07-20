@@ -9,7 +9,7 @@ module.exports = async function (req,res,next) {
   let parse = (tagsname) => {
     return Tags.findOne({name: tagsname})
     .then((tag) => {
-      let value = tag._id;
+      let value = tag._id; 
       //console.log("line 29 "+ tag);
       console.log("line 30 "+ tag._id +`\n`+ tag.name);
       return value;
@@ -26,10 +26,14 @@ module.exports = async function (req,res,next) {
     })
   }
   
-  tagsExist = 
-  await Promise.all(tagsExist.map(async(tag) => {
+  if(tagsExist) {
+    tagsExist = await Promise.all(tagsExist.map(async(tag) => {
     return await parse(tag);
   }));
+  } else {
+    console.log("There were no tags...?")
+  }
+  
   
   req.body.tags = tagsExist;
   //console.log("line 36 "+ tagsExist);
