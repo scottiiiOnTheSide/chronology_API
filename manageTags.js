@@ -13,6 +13,7 @@ module.exports = async function (req,res,next) {
       //console.log("line 29 "+ tag);
       console.log("line 30 "+ tag._id +`\n`+ tag.name);
       return value;
+      //return {name: tag.name, id: tag._id}
     })
     .catch((err) => {
       let newTag = new Tags({

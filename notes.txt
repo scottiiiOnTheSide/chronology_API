@@ -1,3 +1,14 @@
+07. 27. 2022
+@1252 issue still occuring with server crash due to tags. suggested solution is to delete current tags collection. will attempt... later
+
+07. 22. 2022
+@1400 Added comments schema.
+replies refer to the comment scheme itself.
+should be able to derive time data from timestamp.
+
+@1028 Have manageTags.js return object containing tag name and id. 
+test out to ensure it works 
+
 07. 20. 2022
 @1748 Added update and delete endpoints for post, using patch and delete methods, respectively. 
 

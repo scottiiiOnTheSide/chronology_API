@@ -3,8 +3,9 @@ const express = require('express'),
       mongoose = require('mongoose'),
       Posts = require('../models/posts'),
       Tags = require('../models/tags'),
-      verify = require('../verifyUser');
-      manageTags = require('../manageTags');
+      User = require('../models/user'),
+      verify = require('../verifyUser'),
+      manageTags = require('../manageTags'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken');
 require('dotenv').config();
@@ -91,9 +92,7 @@ app.get('/log', verify, async (req,res) => {
       if (err) {
         res.send(err)
       } else {
-        console.log(
-          `Log of posts from ${req.query.month} . ${req.query.year} from user: ${_username}`;
-        )
+        console.log(`Log of posts from ${req.query.month} . ${req.query.year} from user: ${_username}`);
         res.status(200).json(posts);
         //res.send(posts);//sends an array
       }
@@ -107,7 +106,33 @@ app.get('/log', verify, async (req,res) => {
     console.log("I am unsure what failed");
   }
 })
-//redesign this controller to take a query
+
+app.get('/socialLog', verify, async (req, res) => {
+  
+  const auth = req.header('auth-token');
+  const base64url = auth.split('.')[1];
+  const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+  const {_id, _username} = decoded;
+  let id = mongoose.Types.ObjectId(_id);
+  
+  const month = req.query.month,
+        year = req.query.year,
+        user = await User.findById(_id)
+        .then(res => res.toJSON());
+        connections = user.connections;
+        
+  console.log(user.connections);
+  
+  let allPosts = await Posts.find({
+    'owner': {$in: connections},
+    'postedOn_month': req.query.month,
+    'postedOn_year': req.query.year
+  }).then(res => res);
+  console.log(allPosts);
+  
+  res.status(200).send(allPosts);
+})
+
 app.get('/id', verify, async (req,res) => {
     try {
       let _ID = mongoose.Types.ObjectId(req.query.id);
