@@ -1,4 +1,14 @@
+
+09. 09. 2022
+@1039 WE FINALLY FIXED THE NEW UPLOADS ISSUE!
+now working on the front end change required to display the actual name.
+
 07. 27. 2022
+
+@1432 code for getting user info from the auth key should be in some middle wear, as it gets used in every endpoint.
+
+more incremental - socialLog endpoint functional! currently working just as intended...
+
 @1252 issue still occuring with server crash due to tags. suggested solution is to delete current tags collection. will attempt... later
 
 07. 22. 2022

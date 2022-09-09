@@ -163,21 +163,20 @@ app.patch('/updatePost', verify, async (req,res) => {
     if (!data) {
       res.status(404).send({message: "Error"});
     } else{
-      res.status(400).send({message: "Post Updated"})
+      res.status(200).send({message: "Post Updated"})
     }
   })
 })
 
-app.delete('/deletePost', verify, (req,res) => {
+app.delete('/deletePost', verify, async(req,res) => {
   
   const id = mongoose.Types.ObjectId(req.query.id);
 
-  Posts.findByIdAndRemove(id)
-  .then(data => {
+  Posts.findByIdAndRemove(id, function(err,data) {
     if (!data) {
       res.status(404).send({message: "Error"});
     } else{
-      res.status(400).send({message: "Post Deleted"})
+      res.status(200).send(true)
     }
   })
 })

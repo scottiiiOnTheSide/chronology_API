@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const TagsSchema = new mongoose.Schema({
-   name: {
+  name: {
       type: String,
       required: true,
   },
@@ -14,7 +14,7 @@ const TagsSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectID,
       ref: 'Posts'
   }],
-  private: Boolean,
+  isPersonal: Boolean
 });
 
 module.exports = mongoose.model('Tags', TagsSchema);
