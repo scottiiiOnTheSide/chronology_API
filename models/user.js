@@ -1,7 +1,8 @@
 const mongoose = require('mongoose'),
       uniqueValidator = require('mongoose-unique-validator'),
-      encrypt = require('bcryptjs'), //replace with scrypt
-    UserSchema = new mongoose.Schema({
+      encrypt = require('bcryptjs'); //replace with scrypt
+      
+const UserSchema = new mongoose.Schema({
     firstName: {
         type: String,
         required: [true, "This field is necessary"], 
@@ -36,8 +37,27 @@ const mongoose = require('mongoose'),
         type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
     }]
+    notifications: [{
+      type: [Notification]
+    }]
 },{timestamps: true});
 
+const NotificationSchema = new mongoose.Schema({
+  type: Map,
+  of: string
+});
+
+/*
+let newConnectionRequest = new Notification ({
+  connectionRequest: {
+    sender: senderID,
+    reciepient: reciepientID,
+    status:
+  }
+})
+
+status: sent, ignored, accepted
+*/
 
 /*UserSchema.method('password', async (password) => {
     UserSchema[password].required = true;
@@ -47,3 +67,5 @@ const mongoose = require('mongoose'),
 }); */
 UserSchema.plugin(uniqueValidator, {message: 'This is already taken'});
 module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('Notification', NotificationSchema);
+

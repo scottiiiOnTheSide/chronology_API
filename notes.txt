@@ -1,5 +1,10 @@
 
 09. 09. 2022
+@1354 added notification schema to user schema file.
+
+@1109 it (should) be complete. tagging now works as intended. may need to add the manageTags middleware to the update route however 🤔
+  would also have to add code for removing posts from tags array upon editting them out
+
 @1039 WE FINALLY FIXED THE NEW UPLOADS ISSUE!
 now working on the front end change required to display the actual name.
 

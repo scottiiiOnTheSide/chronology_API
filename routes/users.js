@@ -2,9 +2,13 @@ const express = require('express'),
       app = express.Router(),
       mongoose = require('mongoose'),
       User = require('../models/user'),
+      Notification = require('../models/user'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken');
 require('dotenv').config();
+
+//may need to change how I import notification 
+// might be {User, Notification} instead
 
 //Simple 'create new  users' function
 app.post('/newuser', async (req,res) => {
