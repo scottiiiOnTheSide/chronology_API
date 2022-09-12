@@ -49,6 +49,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   //console.log('line 29 '+ req.body.tags);
   let tags = req.body.tags;
   
+  //might have to edit this
   if(tags) {
     tags.forEach((tag) => {
     Tags.findByIdAndUpdate(
