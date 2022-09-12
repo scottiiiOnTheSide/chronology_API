@@ -1,7 +1,14 @@
 const mongoose = require('mongoose'),
       uniqueValidator = require('mongoose-unique-validator'),
       encrypt = require('bcryptjs'); //replace with scrypt
-      
+     
+const NotificationSchema = new mongoose.Schema({
+  connectionRequest: {
+    type: Map,
+    of: String
+  }
+});
+
 const UserSchema = new mongoose.Schema({
     firstName: {
         type: String,
@@ -36,16 +43,11 @@ const UserSchema = new mongoose.Schema({
     connections: [{
         type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
-    }]
+    }],
     notifications: [{
-      type: [Notification]
+      type: [NotificationSchema]
     }]
 },{timestamps: true});
-
-const NotificationSchema = new mongoose.Schema({
-  type: Map,
-  of: string
-});
 
 /*
 let newConnectionRequest = new Notification ({
@@ -66,6 +68,6 @@ status: sent, ignored, accepted
     return hash;
 }); */
 UserSchema.plugin(uniqueValidator, {message: 'This is already taken'});
-module.exports = mongoose.model('User', UserSchema);
-module.exports = mongoose.model('Notification', NotificationSchema);
+module.exports.User = mongoose.model('User', UserSchema);
+module.exports.Notification = mongoose.model('Notification', NotificationSchema);
 

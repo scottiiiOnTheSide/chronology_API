@@ -2,7 +2,8 @@ const express = require('express'),
       app = express(),
       mongoose = require('mongoose'),
       router = express.Router(),
-      cors = require('cors');
+      cors = require('cors'),
+      {User, Notification} = require('./models/user');
      // require('dotenv').config(),
 require('dotenv').config();
 
@@ -29,3 +30,21 @@ app.use('/posts', postRoutes);
 app.listen(3333, '0.0.0.0', ()=> {
 	console.log('API running . . . ');
 });
+
+
+let notif = new Notification ({
+  connectionRequest: {
+    sender: "convert user object id to string",
+    recipient: "another user id",
+    status: "sent"
+  }
+})
+
+notif.save().then(savedDoc => {
+  if(savedDoc) {
+    console.log("it save");
+    console.log(savedDoc)
+  }else {
+    console.log("it no save");
+  } // true
+})
