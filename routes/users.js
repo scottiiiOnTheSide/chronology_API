@@ -3,7 +3,8 @@ const express = require('express'),
       mongoose = require('mongoose'),
       {User, Notification} = require('../models/user'),
       encrypt = require('bcryptjs'),
-      JWT = require('jsonwebtoken');
+      JWT = require('jsonwebtoken'),
+      verify = require('../verifyUser');
 require('dotenv').config();
 
 //may need to change how I import notification 
@@ -82,90 +83,109 @@ app.get('/getuser/:id', async (req,res) => {
     }
 })
 
-app.get('/notification/:type', async (req,res) => {
+app.post('/notif/:type', verify, async (req,res) => {
 
-    let type = req.param.type;
-    if(type == 'connnection') {
+    let type = req.params.type;
+
+    if(type == 'connection') {
         if(req.body.status == 'sent') {
 
-            let connectReq = new Notification({
-                connectionRequest: {
-                    sender: mongoose.Types.ObjectId(req.body.sender),
-                    recipient: mongoose.Types.ObjectId(req.body.recipient),
-                    status: req.body.status,
-                    twinID: ''
-                }
-            })
-
-            let connectRec = new Notification({
-                connectionRequest: {
-                    sender: mongoose.Types.ObjectId(req.body.sender)
-                    recipient: mongoose.Types.ObjectId(req.body.recipient),
-                    status: req.body.status,
-                    twinID: ''
-                }
-            })
-
-            connectReq.set('twinID', connectRec._id);
-            connectRec.set('twinID', connectReq._id);
-            connectReq.save()
-            connectRec.save()
-
-            (async ()=> {
-                await User.findByIdAndUpdate(
-                    mongoose.Types.ObjectId(req.body.sender),
-                    {$push: {"notifications": connectReq}},
-                    {upsert: true},
-                    function(err,success) {
-                        if(err) {
-                          console.log(err)
-                        } else {
-                          console.log("notification added to sender's list")
+                try{
+                    let connectReq = new Notification({
+                        connectionRequest: {
+                            sender: mongoose.Types.ObjectId(req.body.sender),
+                            recipient: mongoose.Types.ObjectId(req.body.recipient),
+                            status: req.body.status,
+                            twinID: ''
                         }
-                    }
-                )
+                    })
 
-                await User.findByIdAndUpdate(
-                    mongoose.Types.ObjectId(req.body.recipient),
-                    {$push: {"notifications": connectRec}},
-                    {upsert: true},
-                    function(err,success) {
-                        if(err) {
-                          console.log(err)
-                        } else {
-                          console.log("notification added to recipient's list")
+                    let connectRec = new Notification({
+                        connectionRequest: {
+                            sender: mongoose.Types.ObjectId(req.body.sender),
+                            recipient: mongoose.Types.ObjectId(req.body.recipient),
+                            status: req.body.status,
+                            twinID: ''
                         }
-                    }
-                )
-            })(); 
+                    })
+
+                    connectReq.connectionRequest.set('twinID', connectRec._id);
+                    connectRec.connectionRequest.set('twinID', connectReq._id);
+
+                    (async ()=> {
+                        let oneOut = await User.findByIdAndUpdate(
+                            mongoose.Types.ObjectId(req.body.sender),
+                            {$push: {"notifications": connectReq}},
+                            [{upsert: true}, {useFindandModify: false}],
+                            function(err,success) {
+                                if(err) {
+                                  console.log(err)
+                                } else {
+                                  console.log("notification added to sender's list")
+                                }
+                            }
+                        );
+                        await oneOut.save();
+
+                        let secondOut = await User.findByIdAndUpdate(
+                            mongoose.Types.ObjectId(req.body.recipient),
+                            {$push: {"notifications": connectRec}},
+                            [{upsert: true}, {useFindandModify: false}],
+                            function(err,success) {
+                                if(err) {
+                                  console.log(err)
+                                } else {
+                                  console.log("notification added to recipient's list")
+                                }
+                            }
+                        );
+                        await secondOut.save();
+                    })(); 
+
+                    connectReq.save()
+                    connectRec.save()
+                    res.status(200).send({connectReq, connectRec, message: "request sent!"});
+            }catch{
+                res.status(404).send("something went wrong");
+            }
+            
 
         } else if (req.body.status == 'accepted') {
 
             Notification.findByIdAndUpdate(
                 mongoose.Types.ObjectId(req.body.notifID),
-                {$set: {['status': 'accepted'}},
+                {$set: {"status": "accepted"}},
                 {useFindandModify: false}
             ).then(data => {
+
                 User.findByIdAndUpdate(
                     mongoose.Types.ObjectId(req.body.recipient),
                     {$push: {"connnections": req.body.sender}},
-                    {upsert: true}
-                ).then(data => {
+                    {upsert: true});
+
+                }).then(data => {
+
                     User.findByIdAndUpdate(
                         mongoose.Types.ObjectId(req.body.sender),
                         {$push: {"connnections": req.body.recipient}},
-                        {upsert: true}
+                        {upsert: true})
+
                     }).then(data => {
+
                          Notification.findByIdAndRemove(
                             mongoose.Types.ObjectId(req.body.twinID)
-                        ).then(data => {
+                         )
+
+                        }).then(data => {
+
                             let confirmConnection = new Notification({
-                                connectionRequest: {
-                                    sender: mongoose.Types.ObjectId(req.body.recipient),
-                                    recipient: mongoose.Types.ObjectId(req.body.sender),
-                                    status: 'accepted',
-                                }
-                            })
+                                    connectionRequest: {
+                                        sender: mongoose.Types.ObjectId(req.body.recipient),
+                                        recipient: mongoose.Types.ObjectId(req.body.sender),
+                                        status: 'accepted',
+                                    }
+                                })
+                            });      
 
                             confirmConnection.save();
 
@@ -183,15 +203,12 @@ app.get('/notification/:type', async (req,res) => {
                                     }
                                 )
                             })();
-                        })
-                    })
-            })
 
         } else if (req.body.status == 'ignored') {
 
             Notification.findByIdAndUpdate(
                 mongoose.Types.ObjectId(req.body.notifID),
-                {$set: {['status': 'ignored'}},
+                {$set: {'status': 'ignored'}},
                 {useFindandModify: false}
             ).then(data => {
                 if (!data) {
@@ -212,8 +229,8 @@ app.get('/notification/:type', async (req,res) => {
         connection requests and tag alerts.
     */
 
-
 })
 
 
 module.exports = app;
+
