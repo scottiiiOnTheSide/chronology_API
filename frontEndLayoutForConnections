@@ -31,3 +31,23 @@ if userID (local) == to req.sender (request) {
 } else {
 	x accepted your request !
 }
+
+
+
+{
+    "emailAddr": "anotherAccount@loqseq.xyz",
+    "password": "anotherAccount"
+}
+
+{
+    "emailAddr": "oneOftheFew@logseq.xyz",
+    "password": "secondDummy"
+}
+(not sure of password)
+
+{
+    "sender": "631fffc31a8ec6e3a2203b62",
+    "recipient": "62e16c033246b9ea70a85649",
+    "status": "sent"
+}
+
