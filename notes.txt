@@ -1,4 +1,16 @@
 
+09. 17. 2022
+@0222 Accepting a connection request now also works as intended!
+      !!! should add checks to both the 'sent' and 'accepted' statements
+          for whether a previous request / entry already exists
+
+      Due to the simplicity of the ignore request, I'll assume that it
+      works as intended
+
+09. 16. 2022
+@1750 Sending a connection request ... now actually works
+      Working on the acceptance part now
+
 09. 15. 2022
 @0430 Sending a connectionRequest now works as intended...
       Will work on the acceptance part next...

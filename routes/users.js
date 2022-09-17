@@ -117,29 +117,23 @@ app.post('/notif/:type', verify, async (req,res) => {
                             mongoose.Types.ObjectId(req.body.sender),
                             {$push: {"notifications": connectReq}},
                             [{upsert: true}, {useFindandModify: false}],
-                            function(err,success) {
-                                if(err) {
-                                  console.log(err)
-                                } else {
+                        ).then((res) => {
+                                if(res) {
                                   console.log("notification added to sender's list")
                                 }
-                            }
-                        );
-                        await oneOut.save();
+                        })
+                        // await oneOut.save();
 
                         let secondOut = await User.findByIdAndUpdate(
                             mongoose.Types.ObjectId(req.body.recipient),
                             {$push: {"notifications": connectRec}},
-                            [{upsert: true}, {useFindandModify: false}],
-                            function(err,success) {
-                                if(err) {
-                                  console.log(err)
-                                } else {
+                            [{upsert: true}, {useFindandModify: false}],  
+                        ).then((res) => {
+                                if(res) {
                                   console.log("notification added to recipient's list")
                                 }
-                            }
-                        );
-                        await secondOut.save();
+                        })
+                        // await secondOut.save();
                     })(); 
 
                     connectReq.save()
@@ -149,66 +143,89 @@ app.post('/notif/:type', verify, async (req,res) => {
                 res.status(404).send("something went wrong");
             }
             
-
         } else if (req.body.status == 'accepted') {
 
-            Notification.findByIdAndUpdate(
-                mongoose.Types.ObjectId(req.body.notifID),
-                {$set: {"status": "accepted"}},
-                {useFindandModify: false}
-            ).then(data => {
+            let notifID = mongoose.Types.ObjectId(req.body.notifID),
+                sender = mongoose.Types.ObjectId(req.body.sender),
+                recipient = mongoose.Types.ObjectId(req.body.recipient);
 
-                User.findByIdAndUpdate(
-                    mongoose.Types.ObjectId(req.body.recipient),
-                    {$push: {"connnections": req.body.sender}},
-                    {upsert: true});
+            (async() => {
 
-                }).then(data => {
+                let one = await Notification.findByIdAndUpdate(
+                    notifID, 
+                    { $set: {["connectionRequest.status"]: "accepted"}},
+                    {useFindandModify: false}
+                ).then((data) => {
+                    if(data) {
+                        // res.send(data)
+                        console.log("original notif to recipient updated");
+                    }
+                })
 
-                    User.findByIdAndUpdate(
-                        mongoose.Types.ObjectId(req.body.sender),
-                        {$push: {"connnections": req.body.recipient}},
-                        {upsert: true})
+                let two = await User.findByIdAndUpdate(
+                    sender,
+                    {$push: {"connections": recipient}},
+                    {upsert: true}
+                ).then((data) => {
+                        if(data) {
+                            // res.send(data)
+                            console.log("recipient added to sender's connections");
+                        }
+                })
 
-                    }).then(data => {
+                //should include a check for whether entry already exists within user's
+                //connection list
+                let three = await User.findByIdAndUpdate(
+                    recipient,
+                    {$push: {"connections": sender}},
+                    {upsert: true}
+                ).then((data) => {
+                    if(data) {
+                        // res.send(data)
+                        console.log("sender added to recipient's connections");
+                    }
+                })
 
-                         Notification.findByIdAndRemove(
-                            mongoose.Types.ObjectId(req.body.twinID)
-                         )
+                let four = await Notification.findByIdAndRemove(
+                    mongoose.Types.ObjectId(req.body.twinID),
+                ).then((data) => {
+                    if(data) {
+                        // res.send(data)
+                        console.log("original notif of sender's request, deleted");
+                    } else {
+                        console.log("nothing to delete?")
+                    }
+                })
 
-                        }).then(data => {
+                let five = new Notification({
+                        connectionRequest: {
+                            sender: mongoose.Types.ObjectId(req.body.recipient),
+                            recipient: mongoose.Types.ObjectId(req.body.sender),
+                            status: 'accepted',
+                        }
+                })
 
-                            let confirmConnection = new Notification({
-                                    connectionRequest: {
-                                        sender: mongoose.Types.ObjectId(req.body.recipient),
-                                        recipient: mongoose.Types.ObjectId(req.body.sender),
-                                        status: 'accepted',
-                                    }
-                                })
-                            });      
+                await five.save();
 
-                            confirmConnection.save();
+                let six = await User.findByIdAndUpdate(
+                    sender,
+                    {$push: {"notifications": five}},
+                    {upsert: true},
+                ).then((data) => {
+                    if(data) {
+                        console.log("new notification added to sender's list")
+                    }
+                })
 
-                            (async ()=> {
-                                await User.findByIdAndUpdate(
-                                    mongoose.Types.ObjectId(req.body.sender),
-                                    {$push: {"notifications": confirmConnection}},
-                                    {upsert: true},
-                                    function(err,success) {
-                                        if(err) {
-                                          console.log(err)
-                                        } else {
-                                          console.log("Connection made! Notification list's updated");
-                                        }
-                                    }
-                                )
-                            })();
+                res.status(200)
+                console.log(`connection made between ${sender} & ${recipient} !`)
+            })();
 
         } else if (req.body.status == 'ignored') {
 
             Notification.findByIdAndUpdate(
                 mongoose.Types.ObjectId(req.body.notifID),
-                {$set: {'status': 'ignored'}},
+                {$set: {['connectionRequest.status']: 'ignored'}},
                 {useFindandModify: false}
             ).then(data => {
                 if (!data) {
@@ -217,7 +234,7 @@ app.post('/notif/:type', verify, async (req,res) => {
                   res.status(200).send({message: "Post Updated"})
                 }
             })
-
+            
         }
 
     } else if(type == 'tagAlert') {
