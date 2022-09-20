@@ -1,5 +1,58 @@
 
 09. 17. 2022
+
+@1815 The tagging function now works :D ! Will make note to add
+      'tag user' input on the front end
+
+@1652 Gotta check if the connectionRequest is updating the recipient's notif.
+      It doesn't appear as though it has
+
+@1325 'Methodology for tagging users' / backend
+
+      (post doc schema needs to be updated to include the tagged)
+
+      for all user accounts added within the post request,
+      (array of usernames)
+
+      find their docs by name,
+      (findandUpdate)
+
+      add the notification concerning the new post into 
+      their notif array
+      (new notif, 
+        postID: ''
+        message: $sender tagged you in their latest post! 
+        status: 'unread' / 'read'
+      )each recipient recieves their own
+
+    frontEnd
+
+    if tagAlert status = 'unread', include it in tally
+    if status = 'read', exclude from tally.
+
+
+    TagAlerts, when clicked, runs fetch for singlePost,
+    then opens blogpost component with said info
+
+    read tags have faded text:
+      - accepted connectionRequests take user to connection section
+      - unread requests have 'accept' / 'ignore' options
+        - ignored requests go gray as well, option remains to accept
+          theyre also no longer included in tally
+      - read tagAlerts will still bring user to said post 
+
+    Upon accepting request,
+    notification list goes blank as it sends the request and reloads
+    upon reload, said notif should now say 'accepted'
+
+    Also,
+    (maybe a future update) for both tags and tagging users, 
+    toggle list all connections or previously used tags, respectively
+
+
+@0237 additions to notif list concerning tagAlerts should be done within the
+      'createPost' route 
+
 @0222 Accepting a connection request now also works as intended!
       !!! should add checks to both the 'sent' and 'accepted' statements
           for whether a previous request / entry already exists

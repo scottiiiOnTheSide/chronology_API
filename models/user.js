@@ -6,6 +6,10 @@ const NotificationSchema = new mongoose.Schema({
   connectionRequest: {
     type: Map,
     of: String
+  },
+  tagAlert: {
+    type: Map,
+    of: String
   }
 });
 
