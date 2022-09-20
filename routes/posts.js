@@ -3,7 +3,7 @@ const express = require('express'),
       mongoose = require('mongoose'),
       Posts = require('../models/posts'),
       Tags = require('../models/tags'),
-      User = require('../models/user'),
+      {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
       manageTags = require('../manageTags'),
       encrypt = require('bcryptjs'),
@@ -32,6 +32,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       title: req.body.title,
       content: req.body.content,
       tags: req.body.tags,
+      taggedUsers: req.body.taggedUsers,
       postedOn_month: month,
       postedOn_day: date,
       postedOn_year: year
@@ -42,7 +43,8 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       author: _username,
       title: req.body.title,
       content: req.body.content,
-      tags: req.body.tags
+      tags: req.body.tags,
+      taggedUsers: req.body.taggedUsers,
     })
   }
   
@@ -67,9 +69,54 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   })
   }
   
-      
   console.log('line 44'+ newPost);
   await newPost.save();
+
+  console.log(req.body.taggedUsers);
+
+  let usersTagged = JSON.parse(JSON.stringify((req.body.taggedUsers)));
+  JSON.stringify(usersTagged);
+
+  // console.log(usersTagged);
+
+  let notifyUser = async(user) => {
+
+    let tagAlert = new Notification({
+      tagAlert: {
+        postID: newPost._id,
+        postTitle: newPost.title,
+        sender: _username,
+        /*
+           On front end, have the title in bold and quotation marks, 
+           the username in blue, perhaps.
+        */
+      }
+    })
+    await tagAlert.save();
+
+    let userID = await User.findOne({userName: user}).then((data) => data);
+    // console.log(userID._id)
+
+    let addTagAlertToNotifs = await User.findByIdAndUpdate(
+        userID._id,
+        {$push: {"notifications": tagAlert}},
+        {upsert: true}
+      ).then((data) => {
+        if(data) {
+          console.log('user notified of them being tagged')
+        } else {
+          console.log('updating user notifs didnt work')
+        }
+    })
+  }
+
+  if(usersTagged) {
+    usersTagged.forEach((user) => {
+      console.log(user);
+      notifyUser(user);
+    })
+  }
+
   res.send(newPost);
 });
 

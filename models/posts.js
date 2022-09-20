@@ -24,6 +24,10 @@ const PostsSchema = new mongoose.Schema({
       type: String,
       ref: 'Tags'
   }],
+  taggedUsers: [{
+    type: String,
+    ref: 'User',
+  }],
   isPersonal: Boolean,
   setEvent_Year: String,
   setEvent_Month: String,

@@ -234,18 +234,9 @@ app.post('/notif/:type', verify, async (req,res) => {
                   res.status(200).send({message: "Post Updated"})
                 }
             })
-            
+
         }
-
-    } else if(type == 'tagAlert') {
-
     }
-    /*
-        09. 11. 2022
-        Two kinds of notifications as of now:
-        connection requests and tag alerts.
-    */
-
 })
 
 

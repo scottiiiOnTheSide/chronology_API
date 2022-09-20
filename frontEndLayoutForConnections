@@ -1,4 +1,8 @@
 
+
+
+
+
 const connectionRequest = await fetch("apiAddr/notification/connection", {
 	method: "POST",
 	header: {
@@ -35,7 +39,7 @@ if userID (local) == to req.sender (request) {
 
 
 {
-    "emailAddr": "anotherAccount@loqseq.xyz",
+    "emailAddr": "anotherAccount@logseq.xyz",
     "password": "anotherAccount"
 }
 
