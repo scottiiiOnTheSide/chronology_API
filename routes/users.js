@@ -83,6 +83,37 @@ app.get('/getuser/:id', async (req,res) => {
     }
 })
 
+app.get
+('/search', verify, async(req, res) => {
+  
+  /*
+    09. 25. 2022
+    takes a query, so url is
+    :3333/users/search?query=${userQuery}
+  */
+  
+  try {
+        let result = await User.aggregate([
+            {
+                "$search": {
+                    "autocomplete": {
+                        "query": `${req.query.query}`,
+                        "path": "userName",
+                        "fuzzy": {
+                            "maxEdits": 2,
+                            "prefixLength": 3
+                        }
+                    }
+                }
+            }
+        ]).toArray();
+        res.send(result);
+    } catch (e) {
+        res.status(500).send({ message: e.message });
+    }
+} )
+
+
 app.post('/notif/:type', verify, async (req,res) => {
 
     let type = req.params.type;

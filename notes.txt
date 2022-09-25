@@ -1,6 +1,8 @@
 
-09. 17. 2022
+09. 25. 2022
+@1613 added "autocompleting" search capability for users. idea is to use this code from the tutorial as a "base", modify it down the line should need be.
 
+09. 17. 2022
 @1815 The tagging function now works :D ! Will make note to add
       'tag user' input on the front end
 
