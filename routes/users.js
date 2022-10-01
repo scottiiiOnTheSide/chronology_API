@@ -69,18 +69,49 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/getuser/:id', async (req,res) => {
-  try {
+  
       let _ID = mongoose.Types.ObjectId(req.params.id);
+      let sendConnects = req.query.sendConnects;
       console.log(_ID);
-      //.send(_ID);
-      let singleUser = await User.findOne({_id: _ID});
-      console.log(singlePost);
-      res.send(singlePost);
-    }
-    catch {
-      res.status(404) 		
-      res.send({ error: "User doesn't exist!" })
-    }
+      
+      if (sendConnects == 'true') {
+        let singleUser = await User.findById(_ID).then((user) => {
+            if(!user) {
+              console.log(user)
+              res.status(404).send("error");
+            } else {
+              let connects = user.connections;
+              let results;
+              (async ()=> {
+                for (let u in connects) {
+                let user = await User.findById(u).then((user) => {
+                  let result = {
+                    username: user.userName,
+                    id: user._id
+                  }
+                  results.push(result);
+                })
+              }
+              })
+              
+              console.log(results)
+              res.status(200).send(results)
+            }
+          })
+      } else {
+        let singleUser = await User.findById(_ID).then((user) => {
+            if(!user) {
+              console.log(user)
+              res.status(404).send("error");
+            } else {
+              console.log("Getting user: " +user.userName);
+              res.status(200).send(user);
+            }
+          })
+      }
+/*catch {
+      
+    }*/
 })
 
 app.get
