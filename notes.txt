@@ -1,4 +1,13 @@
 
+10. 01. 2022
+@2315 sending user connections as a new array of objects now works as intended.
+  will need to add to that endpoint, options for removing users from connections as well
+
+09. 30. 2022
+@2026 Need to adjust /getuser endpoint so that when getting users friendlist, it gets each user for the id within the array, makes a new object with the needed data, pushes that into a new array, then sends the new array.
+
+  will probably have to use .map ...
+
 09. 25. 2022
 @1613 added "autocompleting" search capability for users. idea is to use this code from the tutorial as a "base", modify it down the line should need be.
 

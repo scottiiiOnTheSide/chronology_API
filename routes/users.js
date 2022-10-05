@@ -72,46 +72,38 @@ app.get('/getuser/:id', async (req,res) => {
   
       let _ID = mongoose.Types.ObjectId(req.params.id);
       let sendConnects = req.query.sendConnects;
-      console.log(_ID);
+      let singleUser = await User.findById(_ID).then((user) => {
+      if(!user) {
+         console.log("error retrieving user");
+        } else {
+          return user;
+        }
+      });
       
-      if (sendConnects == 'true') {
-        let singleUser = await User.findById(_ID).then((user) => {
-            if(!user) {
-              console.log(user)
-              res.status(404).send("error");
+      let makeConnect = (userID) => {
+        return User.findById(userID).then((user) => {
+            if (!user) {
+             console.log("Error in getting connection. maybe user has none?")
             } else {
-              let connects = user.connections;
-              let results;
-              (async ()=> {
-                for (let u in connects) {
-                let user = await User.findById(u).then((user) => {
-                  let result = {
-                    username: user.userName,
-                    id: user._id
-                  }
-                  results.push(result);
-                })
+              let result = {
+                username: user.userName,
+                id: user._id
               }
-              })
-              
-              console.log(results)
-              res.status(200).send(results)
+              return result;
             }
-          })
-      } else {
-        let singleUser = await User.findById(_ID).then((user) => {
-            if(!user) {
-              console.log(user)
-              res.status(404).send("error");
-            } else {
-              console.log("Getting user: " +user.userName);
-              res.status(200).send(user);
-            }
-          })
-      }
-/*catch {
+          });
+      };
       
-    }*/
+      if(sendConnects == 'true') {
+        let connects = singleUser.connections;
+        connects = await Promise.all(connects.map(async (user) => {
+          return await makeConnect(user);
+        }))
+        console.log("generated user's connections");
+        res.status(200).send(connects);
+      } else {
+        res.status(200).send(singleUser);
+      }
 })
 
 app.get
@@ -127,6 +119,7 @@ app.get
         let result = await User.aggregate([
             {
                 "$search": {
+                    "index":"initial",
                     "autocomplete": {
                         "query": `${req.query.query}`,
                         "path": "userName",
@@ -137,7 +130,8 @@ app.get
                     }
                 }
             }
-        ]).toArray();
+        ]);
+        console.log(result)
         res.send(result);
     } catch (e) {
         res.status(500).send({ message: e.message });
