@@ -1,4 +1,16 @@
 
+10. 09. 2022
+@1005 added code for sending all of a user's notifications. will also need to implement endpoints for marking a notif as read.
+  but first, must make sure these 2 new endpoints work
+
+@0955 Added code for removing connection.
+      it removes the id from the user's array without returning the doc. so, in the front end, the removed user must also be deleted from the current displayed list (perhaps upon recieving some confirmation from the backend)
+
+@0940 making changes to the end point responsible for getting a user & their connections list.
+  for front end, request url must include
+  '?query=sendConnects' or removeConnect.
+  can add ?remove=aUserID for removals
+
 10. 08. 2022
 @2357 made adjustment to the data that gets sent to the front end when user makes search request.
 

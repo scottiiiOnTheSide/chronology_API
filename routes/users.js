@@ -71,7 +71,7 @@ app.post('/login', async (req, res) => {
 app.get('/getuser/:id', async (req,res) => {
   
       let _ID = mongoose.Types.ObjectId(req.params.id);
-      let sendConnects = req.query.sendConnects;
+      let query = req.query.query;
       let singleUser = await User.findById(_ID).then((user) => {
       if(!user) {
          console.log("error retrieving user");
@@ -79,6 +79,7 @@ app.get('/getuser/:id', async (req,res) => {
           return user;
         }
       });
+      let removalID = req.query.remove;
       
       let makeConnect = (userID) => {
         return User.findById(userID).then((user) => {
@@ -94,13 +95,20 @@ app.get('/getuser/:id', async (req,res) => {
           });
       };
       
-      if(sendConnects == 'true') {
+      if(query == 'sendConnects') {
         let connects = singleUser.connections;
         connects = await Promise.all(connects.map(async (user) => {
           return await makeConnect(user);
         }))
         console.log("generated user's connections");
         res.status(200).send(connects);
+      } else if (query == 'removeConnect') {
+        User.update(
+          { _id: _ID},
+          {$pull: { 'connections': `${removalID}` }}
+        )
+        console.log(singleUser.connections)
+        res.status(200);
       } else {
         res.status(200).send(singleUser);
       }
@@ -304,6 +312,21 @@ app.post('/notif/:type', verify, async (req,res) => {
             })
 
         }
+    }
+    else if (type == 'sendAll') {
+      let id = mongoose.Types.ObjectId(req.body.sender);
+      let user = 
+      User.findById(id).then((user) => {
+        if(!user) {
+          console.log("issue finding user. might not exist");
+        }
+        else {
+          return user;
+        }
+      })
+      
+      let notifs = user.notifications;
+      res.staus(200).send(notifs);
     }
 })
 
