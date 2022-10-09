@@ -1,4 +1,16 @@
 
+10. 08. 2022
+@2357 made adjustment to the data that gets sent to the front end when user makes search request.
+
+  should definitely make that endpoint for removing connections as well....
+  before working on the notifications list endpoint, right?
+  
+10. 04. 2022
+@1010 search now works as intended, had to fix something not shared within the tut (._.
+  the results, however, send the entire user doc to the front end, so i need to trim down the results that get sent to the front end + make it into an array.
+  
+    map should work nicely :D
+
 10. 01. 2022
 @2315 sending user connections as a new array of objects now works as intended.
   will need to add to that endpoint, options for removing users from connections as well

@@ -116,7 +116,15 @@ app.get
   */
   
   try {
-        let result = await User.aggregate([
+        let makeResult = (user) => {
+          let value = {
+            username: user.userName,
+            name: `${user.firstName} ${user.lastName}`,
+            id: user._id
+          }
+          return value
+        }
+        let results = await User.aggregate([
             {
                 "$search": {
                     "index":"initial",
@@ -131,8 +139,12 @@ app.get
                 }
             }
         ]);
-        console.log(result)
-        res.send(result);
+      
+        results = results.map((user) => {
+          return makeResult(user);
+        })
+        console.log(results);
+        res.send(results);
     } catch (e) {
         res.status(500).send({ message: e.message });
     }
