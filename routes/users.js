@@ -103,12 +103,19 @@ app.get('/getuser/:id', async (req,res) => {
         console.log("generated user's connections");
         res.status(200).send(connects);
       } else if (query == 'removeConnect') {
-        User.update(
+        User.updateOne(
           { _id: _ID},
-          {$pull: { 'connections': `${removalID}` }}
+          {$pull: { 'connections': `${removalID}` }},
+          function(err, val) {
+            if(val) {
+              console.log(singleUser.connections)
+              res.status(200).send("removed");
+            } else {
+              console.log(err)
+            }
+          }
         )
-        console.log(singleUser.connections)
-        res.status(200);
+        
       } else {
         res.status(200).send(singleUser);
       }
@@ -161,7 +168,21 @@ app.get
 
 app.post('/notif/:type', verify, async (req,res) => {
 
-    let type = req.params.type;
+    let type = req.params.type,
+        ID = req.query.id,
+        tagRead = req.query.tagRead;
+
+    if(ID && tagRead) {
+      Notification.findByIdAndUpdate(
+        ID, 
+        { $set: {["tagAlert.read"]: "true"}},
+        {useFindandModify: false}
+      ).then((data) => {
+          if(data) {
+          console.log("tag alert now marked read");
+          }
+      });
+    }
 
     if(type == 'connection') {
         if(req.body.status == 'sent') {
@@ -278,6 +299,7 @@ app.post('/notif/:type', verify, async (req,res) => {
                             sender: mongoose.Types.ObjectId(req.body.recipient),
                             recipient: mongoose.Types.ObjectId(req.body.sender),
                             status: 'accepted',
+                            read: false
                         }
                 })
 
@@ -315,19 +337,21 @@ app.post('/notif/:type', verify, async (req,res) => {
     }
     else if (type == 'sendAll') {
       let id = mongoose.Types.ObjectId(req.body.sender);
-      let user = 
+      let user = await
       User.findById(id).then((user) => {
-        if(!user) {
-          console.log("issue finding user. might not exist");
+        if(user) {
+          return user
         }
         else {
-          return user;
+          console.log("issue finding user. might not exist");
         }
       })
       
       let notifs = user.notifications;
-      res.staus(200).send(notifs);
+      console.log('user notifs' +`\n`+notifs)
+      res.status(200).send(notifs);
     }
+    
 })
 
 

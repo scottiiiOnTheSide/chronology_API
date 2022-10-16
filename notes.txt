@@ -1,4 +1,11 @@
 
+10. 12. 2022
+
+@1807 added addition to notif endpoint for marking tagging alerts as read.
+  still need to test the sendAll notifs function too 
+
+@0921 connection removal SEEMS to be working correctly.
+
 10. 09. 2022
 @1005 added code for sending all of a user's notifications. will also need to implement endpoints for marking a notif as read.
   but first, must make sure these 2 new endpoints work
