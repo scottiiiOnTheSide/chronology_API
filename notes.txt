@@ -1,4 +1,15 @@
 
+10. 17. 2022
+@1225 added changes so that notification objects get made including the users usernames as well. will have to test to make sure everything is 👌🏾
+
+10. 16. 2022
+@1425 notifs have object IDs instead of usernames.
+  I need to 
+  • add the sender's name in the notif that gets added to the recipient
+  • add the recipients name to the notif that gets added to the sender 
+  • add the senders name for tag alerts 
+  
+
 10. 12. 2022
 
 @1807 added addition to notif endpoint for marking tagging alerts as read.
