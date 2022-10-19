@@ -1,4 +1,7 @@
 
+10. 18. 2022
+@2308 the additional fields that i added for usernames arent being filled 😩
+
 10. 17. 2022
 @1225 added changes so that notification objects get made including the users usernames as well. will have to test to make sure everything is 👌🏾
 

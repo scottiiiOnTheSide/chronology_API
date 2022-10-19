@@ -186,29 +186,35 @@ app.post('/notif/:type', verify, async (req,res) => {
 
     if(type == 'connection') {
       
-      let sender = 
-      await User.findById(req.body.sender).then((user) => {
-            if (!user) {
-             console.log("Error in getting connection. maybe user has none?")
-            } else {
-              let result = {
-                username: user.userName,
-                id: user._id
-              }
-              return result;
-            }
-            
-        let recipient = await User.findById(req.body.recipient).then((user) => {
-            if (!user) {
-             console.log("Error in getting connection. maybe user has none?")
-            } else {
-              let result = {
-                username: user.userName,
-                id: user._id
-              }
-              return result;
-            }
+        let senderr = mongoose.Types.ObjectId(req.body.sender),
+            recipientt = mongoose.Types.ObjectId(req.body.recipient);
       
+        let sender = 
+      await User.findById(senderr).then((user) => {
+            if (user) {
+              let result = {
+                username: user.userName,
+                id: user._id
+              }
+              return result;
+            } else {
+              console.log("Error in getting connection. maybe user has none?")
+            }
+      })
+            
+            
+        let recipient = await User.findById(recipientt).then((user) => {
+            if (user) {
+              let result = {
+                username: user.userName,
+                id: user._id
+              }
+              return result;
+            } else {
+              console.log("Error in getting connection. maybe user has none?")
+            }
+        })
+        
         if(req.body.status == 'sent') {
 
                /* User.findById sender and recipient
@@ -218,9 +224,9 @@ app.post('/notif/:type', verify, async (req,res) => {
                     let connectReq = new Notification({
                         connectionRequest: {
                             sender: mongoose.Types.ObjectId(req.body.sender),
-                            senderUsername: sender.userName,
+                            senderUsername: sender.username,
                             recipient: mongoose.Types.ObjectId(req.body.recipient),
-                            recipientUsername: recipient.userName,
+                            recipientUsername: recipient.username,
                             status: req.body.status,
                             twinID: ''
                         }
@@ -230,8 +236,8 @@ app.post('/notif/:type', verify, async (req,res) => {
                         connectionRequest: {
                             sender: mongoose.Types.ObjectId(req.body.sender),
                             recipient: mongoose.Types.ObjectId(req.body.recipient),
-                            senderUsername: sender.userName,
-                            recipientUsername: recipient.userName,
+                            senderUsername: sender.username,
+                            recipientUsername: recipient.username,
                             status: req.body.status,
                             twinID: ''
                         }
@@ -273,9 +279,7 @@ app.post('/notif/:type', verify, async (req,res) => {
             
         } else if (req.body.status == 'accepted') {
 
-            let notifID = mongoose.Types.ObjectId(req.body.notifID),
-                senderr = mongoose.Types.ObjectId(req.body.sender),
-                recipientt = mongoose.Types.ObjectId(req.body.recipient);
+            let notifID = mongoose.Types.ObjectId(req.body.notifID);
 
             (async() => {
 
@@ -327,8 +331,8 @@ app.post('/notif/:type', verify, async (req,res) => {
 
                 let five = new Notification({
                         connectionRequest: {
-                            accepter: recipient.userName,
-                            acceptee: sender.userName,
+                            accepter: recipient.username,
+                            acceptee: sender.username,
                             status: 'accepted',
                             read: false
                         }
@@ -347,7 +351,7 @@ app.post('/notif/:type', verify, async (req,res) => {
                 })
 
                 res.status(200)
-                console.log(`connection made between ${sender.userName} & ${recipient.userName} !`)
+                console.log(`connection made between ${sender.username} & ${recipient.username} !`)
             })();
 
         } else if (req.body.status == 'ignored') {
