@@ -23,6 +23,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   const year = d.getFullYear();
   
   let newPost = {};
+  let tagslist = req.body.tags.map((tag) => tag.name)
   //await newPost.save();
   if(req.body.usePostedByDate == true) {
     console.log(month +' '+ date +' '+ year)
@@ -31,7 +32,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       author: _username,
       title: req.body.title,
       content: req.body.content,
-      tags: req.body.tags,
+      tags: tagslist,
       taggedUsers: req.body.taggedUsers,
       postedOn_month: month,
       postedOn_day: date,
@@ -43,7 +44,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       author: _username,
       title: req.body.title,
       content: req.body.content,
-      tags: req.body.tags,
+      tags: tagslist,
       taggedUsers: req.body.taggedUsers,
     })
   }
@@ -55,7 +56,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   if(tags) {
     tags.forEach((tag) => {
     Tags.findByIdAndUpdate(
-      tag,
+      tag.id,
       {$push: {"posts": newPost}},
       {upsert: true},
       function(err,success) {
@@ -74,7 +75,12 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
 
   console.log(req.body.taggedUsers);
 
-  let usersTagged = JSON.parse(JSON.stringify((req.body.taggedUsers)));
+  
+  //10.19.2022 currently not sure if this actually makes sense ?!?
+  let usersTagged;
+  if(req.body.taggedUsers) {
+    usersTagged = JSON.parse(JSON.stringify((req.body.taggedUsers)));
+  }
   JSON.stringify(usersTagged);
 
   // console.log(usersTagged);

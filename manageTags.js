@@ -12,7 +12,10 @@ module.exports = async function (req,res,next) {
       let value = tag.name;
       //console.log("line 29 "+ tag);
       console.log("line 30 "+ tag._id +`\n`+ tag.name);
-      return value;
+      return {
+        name: tag.name,
+        id: tag.id,
+      };
     })
     .catch((err) => {
       let newTag = new Tags({
@@ -22,7 +25,10 @@ module.exports = async function (req,res,next) {
       newTag.save();
       let value = newTag.name;
       console.log('line 39 '+ newTag._id );
-      return value;
+      return {
+        name: newTag.name,
+        id: newTag._id
+      };
     })
   }
   

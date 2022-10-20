@@ -1,4 +1,14 @@
 
+10.19.2022
+
+@2045 the same confirmation notif is being sent to both users. 
+  would like to compile and go over all the kinks and small additions that need to be made in order for all current functions to work correctly and optimally
+
+@1945 need to edit code to make sure old notifcations get deleted and changed.
+  had to go into the DB and manually delete notif docs and the elements from the user array
+
+@1800 connection requests are now being made and sent with usernames included 
+
 10. 18. 2022
 @2308 the additional fields that i added for usernames arent being filled 😩
 
