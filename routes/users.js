@@ -103,18 +103,37 @@ app.get('/getuser/:id', async (req,res) => {
         console.log("generated user's connections");
         res.status(200).send(connects);
       } else if (query == 'removeConnect') {
-        User.updateOne(
-          { _id: _ID},
-          {$pull: { 'connections': `${removalID}` }},
-          function(err, val) {
-            if(val) {
-              console.log(singleUser.connections)
-              res.status(200).send("removed");
-            } else {
-              console.log(err)
-            }
-          }
-        )
+
+        (async() => {
+            let one = User.updateOne(
+              { _id: _ID},
+              {$pull: { 'connections': `${removalID}` }},
+              function(err, val) {
+                if(val) {
+                  console.log(singleUser.connections);
+                  console.log('removee disconnected from remover');
+                  res.status(200).send("removed");
+                } else {
+                  console.log(err)
+                }
+              }
+            )
+
+            let two = User.updateOne(
+                { _id:  mongoose.Types.ObjectId(removalID)},
+                {$pull: {'connections': `${req.params.id}`}},
+                function(err, val) {
+                    if(val) {
+                        console.log('remover disconnected from removee');
+                    } else {
+                        console.log(err)
+                    }
+                }
+            )
+        })
+        
+
+
         
       } else {
         res.status(200).send(singleUser);
@@ -283,14 +302,27 @@ app.post('/notif/:type', verify, async (req,res) => {
 
             (async() => {
 
-                let one = await Notification.findByIdAndUpdate(
-                    notifID, 
-                    { $set: {["connectionRequest.status"]: "accepted"}},
+                let one = await Notification.deleteOne(
+                    {_id: notifID}, 
+                ).then((data) => {
+                    if(data) {
+                        // res.send(data)
+                        console.log("independent notification doc of request to recipient, deleted");
+                    } else {
+                        console.log('Nothing to delete?')
+                    }
+                })
+
+                let oneTwo = await User.findByIdAndUpdate(
+                    {_id: recipientt}, 
+                    {$pull: {"notifications": {"connectionRequest": {_id: mongoose.Types.ObjectId(req.body.notifID)}}}},
                     {useFindandModify: false}
                 ).then((data) => {
                     if(data) {
                         // res.send(data)
-                        console.log("original notif to recipient updated");
+                        console.log("notif in recipient's array, deleted");
+                    } else {
+                        console.log("notif in recipient's not found or deleted")
                     }
                 })
 
@@ -318,19 +350,32 @@ app.post('/notif/:type', verify, async (req,res) => {
                     }
                 })
 
-                let four = await Notification.findByIdAndRemove(
-                    mongoose.Types.ObjectId(req.body.twinID),
-                ).then((data) => {
-                    if(data) {
-                        // res.send(data)
-                        console.log("original notif of sender's request, deleted");
-                    } else {
-                        console.log("nothing to delete?")
-                    }
-                })
+                // let four = await Notification.findByIdAndRemove(
+                //     {_id: mongoose.Types.ObjectId(req.body.twinID)},
+                // ).then((data) => {
+                //     if(data) {
+                //         // res.send(data)
+                //         console.log("original notif of sender's request, deleted");
+                //     } else {
+                //         console.log("nothing to delete?")
+                //     }
+                // })
+
+                // let fourAndAHalf = await User.findByIdAndUpdate(
+                //     senderr,
+                //     {$pull: {"notifications": {"connectionRequest": {_id: mongoose.Types.ObjectId(req.body.twinID)}}}},
+                //     { safe: true, upsert: true }
+                // ).then((data) => {
+                //     if(data) {
+                //         console.log('Sender notif indicating they sent recipient a request, deleted');
+                //     } else {
+                //         console.log("unable to find doc - nothing to delete?");
+                //     }
+                // })
 
                 let five = new Notification({
                         connectionRequest: {
+                            sender: recipient.id, /*the original sender*/
                             accepter: recipient.username,
                             acceptee: sender.username,
                             status: 'accepted',
@@ -346,9 +391,25 @@ app.post('/notif/:type', verify, async (req,res) => {
                     {upsert: true},
                 ).then((data) => {
                     if(data) {
+                        console.log("new notification added to recipient's list")
+                    }
+                })
+
+                let seven = await User.findByIdAndUpdate(
+                    recipientt,
+                    {$push: {"notifications": five}},
+                    {upsert: true},
+                ).then((data) => {
+                    if(data) {
                         console.log("new notification added to sender's list")
                     }
                 })
+
+                /* 10. 31. 2022
+                    Okay, so, once a connectRequest with the status of accepted is sent,
+                    the original sender becomes the recipient, 
+                    and the original recipient becomes the sender
+                */
 
                 res.status(200)
                 console.log(`connection made between ${sender.username} & ${recipient.username} !`)

@@ -1,4 +1,21 @@
 
+10. 31. 2022
+
+@2345 Added reciprocal removal - when a user disconnects from another, the disconnection is mutual
+      between both accounts
+
+@2315 The process is cleaned up now, and users are only being added once (multiple additions
+        of the same user was an issue)
+      Now to find out how to delete the original request that gets sent to the recipient -
+      the one which they need to accept or ignore
+
+@2305 Changed the connection acception process. 
+      Will make a new account to test it out
+
+
+@2135 Confirmation notifications for successful connections now corrected.
+      Need to make sure the initial messages get deleted now
+
 10.19.2022
 
 @2045 the same confirmation notif is being sent to both users. 
