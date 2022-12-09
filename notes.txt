@@ -1,4 +1,19 @@
 
+12. 09. 2022
+@0055 Short term, to be removed comments -> //
+      Long term, documentation -> /**/
+
+      Added new endpoint for monthChart
+      Need to know that the returned object for all posts within a month look like
+      so a can make new object to send to front end containing only the date and 
+      postPerDate combo
+      Will also make another returnable from this endpoint,
+      to return all the posts within any given date
+
+11. 01. 2022
+@1841 I may just have to leave it as a bug for now - that the original request sent to the recipient doesn't delete after acceptance. I am currently unable to delete the notif object from the user's document within MongoDB atlas - and it's way too tedious to build a component simply for that function
+
+
 10. 31. 2022
 
 @2345 Added reciprocal removal - when a user disconnects from another, the disconnection is mutual

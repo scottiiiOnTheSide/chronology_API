@@ -444,7 +444,7 @@ app.post('/notif/:type', verify, async (req,res) => {
       })
       
       let notifs = user.notifications;
-      console.log('user notifs' +`\n`+notifs)
+      console.log(`sending ${user.userName} notifs`)
       res.status(200).send(notifs);
     }
     

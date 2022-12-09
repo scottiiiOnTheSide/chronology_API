@@ -134,10 +134,6 @@ app.get('/log', verify, async (req,res) => {
   const {_id, _username} = decoded; 
   
   try {
-    /*console.log(_id +`\n`+ _username);
-    console.log(req.query.month)
-    console.log(req.query.year)
-    res.send("👍🏾")*/
     Posts.find({
       owner: _id,
       postedOn_month: req.query.month,
@@ -159,6 +155,44 @@ app.get('/log', verify, async (req,res) => {
     )
     console.log("I am unsure what failed");
   }
+})
+
+app.get('/monthChart', verify, async (req, res) => {
+
+  /*
+      Break down auth token to retrieve user _id
+  */
+  const auth = req.header('auth-token');
+  const base64url = auth.split('.')[1];
+  const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+  const {_id, _username} = decoded; 
+
+  const month = req.query.month,
+        year = req.query.year;
+
+  try {
+    Posts.find({
+      owner: _id,
+      postedOn_month: month,
+      postedOn_year: year
+    }, (err, posts) => {
+      if (err) {
+        res.send('No posts for this month(?)')
+        console.log('No posts for this month(?)')
+      } else {
+
+        res.status(200).json(posts);
+
+      }
+    })
+  }
+  catch (err) {
+    res.status(404).send(
+      { error: `Unable to obtain posts per date for ${month} . ${year}`}
+    )
+    console.log(`Unable to obtain posts per date for ${month} . ${year}`);
+  }
+
 })
 
 app.get('/socialLog', verify, async (req, res) => {
