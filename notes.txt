@@ -1,5 +1,28 @@
 
+12. 21. 2022
+@1509 Modified monthChart endpoint to include conditional if day query is included within request. Works as intended.
+
+12. 20. 2022
+@1455 Add if statement to monthChart endpoint if req.query.day has value, and if so, to get and return all the posts for that specific day
+
+12. 15. 2022
+@1155 Loop fixed :D 
+
+@1120 I believe that there are indeed many posts made in September - when this postsPerMonth is loaded however, the result is an array with 96 values ...
+      So i have to fix the loop so that it's correctly increasing the value before adding it to the array
+
+@0825 Yesterday I implemented a contingency for when the MonthChart search is successful, 
+but there are no posts for that month.
+
+12. 13. 2022 
+@1000 Endpoint for returning amount of posts a day per month works successfully 
+
 12. 09. 2022
+
+@0225 Previous issues fixed...
+
+@0215 Need to add check for when there are no tags in a post ...
+
 @0055 Short term, to be removed comments -> //
       Long term, documentation -> /**/
 
