@@ -1,4 +1,8 @@
 
+12. 25. 2022
+@1210 Added Conditional for social monthChart call, however was unable to test whether this part of the script works or is even legit! 
+currently dont find it worth doing what would be necessary to do so...
+
 12. 21. 2022
 @1509 Modified monthChart endpoint to include conditional if day query is included within request. Works as intended.
 
