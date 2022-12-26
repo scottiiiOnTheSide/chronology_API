@@ -1,4 +1,16 @@
 
+12. 22. 2022
+
+@1330 for createPost endpoint, will change the usePostedByDate option parameter
+for when current entries are made, and it will be OFF when posts made from dayLog
+
+When posts are made from monthChart, usePostedByDate will be TRUE and frontEnd will
+send the date info with the req.query
+
+@1300 Social Log Now Gets All posts current date and previous
+
+@1115 Log now gets all posts current and previous. 
+
 12. 21. 2022
 @1509 Modified monthChart endpoint to include conditional if day query is included within request. Works as intended.
 

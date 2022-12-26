@@ -132,29 +132,99 @@ app.get('/log', verify, async (req,res) => {
   const base64url = auth.split('.')[1];
   const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
   const {_id, _username} = decoded; 
-  
-  try {
-    Posts.find({
-      owner: _id,
-      postedOn_month: req.query.month,
-      postedOn_year: req.query.year
-    }, (err, posts) => {
-      if (err) {
-        res.send(err)
+
+  Posts.find({ owner: _id},
+    (err, posts) => {
+      if(err) {
+
+        res.status(400).send(err);
+
       } else {
-        console.log(`Log of posts from ${req.query.month} . ${req.query.year} from user: ${_username}`);
-        res.status(200).json(posts);
-        //res.send(posts);//sends an array
+
+        let d = new Date(),
+            currentYear = d.getFullYear(),
+            currentMonth = d.getMonth(),
+            currentDay = d.getDate();
+
+        let result = posts.filter((post) => {
+
+          /*all posts made within or before current year*/
+          if (post.postedOn_year <= currentYear) {
+
+            /* removes posts within current year, but beyond current month */
+            if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
+                (post.postedOn_year <= currentYear)) {
+
+                /* exclude posts within current month, beyond current day*/
+                if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
+                  return null;
+                }
+
+                else {
+                  return post;
+                }
+            }
+          }
+        });
+
+        res.status(200).send(result);
       }
-    })
-    
-  } catch (err) {
-    res.status(404);
-    res.send(
-      { error: "Post does not exist!" }
-    )
-    console.log("I am unsure what failed");
-  }
+    });
+
+})
+
+app.get('/socialLog', verify, async (req, res) => {
+  
+  const auth = req.header('auth-token');
+  const base64url = auth.split('.')[1];
+  const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+  const {_id, _username} = decoded;
+  let id = mongoose.Types.ObjectId(_id);
+  
+  const user = await User.findById(_id)
+        .then(res => res.toJSON());
+        connections = user.connections;
+        
+  // console.log(user.connections);
+  
+  let allPosts = await Posts.find({
+    'owner': {$in: connections},
+  }).then((err, posts) => {
+      if(err) {
+
+        res.status(400).send(err);
+
+      } else {
+
+        let d = new Date(),
+            currentYear = d.getFullYear(),
+            currentMonth = d.getMonth(),
+            currentDay = d.getDate();
+
+        let result = posts.filter((post) => {
+
+          /*all posts made within or before current year*/
+          if (post.postedOn_year <= currentYear) {
+
+            /* removes posts within current year, but beyond current month */
+            if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
+                (post.postedOn_year <= currentYear)) {
+
+                /* exclude posts within current month, beyond current day*/
+                if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
+                  return null;
+                }
+
+                else {
+                  return post;
+                }
+            }
+          }
+        });
+        res.status(200).send(result);
+      }
+  });
+
 })
 
 app.get('/monthChart', verify, async (req, res) => {
@@ -251,34 +321,7 @@ app.get('/monthChart', verify, async (req, res) => {
       console.log(`Unable to obtain posts per date for ${month} . ${day} . ${year}`);
     }
   }
-
 });
-
-app.get('/socialLog', verify, async (req, res) => {
-  
-  const auth = req.header('auth-token');
-  const base64url = auth.split('.')[1];
-  const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
-  const {_id, _username} = decoded;
-  let id = mongoose.Types.ObjectId(_id);
-  
-  const month = req.query.month,
-        year = req.query.year,
-        user = await User.findById(_id)
-        .then(res => res.toJSON());
-        connections = user.connections;
-        
-  console.log(user.connections);
-  
-  let allPosts = await Posts.find({
-    'owner': {$in: connections},
-    'postedOn_month': req.query.month,
-    'postedOn_year': req.query.year
-  }).then(res => res);
-  console.log(allPosts);
-  
-  res.status(200).send(allPosts);
-})
 
 app.get('/id', verify, async (req,res) => {
     try {
