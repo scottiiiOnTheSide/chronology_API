@@ -245,149 +245,174 @@ app.get('/monthChart', verify, async (req, res) => {
         day = req.query.day,
         social = req.query.social;
 
-  console.log(month + day + year + social);
+  console.log(month + day + year);
+  console.log('hello');
+  
+  if(social == true) {
+    /* get amount of posts per date in month  */
+    if(!day) {
+      try {
+      await Posts.find({
+        owner: {$in: connections},
+        postedOn_month: month,
+        postedOn_year: year
+      }, (err, posts) => {
+        if (err) {
+          res.status(400).send('No posts for this month(?)')
+          console.log('No posts for this month(?)')
+        } else {
 
-if (social == 'true' && !day) {/* Social monthChart request*/
-    
-    console.log('social true day false');
+          let daysInSelectedMonth;
+
+          if(month == 1) {
+            daysInSelectedMonth = new Date(year, 2, 0).getDate();
+          } else if (month == 2) {
+            daysInSelectedMonth = new Date(year, 3, 0).getDate();
+          } else {
+            daysInSelectedMonth = new Date(year, month+1, 0).getDate();
+          }
+
 
           let postsPerMonth = []
 
-          let results = await Posts.find({
-            owner: {$in: connections},
-            postedOn_month: month,
-            postedOn_year: year
-          });
-
-          if (results) {
-              let daysInSelectedMonth;
-
-              if(month == 1) {
-                daysInSelectedMonth = new Date(year, 2, 0).getDate();
-              } else if (month == 2) {
-                daysInSelectedMonth = new Date(year, 3, 0).getDate();
-              } else {
-                daysInSelectedMonth = new Date(year, month+1, 0).getDate();
+          for(y = 0; y <= daysInSelectedMonth; y++) {
+            let postsPerDate = 0;
+            if(posts.length == 0) {
+                postsPerMonth.push(postsPerDate);
+            } else {
+              for(i=0; i < posts.length; i++) {
+                if(posts[i].postedOn_day == y) {
+                  postsPerDate++;
+                }    
               }
-
-              for(y = 0; y <= daysInSelectedMonth; y++) {
-                let postsPerDate = 0;
-                if(results.length == 0) {
-                    postsPerMonth.push(postsPerDate);
-                } else {
-                  for(i=0; i < results.length; i++) {
-                    if(results[i].postedOn_day == y) {
-                      postsPerDate++;
-                    }    
-                  }
-                  postsPerMonth.push(postsPerDate);
-                }
-              }
-
-              res.status(200).send(postsPerMonth);
-              console.log(`Posts Per Month ${month}. ${year}\n`+postsPerMonth);
-          }
-          else {
-            res.status(404).send({ error: `Unable to obtain posts per date for ${month} . ${year}`})
-            console.log(`Unable to obtain posts per date for ${month} . ${year}`);
-          }
-
-    } 
-
-if (social == 'true' && day) {/* get all posts for full date */
-        
-      console.log('social true day true');
-
-      let postsForDate = []
-        
-      let results = await Posts.find({
-          'owner': {$in: connections},
-          postedOn_month: month,
-          postedOn_year: year,
-          postedOn_day: day,
-        });
-      
-    
-      if (results) {
-        res.status(200).send(results);
-      } else {
-        res.status(400).send('No posts for this day(?)')
-        console.log('No posts for this day(?)') 
-      }
-    }
-
-if (social == 'false' && !day ) { /* if not a social monthChart request*/
-
-    console.log('social false day false');
-
-      let postsPerMonth = []
-
-      let results = await Posts.find({
-          owner: _id,
-          postedOn_month: month,
-          postedOn_year: year
-      });
-
-      if (results) {
-
-        let daysInSelectedMonth;
-
-        if(month == 1) {
-          daysInSelectedMonth = new Date(year, 2, 0).getDate();
-        } else if (month == 2) {
-          daysInSelectedMonth = new Date(year, 3, 0).getDate();
-        } else {
-          daysInSelectedMonth = new Date(year, month+1, 0).getDate();
-        }
-
-        let postsPerMonth = []
-  
-        for(y = 0; y <= daysInSelectedMonth; y++) {
-          let postsPerDate = 0;
-          if(results.length == 0) {
-            postsPerMonth.push(postsPerDate);
-          } else {
-            for(i=0; i < results.length; i++) {
-              if(results[i].postedOn_day == y) {
-                postsPerDate++;
-              }    
+              postsPerMonth.push(postsPerDate);
             }
-          postsPerMonth.push(postsPerDate);
           }
+          res.status(200).send(postsPerMonth);
+          console.log(`Posts Per Month ${month}. ${year}\n`+postsPerMonth);
+          // console.log(posts)
         }
-
-        res.status(200).send(postsPerMonth);
-        console.log(`Social Posts Per Month ${month}. ${year}\n`+postsPerMonth);
-
-      } else {
-        res.status(404).send({ error: `Unable to obtain posts per date for ${month} . ${year}`})
-        console.log(`Unable to obtain posts per date for ${month} . ${year}`);
-      }
+      })
+  }
+    catch (err) {
+      res.status(404).send(
+        { error: `Unable to obtain posts per date for ${month} . ${year}`}
+      )
+      console.log(`Unable to obtain posts per date for ${month} . ${year}`);
     }
-    
-if (social == 'false' && day) {
-
-    console.log('social false day true');
-
-      let postsPerDate = [];
-
-      let results = await Posts.find({
-        'owner': _id,
+      
+      
+    }
+    /* get all posts for full date */
+    else if (day) {
+      try {
+      await Posts.find({
+        'owner': {$in: connections},
         postedOn_month: month,
         postedOn_year: year,
         postedOn_day: day,
-      });
-
-      if (results) {
-        res.status(400).send('No posts for this date ${month} . ${day}')
-        console.log(`No posts for this date ${month} . ${day}`)
-      } else {
-          res.status(200).send(results);
-      }
+      }, (err, posts) => {
+        if (err) {
+          res.status(400).send('No posts for this day(?)')
+          console.log('No posts for this day(?)')
+        
+        } else {
+          res.status(200).send(posts);
+        }
+      })
+      } 
+      catch(err) {
+      res.status(404).send(
+        { error: `Unable to obtain posts per date for ${month} . ${day} . ${year}`}
+      )
+      console.log(`Unable to obtain posts per date for ${month} . ${day} . ${year}`);
+    }
 }
- 
-});
+  
+  else {/* if not a social monthChart request*/
+    if(!day) {
+    try {
+      Posts.find({
+        owner: _id,
+        postedOn_month: month,
+        postedOn_year: year
+      }, (err, posts) => {
+        if (err) {
+          res.status(400).send('No posts for this month(?)')
+          console.log('No posts for this month(?)')
+        } else {
 
+          let daysInSelectedMonth;
+
+          if(month == 1) {
+            daysInSelectedMonth = new Date(year, 2, 0).getDate();
+          } else if (month == 2) {
+            daysInSelectedMonth = new Date(year, 3, 0).getDate();
+          } else {
+            daysInSelectedMonth = new Date(year, month+1, 0).getDate();
+          }
+
+
+          let postsPerMonth = []
+
+          for(y = 0; y <= daysInSelectedMonth; y++) {
+            let postsPerDate = 0;
+            if(posts.length == 0) {
+                postsPerMonth.push(postsPerDate);
+            } else {
+              for(i=0; i < posts.length; i++) {
+                if(posts[i].postedOn_day == y) {
+                  postsPerDate++;
+                }    
+              }
+              postsPerMonth.push(postsPerDate);
+            }
+          }
+          res.status(200).send(postsPerMonth);
+          console.log(`Posts Per Month ${month}. ${year}\n`+postsPerMonth);
+          // console.log(posts)
+        }
+      })
+  }
+    catch (err) {
+      res.status(404).send(
+        { error: `Unable to obtain posts per date for ${month} . ${year}`}
+      )
+      console.log(`Unable to obtain posts per date for ${month} . ${year}`);
+    }
+  } 
+    else if (day) {
+    try {
+      
+      Posts.find({
+        owner: _id,
+        postedOn_month: month,
+        postedOn_year: year,
+        postedOn_day: day,
+      }, (err, posts) => {
+        if (err) {
+          res.status(400).send('No posts for this day(?)')
+          console.log('No posts for this day(?)')
+        
+        } else {
+          res.status(200).send(posts);
+        }
+      })
+
+    } 
+    catch(err) {
+      res.status(404).send(
+        { error: `Unable to obtain posts per date for ${month} . ${day} . ${year}`}
+      )
+      console.log(`Unable to obtain posts per date for ${month} . ${day} . ${year}`);
+    }
+  }
+<<<<<<< HEAD
+=======
+  }
+
+>>>>>>> e247a662a5b80e0d8620084b418df08b3a08fa2a
+});
 
 app.get('/id', verify, async (req,res) => {
     try {
