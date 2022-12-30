@@ -1,4 +1,12 @@
 
+12. 30. 2022
+@1115 Implemented addition to log in which retroactive posts will still be organized
+        chronologically.
+
+      Also moved the reordering of the posts to the backEnd, here, as well.
+
+      Removed socialLog endpoint, modified log endpoint to have social query
+
 12. 29. 2022
 @1010 MonthChart endpoint conditionals now all work as intended
 

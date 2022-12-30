@@ -131,22 +131,31 @@ app.get('/log', verify, async (req,res) => {
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
   const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
-  const {_id, _username} = decoded; 
+  const {_id, _username} = decoded;
+  const user = await User.findById(_id)
+        .then(res => res.toJSON());
+  const connections = user.connections;
 
-  Posts.find({ owner: _id},
-    (err, posts) => {
-      if(err) {
+  let social = req.query.social;
+        
+  // console.log(user.connections);
+  
+  if(social == false) {
+    let socialPosts = await Posts.find({
+      'owner': {$in: connections},
+    });
 
-        res.status(400).send(err);
-
-      } else {
+    if(!socialPosts) {
+      res.status(400).send(err);
+    } 
+    else {
 
         let d = new Date(),
             currentYear = d.getFullYear(),
             currentMonth = d.getMonth(),
             currentDay = d.getDate();
 
-        let result = posts.filter((post) => {
+        let results = socialPosts.filter((post) => {
 
           /*all posts made within or before current year*/
           if (post.postedOn_year <= currentYear) {
@@ -167,9 +176,91 @@ app.get('/log', verify, async (req,res) => {
           }
         });
 
-        res.status(200).send(result);
-      }
-    });
+        let sortByDate = (posts) => {
+
+          posts.sort((a,b) => {
+
+            const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                  dateB = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day);
+
+            if (dateA > dateB) return -1;
+            if (dateA < dateB) return 1;
+            return 0;
+          })
+        }
+
+        sortByDate(results);
+
+        let reorder = [];
+        for(let i = results.length; i >= 0; i--) {
+          reorder.push(results[i]);
+        }
+        reorder.splice(0, 1);
+
+        res.status(200).send(reorder);
+    }
+  }
+
+  else if (social == true) {
+    let posts = await Posts.find({owner: _id});
+
+    if(!post) {
+      res.status(400).send(err);
+    } 
+    else {
+
+        let d = new Date(),
+            currentYear = d.getFullYear(),
+            currentMonth = d.getMonth(),
+            currentDay = d.getDate();
+
+        let results = posts.filter((post) => {
+
+          /*all posts made within or before current year*/
+          if (post.postedOn_year <= currentYear) {
+
+            /* removes posts within current year, but beyond current month */
+            if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
+                (post.postedOn_year <= currentYear)) {
+
+                /* exclude posts within current month, beyond current day*/
+                if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
+                  return null;
+                }
+
+                else {
+                  return post;
+                }
+            }
+          }
+        });
+
+        let sortByDate = (posts) => {
+
+          posts.sort((a,b) => {
+
+            const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                  dateB = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day);
+
+            if (dateA > dateB) return -1;
+            if (dateA < dateB) return 1;
+            return 0;
+          })
+        }
+
+        sortByDate(results);
+
+        let reorder = [];
+        for(let i = results.length; i >= 0; i--) {
+          reorder.push(results[i]);
+        }
+        reorder.splice(0, 1);
+
+        res.status(200).send(reorder);
+    }
+
+  }
+
 
 })
 
