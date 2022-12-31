@@ -38,7 +38,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       postedOn_day: date,
       postedOn_year: year
     })
-  } else {
+  } else if (req.body.usePostedByDate == false) {
     newPost = new Posts({
       owner: _id,
       author: _username,
@@ -46,6 +46,9 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       content: req.body.content,
       tags: tagslist,
       taggedUsers: req.body.taggedUsers,
+      postedOn_month: req.body.postedOn_month,
+      postedOn_day: req.body.postedOn_day,
+      postedOn_year: req.body.postedOn_year
     })
   }
   
@@ -137,18 +140,14 @@ app.get('/log', verify, async (req,res) => {
   const connections = user.connections;
 
   let social = req.query.social;
-        
-  // console.log(user.connections);
   
-  if(social == false) {
+  if(social == 'true') {
+
     let socialPosts = await Posts.find({
       'owner': {$in: connections},
     });
 
-    if(!socialPosts) {
-      res.status(400).send(err);
-    } 
-    else {
+    console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -198,16 +197,12 @@ app.get('/log', verify, async (req,res) => {
         reorder.splice(0, 1);
 
         res.status(200).send(reorder);
-    }
   }
 
-  else if (social == true) {
-    let posts = await Posts.find({owner: _id});
+  else if (social == 'false') {
+    let posts = await Posts.find({owner: _id})
 
-    if(!post) {
-      res.status(400).send(err);
-    } 
-    else {
+    console.log('Retrieved user posts for ' +user.userName+ " " +posts.length);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -257,11 +252,7 @@ app.get('/log', verify, async (req,res) => {
         reorder.splice(0, 1);
 
         res.status(200).send(reorder);
-    }
-
   }
-
-
 })
 
 app.get('/socialLog', verify, async (req, res) => {
@@ -469,13 +460,12 @@ if (social == 'false' && day) {
         postedOn_day: day,
       });
 
-      if (results) {
+      if (!results) {
         res.status(400).send('No posts for this date ${month} . ${day}')
         console.log(`No posts for this date ${month} . ${day}`)
       } else {
           res.status(200).send(results);
-      }
-}
+      }}
  
 });
 

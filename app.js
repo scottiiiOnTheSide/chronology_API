@@ -4,7 +4,6 @@ const express = require('express'),
       router = express.Router(),
       cors = require('cors'),
       {User, Notification} = require('./models/user');
-     // require('dotenv').config(),
 require('dotenv').config();
 
 mongoose.connect(process.env.DB_LINK, {useNewUrlParser: true, useUnifiedTopology: true});

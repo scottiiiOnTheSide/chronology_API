@@ -1,4 +1,13 @@
 
+12. 31. 2022
+
+@1015 Both issues fixed...
+
+@1010 Have to check why MonthChart for posts for singleday is returning nothing....
+
+@0837 Currently, Database isn't returning post info for...users?
+
+
 12. 30. 2022
 @1115 Implemented addition to log in which retroactive posts will still be organized
         chronologically.
