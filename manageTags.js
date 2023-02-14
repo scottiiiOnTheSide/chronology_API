@@ -2,10 +2,11 @@ const Tags = require('./models/tags'),
       mongoose = require('mongoose');
 
 module.exports = async function (req,res,next) {
-  let tagsExist = req.body.tags;
-  JSON.stringify(tagsExist);
-  let upsertTags = [];
   
+  let tagsExist = req.body.tags.split(" ");
+  // JSON.stringify(tagsExist);
+  console.log(tagsExist);
+   
   let parse = (tagsname) => {
     return Tags.findOne({name: tagsname})
     .then((tag) => {
@@ -34,9 +35,9 @@ module.exports = async function (req,res,next) {
   
   if(tagsExist) {
     tagsExist = await Promise.all(tagsExist.map(async(tag) => {
-    return await parse(tag);
-  }));
-  } else {
+      return await parse(tag);
+    }));
+  } else if (!tagsExist) {
     console.log("There were no tags...?")
   }
   

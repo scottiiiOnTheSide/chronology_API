@@ -1,6 +1,12 @@
 
-12. 31. 2022
 
+02. 14. 2023
+@0221 Wow, havent worked on the api since.... the very end of last year.
+Anyhow, the issue with tags upon upload should now be resolved...
+Will test post without tags soon...
+
+
+12. 31. 2022
 @1015 Both issues fixed...
 
 @1010 Have to check why MonthChart for posts for singleday is returning nothing....

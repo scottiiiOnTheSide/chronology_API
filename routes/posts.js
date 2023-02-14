@@ -24,7 +24,7 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   
   let newPost = {};
   let tagslist = req.body.tags.map((tag) => tag.name)
-  //await newPost.save();
+
   if(req.body.usePostedByDate == true) {
     console.log(month +' '+ date +' '+ year)
     newPost = new Posts({
@@ -38,7 +38,8 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
       postedOn_day: date,
       postedOn_year: year
     })
-  } else if (req.body.usePostedByDate == false) {
+  } 
+  else if (req.body.usePostedByDate == false) {
     newPost = new Posts({
       owner: _id,
       author: _username,
