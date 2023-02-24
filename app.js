@@ -1,9 +1,12 @@
 const express = require('express'),
       app = express(),
+      bodyParser = require('body-parser'),
+      // busboy = require('connect-busboy'),
       mongoose = require('mongoose'),
       router = express.Router(),
       cors = require('cors'),
       {User, Notification} = require('./models/user');
+      GCS = require('./manageImages');
 require('dotenv').config();
 
 mongoose.connect(process.env.DB_LINK, {useNewUrlParser: true, useUnifiedTopology: true});
@@ -14,7 +17,11 @@ db.once('open', function () {
 });
 
 app.use(router);
-app.use(express.json());
+app.use(bodyParser.json());
+// app.use(upload.array()); //for parsing multipart / form-data
+app.use(bodyParser.urlencoded({extended: true})) //necessary?
+// app.use(express.static('public'));//necessary?
+// app.use(busboy());
 app.use(cors({
   origin: '*'
 }));
@@ -29,3 +36,6 @@ app.use('/posts', postRoutes);
 app.listen(3333, '0.0.0.0', ()=> {
 	console.log('API running . . . ');
 });
+
+//this works as intended
+// GCS.getBuckets().then(data => console.log(data));

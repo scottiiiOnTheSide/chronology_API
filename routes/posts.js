@@ -1,5 +1,8 @@
 const express = require('express'),
       app = express.Router(),
+      multer = require('multer'),
+      bodyParser = require('body-parser'),
+      // busboy = require('connect-busboy'),
       mongoose = require('mongoose'),
       Posts = require('../models/posts'),
       Tags = require('../models/tags'),
@@ -10,7 +13,10 @@ const express = require('express'),
       JWT = require('jsonwebtoken');
 require('dotenv').config();
 
-app.post('/createPost', verify, manageTags, async (req,res) => {
+let storage = multer.memoryStorage(),
+    upload = multer({ storage: storage })
+
+app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
@@ -23,111 +29,69 @@ app.post('/createPost', verify, manageTags, async (req,res) => {
   const year = d.getFullYear();
   
   let newPost = {};
-  let tagslist = req.body.tags.map((tag) => tag.name)
+  let tagslist = null;
 
-  if(req.body.usePostedByDate == true) {
-    console.log(month +' '+ date +' '+ year)
-    newPost = new Posts({
-      owner: _id,
-      author: _username,
-      title: req.body.title,
-      content: req.body.content,
-      tags: tagslist,
-      taggedUsers: req.body.taggedUsers,
-      postedOn_month: month,
-      postedOn_day: date,
-      postedOn_year: year
-    })
-  } 
-  else if (req.body.usePostedByDate == false) {
-    newPost = new Posts({
-      owner: _id,
-      author: _username,
-      title: req.body.title,
-      content: req.body.content,
-      tags: tagslist,
-      taggedUsers: req.body.taggedUsers,
-      postedOn_month: req.body.postedOn_month,
-      postedOn_day: req.body.postedOn_day,
-      postedOn_year: req.body.postedOn_year
-    })
-  }
+  console.log(req.body);
+  console.log(req.files[0].buffer);
+
+  // let buffer = Buffer.from(req.files[0].buffer, 'binary');
+  // console.log(buffer);
+
+
+  // if(req.body.usePostedByDate == true) {
+  //   console.log(month +' '+ date +' '+ year)
+  //   newPost = new Posts({
+  //     owner: _id,
+  //     author: _username,
+  //     title: req.body.title,
+  //     content: req.body.content,
+  //     tags: tagslist,
+  //     taggedUsers: req.body.taggedUsers,
+  //     postedOn_month: month,
+  //     postedOn_day: date,
+  //     postedOn_year: year
+  //   })
+  // } 
+  // else if (req.body.usePostedByDate == false) {
+  //   newPost = new Posts({
+  //     owner: _id,
+  //     author: _username,
+  //     title: req.body.title,
+  //     content: req.body.content,
+  //     tags: tagslist,
+  //     taggedUsers: req.body.taggedUsers,
+  //     postedOn_month: req.body.postedOn_month,
+  //     postedOn_day: req.body.postedOn_day,
+  //     postedOn_year: req.body.postedOn_year
+  //   })
+  // }
   
   //console.log('line 29 '+ req.body.tags);
-  let tags = req.body.tags;
+
+  // let tags;
+  // if(req.body.tags) {
+  //   tags = req.body.tags.split(/[, ]+/);
+  //   tagslist = tags.map((tag) => tag.name)
+  // }
   
-  //might have to edit this
-  if(tags) {
-    tags.forEach((tag) => {
-    Tags.findByIdAndUpdate(
-      tag.id,
-      {$push: {"posts": newPost}},
-      {upsert: true},
-      function(err,success) {
-        if(err) {
-          console.log(err)
-        } else {
-          console.log("tag updated")
-        }
-      }
-    )
-  })
-  }
+  // // if(tags) {
+  // //   tags.forEach((tag) => {
+  // //     Tags.findByIdAndUpdate(
+  // //       tag.id,
+  // //       {$push: {"posts": newPost}},
+  // //       {upsert: true},
+  // //       function(err,success) {
+  // //         if(err) {
+  // //           console.log(err)
+  // //         } else {
+  // //           console.log("tag updated")
+  // //         }
+  // //       }
+  // //     )
+  // //   })
+  // // }
   
-  console.log('line 44'+ newPost);
-  await newPost.save();
-
-  console.log(req.body.taggedUsers);
-
-  
-  //10.19.2022 currently not sure if this actually makes sense ?!?
-  let usersTagged;
-  if(req.body.taggedUsers) {
-    usersTagged = JSON.parse(JSON.stringify((req.body.taggedUsers)));
-  }
-  JSON.stringify(usersTagged);
-
-  // console.log(usersTagged);
-
-  let notifyUser = async(user) => {
-
-    let tagAlert = new Notification({
-      tagAlert: {
-        postID: newPost._id,
-        postTitle: newPost.title,
-        sender: _username,
-        /*
-           On front end, have the title in bold and quotation marks, 
-           the username in blue, perhaps.
-        */
-      }
-    })
-    await tagAlert.save();
-
-    let userID = await User.findOne({userName: user}).then((data) => data);
-    // console.log(userID._id)
-
-    let addTagAlertToNotifs = await User.findByIdAndUpdate(
-        userID._id,
-        {$push: {"notifications": tagAlert}},
-        {upsert: true}
-      ).then((data) => {
-        if(data) {
-          console.log('user notified of them being tagged')
-        } else {
-          console.log('updating user notifs didnt work')
-        }
-    })
-  }
-
-  if(usersTagged) {
-    usersTagged.forEach((user) => {
-      console.log(user);
-      notifyUser(user);
-    })
-  }
-
-  res.send(newPost);
+  res.send({message: "Uploaded"});
 });
 
 app.get('/log', verify, async (req,res) => {
@@ -520,3 +484,50 @@ app.delete('/deletePost', verify, async(req,res) => {
 })
 
 module.exports = app;
+
+//10.19.2022 currently not sure if this actually makes sense ?!?
+  // let usersTagged;
+  // if(req.body.taggedUsers) {
+  //   usersTagged = JSON.parse(JSON.stringify((req.body.taggedUsers)));
+  // }
+  // JSON.stringify(usersTagged);
+
+  // // console.log(usersTagged);
+
+  // let notifyUser = async(user) => {
+
+  //   let tagAlert = new Notification({
+  //     tagAlert: {
+  //       postID: newPost._id,
+  //       postTitle: newPost.title,
+  //       sender: _username,
+  //       /*
+  //          On front end, have the title in bold and quotation marks, 
+  //          the username in blue, perhaps.
+  //       */
+  //     }
+  //   })
+  //   await tagAlert.save();
+
+  //   let userID = await User.findOne({userName: user}).then((data) => data);
+  //   // console.log(userID._id)
+
+  //   let addTagAlertToNotifs = await User.findByIdAndUpdate(
+  //       userID._id,
+  //       {$push: {"notifications": tagAlert}},
+  //       {upsert: true}
+  //     ).then((data) => {
+  //       if(data) {
+  //         console.log('user notified of them being tagged')
+  //       } else {
+  //         console.log('updating user notifs didnt work')
+  //       }
+  //   })
+  // }
+
+  // if(usersTagged) {
+  //   usersTagged.forEach((user) => {
+  //     console.log(user);
+  //     notifyUser(user);
+  //   })
+  // }

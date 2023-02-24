@@ -1,5 +1,32 @@
 
 
+02. 22. 2023
+
+@1405 We now get the file buffer without the file being saved to the computer :D !
+
+@1340 backend finally parses formData and image file correctly!
+    
+      next steps -> sending the image file to GCS, get back to link,
+      add link as part of content array in blogPost body!
+
+@0855 No data within post request...
+
+02. 21. 2023
+@1000 Process:
+convert images to base64 upon upload (on front end)
+
+middleware: converts base64 to buffer(binary),
+            uploads buffers to GCS and returns their media links.
+            then exchange base64s in req.body for media links
+
+save post as per usual.
+
+
+02. 20. 2023
+@2147 Need to add support for multer into postjs code. 
+        May make a middleware function which processes the images
+        and supplies the urls from google cloud
+
 02. 14. 2023
 @0221 Wow, havent worked on the api since.... the very end of last year.
 Anyhow, the issue with tags upon upload should now be resolved...
