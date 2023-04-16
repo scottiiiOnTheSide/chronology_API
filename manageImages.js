@@ -19,10 +19,42 @@ const GCS = new Storage({
 	}),
 	uploadMedia = GCS.bucket('logseqmedia');
 
-// let uploadImages = multer({
-// 		storage: multer.MemoryStorage,
-// 	}).array("multi-files", 10);
-	
-// uploadImages = util.promisify(uploadImages);
+const getBuffer = upload.any();
 
-module.exports = GCS;
+module.exports = async function(req, res, next) {
+
+	const processMedia = async () => {
+		console.log(req.files[0].buffer);
+
+		// will devise more sophisticated naming convention later
+		const fileName = 'image2.jpg';
+		const file = uploadMedia.file(fileName);
+		const options = {
+			resumable: false,
+			metadata: {
+				contentType: 'image/jpeg/png',
+			}
+		};
+		await file.save(req.files[0].buffer, options);
+
+		await uploadMedia.setMetadata({
+		    enableRequesterPays: true,
+		    website: {
+		      mainPageSuffix: 'index.html',
+		      notFoundPage: '404.html',
+		    },
+		});
+
+		let cdnUrl;
+		file.makePublic(async (err, response) => {
+			cdnUrl = await file.getSignedUrl({
+				action: 'read',
+				expires: '01-01-2499',
+			})
+
+			console.log(cdnUrl);
+		})
+	}
+
+	getBuffer(req, res, processMedia);
+};

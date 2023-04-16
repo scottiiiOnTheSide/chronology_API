@@ -2,13 +2,13 @@ const express = require('express'),
       app = express.Router(),
       multer = require('multer'),
       bodyParser = require('body-parser'),
-      // busboy = require('connect-busboy'),
       mongoose = require('mongoose'),
       Posts = require('../models/posts'),
       Tags = require('../models/tags'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
       manageTags = require('../manageTags'),
+      manageImages = require('../manageImages'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken');
 require('dotenv').config();
@@ -16,7 +16,7 @@ require('dotenv').config();
 let storage = multer.memoryStorage(),
     upload = multer({ storage: storage })
 
-app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
+app.post('/createPost', verify, manageTags, manageImages, async (req,res) => {
   
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
@@ -31,8 +31,8 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   let newPost = {};
   let tagslist = null;
 
-  console.log(req.body);
-  console.log(req.files[0].buffer);
+  // console.log(req.body);
+  // console.log(req.files[0].buffer);
 
   // let buffer = Buffer.from(req.files[0].buffer, 'binary');
   // console.log(buffer);

@@ -1,4 +1,23 @@
 
+04. 16. 2023
+
+@0115 Current link returned by GCS upload automatically downloads the image when searching
+      link online. Needs to be fixed....
+      They also need to be public....
+
+@1225 It's been nearly 2 months since I've touched this code D:
+
+      Middleware for processing images is, at this very beginning stage,
+      processing the images.
+
+      The algo:
+      Middleware processes uploaded data
+        - use "username_MM/DD/YYYY_time_number of image" format for filename
+        - upload to GCS, get media link in return
+        !? need to come up with new method of keeping track of text/image order,
+           as the number given to them from the front end doesnt carry over to backend
+
+    Post schema needs to be updated so that content is now an array
 
 02. 22. 2023
 
