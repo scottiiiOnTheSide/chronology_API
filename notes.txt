@@ -1,4 +1,22 @@
 
+04. 20. 2023
+@0145 image files have object key called fieldname which includes image number creatd
+       by frontEnd. However, when two images alone are uploaded, second image still
+       has 1.5 as name / number. 
+       Text does have key which holds it's place value, however.
+       Need to make these more cohesive...
+
+04. 17. 2023
+@0710 The signedURl returned after the upload is sufficient to be used as src link for
+      img elements. 
+
+      It would seem that there are some potential security concerns with using this
+      approach? However, considering that this is whole project is really just a prototype,
+      it isn't something to be concerned with right now - but definitely noted.
+
+      Now need to work on algo for processing the images...
+
+
 04. 16. 2023
 
 @0115 Current link returned by GCS upload automatically downloads the image when searching

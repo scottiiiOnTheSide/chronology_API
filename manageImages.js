@@ -24,36 +24,40 @@ const getBuffer = upload.any();
 module.exports = async function(req, res, next) {
 
 	const processMedia = async () => {
-		console.log(req.files[0].buffer);
+
+		//loops through all files sent...
+		for (let i = 0; i < req.files.length; i++) {
+			console.log(req.files[i].buffer);
+		}
 
 		// will devise more sophisticated naming convention later
-		const fileName = 'image2.jpg';
-		const file = uploadMedia.file(fileName);
-		const options = {
-			resumable: false,
-			metadata: {
-				contentType: 'image/jpeg/png',
-			}
-		};
-		await file.save(req.files[0].buffer, options);
+		// const fileName = 'image2.jpg';
+		// const file = uploadMedia.file(fileName);
+		// const options = {
+		// 	resumable: false,
+		// 	metadata: {
+		// 		contentType: 'image/jpeg/png',
+		// 	}
+		// };
+		// await file.save(req.files[0].buffer, options);
 
-		await uploadMedia.setMetadata({
-		    enableRequesterPays: true,
-		    website: {
-		      mainPageSuffix: 'index.html',
-		      notFoundPage: '404.html',
-		    },
-		});
+		// await uploadMedia.setMetadata({
+		//     enableRequesterPays: true,
+		//     website: {
+		//       mainPageSuffix: 'index.html',
+		//       notFoundPage: '404.html',
+		//     },
+		// });
 
-		let cdnUrl;
-		file.makePublic(async (err, response) => {
-			cdnUrl = await file.getSignedUrl({
-				action: 'read',
-				expires: '01-01-2499',
-			})
+		// let cdnUrl;
+		// file.makePublic(async (err, response) => {
+		// 	cdnUrl = await file.getSignedUrl({
+		// 		action: 'read',
+		// 		expires: '01-01-2499',
+		// 	})
 
-			console.log(cdnUrl);
-		})
+		// 	console.log(cdnUrl);
+		// })
 	}
 
 	getBuffer(req, res, processMedia);
