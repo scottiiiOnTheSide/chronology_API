@@ -1,5 +1,28 @@
 
 04. 20. 2023
+
+@1020 Media processing now works splendidly :D !!!
+      Need to change the Post Schema so that content is now one of those object
+      field types, rather than simply text...
+
+      in Schema file, replace with:
+      post: {
+        type: Map,
+        of: String
+      },
+
+      in post route, create post like:
+      post: {
+        text_number: 'text_number'
+        media_number: 'media_number'
+      }
+
+      in req.body, text body number is first part of key value,
+      will need to cut first part of string, convert to int
+
+      will most likely need to do this on frontEnd as well,
+      for ordering content correctly...
+
 @0145 image files have object key called fieldname which includes image number creatd
        by frontEnd. However, when two images alone are uploaded, second image still
        has 1.5 as name / number. 
@@ -30,7 +53,7 @@
 
       The algo:
       Middleware processes uploaded data
-        - use "username_MM/DD/YYYY_time_number of image" format for filename
+        - use "imageNumber_username_MM/DD/YYYY_time" format for filename
         - upload to GCS, get media link in return
         !? need to come up with new method of keeping track of text/image order,
            as the number given to them from the front end doesnt carry over to backend

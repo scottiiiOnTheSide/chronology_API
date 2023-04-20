@@ -23,42 +23,64 @@ const getBuffer = upload.any();
 
 module.exports = async function(req, res, next) {
 
+	const auth = req.header('auth-token');
+  	const base64url = auth.split('.')[1];
+  	const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+  	const {_id, _username} = decoded;
+  	const date = new Date();
+  	const mm = date.getMonth() + 1;
+  	const dd = date.getDate();
+  	const yy = date.getFullYear();
+  	const timeStamp = date.getTime();
+
+  	let imagesArray = [];
+
 	const processMedia = async () => {
 
 		//loops through all files sent...
 		for (let i = 0; i < req.files.length; i++) {
-			console.log(req.files[i].buffer);
-		}
+			// console.log(req.files[i].buffer);
 
-		// will devise more sophisticated naming convention later
-		// const fileName = 'image2.jpg';
-		// const file = uploadMedia.file(fileName);
-		// const options = {
-		// 	resumable: false,
-		// 	metadata: {
-		// 		contentType: 'image/jpeg/png',
-		// 	}
-		// };
-		// await file.save(req.files[0].buffer, options);
+			const fileNumber = req.files[i].fieldname;
+			const fileName = `${fileNumber}_${_username}_${mm}-${dd}-${yy}_${timeStamp}`;
+			const file = uploadMedia.file(fileName);
+			const options = {
+				resumable: false,
+				metadata: {
+					contentType: 'image/jpeg/png',
+				}
+			};
 
-		// await uploadMedia.setMetadata({
-		//     enableRequesterPays: true,
-		//     website: {
-		//       mainPageSuffix: 'index.html',
-		//       notFoundPage: '404.html',
-		//     },
-		// });
+			await file.save(req.files[i].buffer, options);
 
-		// let cdnUrl;
-		// file.makePublic(async (err, response) => {
-		// 	cdnUrl = await file.getSignedUrl({
-		// 		action: 'read',
-		// 		expires: '01-01-2499',
-		// 	})
+			await uploadMedia.setMetadata({
+			    enableRequesterPays: true,
+				    website: {
+				      mainPageSuffix: 'index.html',
+				      notFoundPage: '404.html',
+				    },
+			});
 
-		// 	console.log(cdnUrl);
-		// })
+		
+			const [cdnUrl] = await file.getSignedUrl({
+				action: 'read',
+				expires: '01-01-2499',
+			});
+
+			let title = `image_${fileNumber}`;
+
+			imagesArray.push({
+				[title]: cdnUrl
+			})
+
+		}//end of loop
+
+		req.body.media = imagesArray;
+
+		//for testing
+		console.log(req.body);
 	}
 
+	/* Runs media processing algo */
 	getBuffer(req, res, processMedia);
 };
