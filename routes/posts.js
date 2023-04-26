@@ -29,9 +29,21 @@ app.post('/createPost', verify, manageTags, manageImages, async (req,res) => {
   const year = d.getFullYear();
   
   let newPost = {};
+  let postContent = [];
   let tagslist = null;
 
-  // console.log(req.body);
+  console.log(req.body);
+  console.log("hello");
+
+  // req.body.forEach(([key, value]) => {
+
+  //   if( Number.isInteger( parseInt(key) )) {
+  //     postContent.push(value);
+  //   }
+  // })
+
+  // console.log(postContent)
+
   // console.log(req.files[0].buffer);
 
   // let buffer = Buffer.from(req.files[0].buffer, 'binary');
@@ -91,7 +103,7 @@ app.post('/createPost', verify, manageTags, manageImages, async (req,res) => {
   // //   })
   // // }
   
-  res.send({message: "Uploaded"});
+  // res.send({message: "Uploaded"});
 });
 
 app.get('/log', verify, async (req,res) => {
