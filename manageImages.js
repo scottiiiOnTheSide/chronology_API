@@ -17,7 +17,7 @@ const GCS = new Storage({
 		keyFilename: path.join(__dirname, 'logSeqMediaGCSaccess.json'),
 		projectId: "aerobic-name-372620"
 	}),
-	uploadMedia = GCS.bucket('logseqmedia');
+	  uploadMedia = GCS.bucket('logseqmedia');
 
 const getBuffer = upload.any();
 
@@ -39,7 +39,6 @@ module.exports = async function(req, res, next) {
 
 		//loops through all files sent...
 		for (let i = 0; i < req.files.length; i++) {
-			// console.log(req.files[i].buffer);
 
 			const fileNumber = req.files[i].fieldname;
 			const fileName = `${fileNumber}_${_username}_${mm}-${dd}-${yy}_${timeStamp}`;
@@ -83,5 +82,6 @@ module.exports = async function(req, res, next) {
 	}
 
 	/* Runs media processing algo */
-	getBuffer(req, res, processMedia);
+	await getBuffer(req, res, processMedia);
+	next();
 };

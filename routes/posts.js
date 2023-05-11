@@ -10,13 +10,24 @@ const express = require('express'),
       manageTags = require('../manageTags'),
       manageImages = require('../manageImages'),
       encrypt = require('bcryptjs'),
-      JWT = require('jsonwebtoken');
+      JWT = require('jsonwebtoken'),
+      path = require('path'),
+      util = require('util');
 require('dotenv').config();
 
-let storage = multer.memoryStorage(),
-    upload = multer({ storage: storage })
 
-app.post('/createPost', verify, manageTags, manageImages, async (req,res) => {
+/* for processing media content */
+let storage = multer.memoryStorage(),
+    upload = multer({ storage: storage }),
+    GCS = new Storage({
+    keyFilename: path.join(__dirname, '../logSeqMediaGCSaccess.json'),
+    projectId: "aerobic-name-372620"
+  }),
+    uploadMedia = GCS.bucket('logseqmedia');
+
+
+
+app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
@@ -25,29 +36,95 @@ app.post('/createPost', verify, manageTags, manageImages, async (req,res) => {
   
   const d = new Date();
   const month = d.getMonth();
+  const mm = month + 1;
   const date = d.getDate();
   const year = d.getFullYear();
+  const timeStamp = d.getTime();
   
   let newPost = {};
   let postContent = [];
   let tagslist = null;
 
-  console.log(req.body);
-  console.log("hello");
+  /* media processing stuff */
+    /*  
+        loops though all media files originally in req.body,
+        sends to GCS then gets their cdnURL, adds url to req.body 
+    */
+  for (let i = 0; i < req.files.length; i++) {
 
-  // req.body.forEach(([key, value]) => {
+      const fileNumber = req.files[i].fieldname;
+      const fileName = `${fileNumber}_${_username}_${mm}-${date}-${year}_${timeStamp}`;
+      const file = uploadMedia.file(fileName);
+      const options = {
+        resumable: false,
+        metadata: {
+          contentType: 'image/jpeg/png',
+        }
+      };
 
-  //   if( Number.isInteger( parseInt(key) )) {
-  //     postContent.push(value);
-  //   }
-  // })
+      await file.save(req.files[i].buffer, options);
 
-  // console.log(postContent)
+      await uploadMedia.setMetadata({
+          enableRequesterPays: true,
+            website: {
+              mainPageSuffix: 'index.html',
+              notFoundPage: '404.html',
+            },
+      });
 
-  // console.log(req.files[0].buffer);
+    
+      const [cdnUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: '01-01-2499',
+      });
 
-  // let buffer = Buffer.from(req.files[0].buffer, 'binary');
-  // console.log(buffer);
+      let title = `${fileNumber}`;
+
+      req.body[title] = cdnUrl;
+  }
+
+  /* 05. 01. 2023
+     Loop through all numbered entries within the req.body,
+     add urls and content to new array of objects,
+     have said array be post.Content
+     organizes data in order user originally intended
+  */
+  let body = {}
+  Object.assign(body, req.body);
+
+  for (let value in body) { //must use for ... in 4 objects
+    if( Number.isInteger( parseInt(value) )) {
+      if(body[value] == '') {
+        continue;
+      } else {
+
+        if(value % 1 != 0) {//if media link
+          postContent.push(
+            {
+              place: value,
+              type: "media",
+              data: body[value]
+            }
+          );
+        } else {
+            postContent.push(
+              {
+                place: value,
+                type: "text",
+                data: body[value]
+              }
+          );
+        }
+      }
+    }
+  }
+
+  postContent.sort((a, b) => {
+    return a.place - b.place;
+  })
+
+  console.log(body);
+  console.log(postContent);
 
 
   // if(req.body.usePostedByDate == true) {

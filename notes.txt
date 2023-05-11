@@ -1,4 +1,26 @@
 
+
+05. 11. 2023
+@1530 req.body content is now fully parsed and organized:
+      the unique order in which the user uploads their media and text
+      is maintained in the postContent.
+
+      should simply need to reactivate the rest of the route...
+
+
+05. 01. 2023
+@1020 Make Post.content an array instead. 
+      Add content and urls from req.body into another array,
+      then make it equal to post.content
+
+
+04. 29. 2023
+@1745 Had to move middleware for processing media to main post route...
+      Next, correctly storing the text content and the media links in correct
+            order within the post documents...
+
+            Will also have to clean up the media processing functions...s 
+
 04. 25. 2023
 @2250 Changed keyvalues in req.body object for text content and media cdn url's.
       Current goal is to simply ...
@@ -33,9 +55,9 @@
       },
 
       in post route, create post like:
-      post: {
-        text_number: 'text_number'
-        media_number: 'media_number'
+      content: {
+        text_number: content
+        media_number: mediaLink
       }
 
       in req.body, text body number is first part of key value,

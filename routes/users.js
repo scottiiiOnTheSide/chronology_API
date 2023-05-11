@@ -140,8 +140,7 @@ app.get('/getuser/:id', async (req,res) => {
       }
 })
 
-app.get
-('/search', verify, async(req, res) => {
+app.get('/search', verify, async(req, res) => {
   
   /*
     09. 25. 2022

@@ -15,11 +15,11 @@ const PostsSchema = new mongoose.Schema({
       required: true,
       index: true,
   },
-  content: {
+  content: [{
       type: String,
       required: false,
       index: true, 
-  },
+  }],
   tags: [{
       type: String,
       ref: 'Tags'
