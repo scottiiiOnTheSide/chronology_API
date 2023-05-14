@@ -1,5 +1,20 @@
 const mongoose = require('mongoose');
 
+let ContentSchema = new mongoose.Schema({
+  place: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true
+  }
+})
+
 const PostsSchema = new mongoose.Schema({
   owner: {
       type: mongoose.Schema.Types.ObjectID,
@@ -15,11 +30,6 @@ const PostsSchema = new mongoose.Schema({
       required: true,
       index: true,
   },
-  content: [{
-      type: String,
-      required: false,
-      index: true, 
-  }],
   tags: [{
       type: String,
       ref: 'Tags'
@@ -28,15 +38,33 @@ const PostsSchema = new mongoose.Schema({
     type: String,
     ref: 'User',
   }],
-  isPersonal: Boolean,
-  setEvent_Year: String,
-  setEvent_Month: String,
-  setEvent_Date: String,
-  usePostedByDate: Boolean,
-  postedOn_month: Number,
-  postedOn_day: Number,
-  postedOn_year: Number
+  isPersonal: {
+    type: Boolean,
+  },
+  setEvent_Year: {
+    type: Number,
+  },
+  setEvent_Month: {
+    type: Number,
+  },
+  setEvent_Date: {
+    type: Number,
+  },
+  usePostedByDate: {
+    type: Boolean,
+  },
+  postedOn_month: {
+    type: Number,
+  },
+  postedOn_day: {
+    type: Number,
+  },
+  postedOn_year: {
+    type: Number,
+  },
+  content: [ContentSchema],
 }, {timestamps: true});
 
 
-module.exports = mongoose.model('Posts', PostsSchema);
+module.exports.Posts = mongoose.model('Posts', PostsSchema);
+module.exports.Content = mongoose.model('Content', ContentSchema);

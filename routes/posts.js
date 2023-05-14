@@ -3,7 +3,7 @@ const express = require('express'),
       multer = require('multer'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
-      Posts = require('../models/posts'),
+      {Posts, Content} = require('../models/posts'),
       Tags = require('../models/tags'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
@@ -41,9 +41,16 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   const year = d.getFullYear();
   const timeStamp = d.getTime();
   
-  let newPost = {};
+  let newPost = new Posts ({});
   let postContent = [];
   let tagslist = null;
+
+  //converts provided tags to be stored in doc by name, rather than their IDs
+  let tags;
+  if(req.body.tags != '' || req.body.tags == null) {
+    tags = req.body.tags.split(/[, ]+/);
+    tagslist = tags.map((tag) => tag.name)
+  }
 
   /* media processing stuff */
     /*  
@@ -89,31 +96,77 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
      have said array be post.Content
      organizes data in order user originally intended
   */
+
+  if(req.body.usePostedByDate == 'true') {
+    console.log(month +' '+ date +' '+ year)
+      newPost.owner = _id;
+      newPost.author = _username;
+      newPost.title = req.body.title;
+      newPost.tags = tagslist;
+      newPost.taggedUsers = req.body.taggedUsers;
+      newPost.postedOn_month = month;
+      newPost.postedOn_day = date;
+      newPost.postedOn_year = year;
+  }
+  else if (req.body.usePostedByDate == 'false') {
+      newPost.owner = _id;
+      newPost.author = _username;
+      newPost.title = req.body.title;
+      newPost.tags = tagslist;
+      newPost.taggedUsers = req.body.taggedUsers;
+      newPost.postedOn_month = req.body.postedOn_month;
+      newPost.postedOn_day = req.body.postedOn_day;
+      newPost.postedOn_year = req.body.postedOn_year;
+  }
+
+  //updates tags to include new post created with them  
+  if(tags) {
+    tags.forEach((tag) => {
+      Tags.findByIdAndUpdate(
+        tag.id,
+        {$push: {"posts": newPost}},
+        {upsert: true},
+        function(err,success) {
+          if(err) {
+            console.log(err)
+          } else {
+            console.log("tag updated")
+          }
+        }
+      )
+    })
+  } 
+  else if (tags == '' || tags == 'undefined') {
+      return null;
+  }
+
   let body = {}
   Object.assign(body, req.body);
 
   for (let value in body) { //must use for ... in 4 objects
+
     if( Number.isInteger( parseInt(value) )) {
       if(body[value] == '') {
         continue;
       } else {
 
         if(value % 1 != 0) {//if media link
-          postContent.push(
-            {
-              place: value,
-              type: "media",
-              data: body[value]
-            }
-          );
+
+          let data = new Content ({
+            place: value,
+            type: "media",
+            content: body[value]
+          })
+          postContent.push(data);
+
         } else {
-            postContent.push(
-              {
-                place: value,
-                type: "text",
-                data: body[value]
-              }
-          );
+
+          let data = new Content ({
+            place: value,
+            type: "text",
+            content: body[value]
+          })
+          postContent.push(data);
         }
       }
     }
@@ -123,64 +176,15 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
     return a.place - b.place;
   })
 
-  console.log(body);
-  console.log(postContent);
+  postContent.forEach((element) => {
+    newPost.content.push(element);
+  })
 
-
-  // if(req.body.usePostedByDate == true) {
-  //   console.log(month +' '+ date +' '+ year)
-  //   newPost = new Posts({
-  //     owner: _id,
-  //     author: _username,
-  //     title: req.body.title,
-  //     content: req.body.content,
-  //     tags: tagslist,
-  //     taggedUsers: req.body.taggedUsers,
-  //     postedOn_month: month,
-  //     postedOn_day: date,
-  //     postedOn_year: year
-  //   })
-  // } 
-  // else if (req.body.usePostedByDate == false) {
-  //   newPost = new Posts({
-  //     owner: _id,
-  //     author: _username,
-  //     title: req.body.title,
-  //     content: req.body.content,
-  //     tags: tagslist,
-  //     taggedUsers: req.body.taggedUsers,
-  //     postedOn_month: req.body.postedOn_month,
-  //     postedOn_day: req.body.postedOn_day,
-  //     postedOn_year: req.body.postedOn_year
-  //   })
-  // }
+  await newPost.save().then((post) => {
+    console.log(post._id)
+    res.send({message: "Uploaded"});
+  });
   
-  //console.log('line 29 '+ req.body.tags);
-
-  // let tags;
-  // if(req.body.tags) {
-  //   tags = req.body.tags.split(/[, ]+/);
-  //   tagslist = tags.map((tag) => tag.name)
-  // }
-  
-  // // if(tags) {
-  // //   tags.forEach((tag) => {
-  // //     Tags.findByIdAndUpdate(
-  // //       tag.id,
-  // //       {$push: {"posts": newPost}},
-  // //       {upsert: true},
-  // //       function(err,success) {
-  // //         if(err) {
-  // //           console.log(err)
-  // //         } else {
-  // //           console.log("tag updated")
-  // //         }
-  // //       }
-  // //     )
-  // //   })
-  // // }
-  
-  // res.send({message: "Uploaded"});
 });
 
 app.get('/log', verify, async (req,res) => {

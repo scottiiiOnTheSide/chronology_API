@@ -1,12 +1,49 @@
 
 
+05. 14. 2023
+@1225 Saving postContent as subDocs now works well. post.content is an
+      array with subDocs like objects within it.
+
+      Updating posts will be abit more complex,
+      as the frontEnd wont include the individual contents IDs
+
+      to updatePosts,
+      get post by id,
+      delete subDocs within content
+      replace wiih parsed data from front end.
+
+      Front end req should also include image links and their place.
+
+      If image is removed from post,
+      will have to find some way to also delete it over on GCS
+
+      To Do:
+        - Clean up createPost code.
+
+
+05. 13. 2023
+
+@1755 The current solution seems to be way too complex. 
+      Will need to rethink it.
+
+      Thinking of using the map type...
+      using a loop to add the key + value pairs...
+
+@0600 post content is now saved to the DB doc as an array of objects
+      However! It is nested one level too deep.
+      Will most likely have to access it like:
+      post.content[0].type or such
+
+      Will need to change the update function in the future....
+
+      Now, to update the front end...
+
 05. 11. 2023
 @1530 req.body content is now fully parsed and organized:
       the unique order in which the user uploads their media and text
       is maintained in the postContent.
 
       should simply need to reactivate the rest of the route...
-
 
 05. 01. 2023
 @1020 Make Post.content an array instead. 
