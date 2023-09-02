@@ -8,6 +8,7 @@ const express = require('express'),
       {User, Notification} = require('./models/user');
       GCS = require('./manageImages');
 require('dotenv').config();
+const expressWS = require('express-ws')(app);
 
 mongoose.connect(process.env.DB_LINK, {useNewUrlParser: true, useUnifiedTopology: true});
 const db = mongoose.connection;
@@ -18,10 +19,7 @@ db.once('open', function () {
 
 app.use(router);
 app.use(bodyParser.json());
-// app.use(upload.array()); //for parsing multipart / form-data
 app.use(bodyParser.urlencoded({extended: true})) //necessary?
-// app.use(express.static('public'));//necessary?
-// app.use(busboy());
 app.use(cors({
   origin: '*'
 }));
@@ -32,6 +30,10 @@ app.use('/users', userRoutes);
 
 const postRoutes = require('./routes/posts');
 app.use('/posts', postRoutes);
+
+const instantRoutes = require('./routes/instants');
+app.use('/', instantRoutes);
+
 
 app.listen(3333, '0.0.0.0', ()=> {
 	console.log('API running . . . ');

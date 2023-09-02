@@ -66,16 +66,14 @@ module.exports = async function(req, res, next) {
 				expires: '01-01-2499',
 			});
 
-			let title = `${fileNumber}`;
+			let contentNumber = `${fileNumber}`;
 
 			// imagesArray.push({
 			// 	[title]: cdnUrl
 			// })
-			req.body[title] = cdnUrl;
+			req.body[contentNumber] = cdnUrl;
 
 		}//end of loop
-
-		// req.body.media = imagesArray;
 
 		//for testing
 		// console.log(req.body);

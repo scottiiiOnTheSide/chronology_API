@@ -12,17 +12,20 @@ const express = require('express'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
       path = require('path'),
-      util = require('util');
+      util = require('util'),
+      {Storage} = require('@google-cloud/storage');
 require('dotenv').config();
 
 
 /* for processing media content */
-let storage = multer.memoryStorage(),
-    upload = multer({ storage: storage }),
-    GCS = new Storage({
-    keyFilename: path.join(__dirname, '../logSeqMediaGCSaccess.json'),
-    projectId: "aerobic-name-372620"
-  }),
+let storage = multer.memoryStorage(), //keeps data in RAM storage
+
+    upload = multer({ storage: storage }), //sets target destination for uploads
+
+    GCS = new Storage({ //sets GCS client globally - all paths can use this
+      keyFilename: path.join(__dirname, '../logSeqMediaGCSaccess.json'),
+      projectId: "aerobic-name-372620"
+    }),
     uploadMedia = GCS.bucket('logseqmedia');
 
 
@@ -51,6 +54,7 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
     tags = req.body.tags.split(/[, ]+/);
     tagslist = tags.map((tag) => tag.name)
   }
+
 
   /* media processing stuff */
     /*  
@@ -85,17 +89,21 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
         expires: '01-01-2499',
       });
 
+      //necessary...?
       let title = `${fileNumber}`;
 
       req.body[title] = cdnUrl;
   }
 
-  /* 05. 01. 2023
-     Loop through all numbered entries within the req.body,
-     add urls and content to new array of objects,
-     have said array be post.Content
-     organizes data in order user originally intended
-  */
+
+  console.log(req.body)
+
+  // /* 05. 01. 2023
+  //    Loop through all numbered entries within the req.body,
+  //    add urls and content to new array of objects,
+  //    have said array be post.Content
+  //    organizes data in order user originally intended
+  // */
 
   if(req.body.usePostedByDate == 'true') {
     console.log(month +' '+ date +' '+ year)
@@ -143,25 +151,27 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   let body = {}
   Object.assign(body, req.body);
 
-  for (let value in body) { //must use for ... in 4 objects
+  for (let value in body) { //must use for ... in regarding objects
 
     if( Number.isInteger( parseInt(value) )) {
       if(body[value] == '') {
         continue;
       } else {
 
-        if(value % 1 != 0) {//if media link
+      if(value % 1 != 0) {//if media link
 
-          let data = new Content ({
+          //08. 30. 2023 extract filename from link here
+          let data = new Content({
             place: value,
             type: "media",
             content: body[value]
           })
+
           postContent.push(data);
 
         } else {
 
-          let data = new Content ({
+          let data = new Content({
             place: value,
             type: "text",
             content: body[value]
@@ -364,7 +374,6 @@ app.get('/socialLog', verify, async (req, res) => {
         res.status(200).send(result);
       }
   });
-
 })
 
 app.get('/monthChart', verify, async (req, res) => {
@@ -527,7 +536,6 @@ if (social == 'false' && day) {
  
 });
 
-
 app.get('/id', verify, async (req,res) => {
     try {
       let _ID = mongoose.Types.ObjectId(req.query.id);
@@ -567,60 +575,33 @@ app.delete('/deletePost', verify, async(req,res) => {
   
   const id = mongoose.Types.ObjectId(req.query.id);
 
-  Posts.findByIdAndRemove(id, function(err,data) {
-    if (!data) {
-      res.status(404).send({message: "Error"});
-    } else{
-      res.status(200).send(true)
-    }
-  })
+  async function deleteFile(filename) {
+    await GCS.bucket('logseqmedia').file(filename).delete();
+    console.log(`${filename} deleted from GCS`);
+  }
+
+  Posts.findByIdAndRemove(id, (err, data)=> {
+      if(!data) {
+        console.log('error')
+      }
+      else {
+        // console.log(data.content)
+
+        for(let i = 0; i < data.content.length; i++) {
+          if(data.content[i].place % 1 != 0) { //for the media links
+            let string = data.content[i].content;
+            let substring = string.substring(43);
+            let cutoff = parseInt(substring.indexOf('?'));
+            let filename = substring.substring(0, cutoff);
+
+            console.log(filename);
+            deleteFile(filename).catch(console.error);
+          }
+        }
+
+        res.status(200).send(true)
+      }
+  });
 })
 
 module.exports = app;
-
-//10.19.2022 currently not sure if this actually makes sense ?!?
-  // let usersTagged;
-  // if(req.body.taggedUsers) {
-  //   usersTagged = JSON.parse(JSON.stringify((req.body.taggedUsers)));
-  // }
-  // JSON.stringify(usersTagged);
-
-  // // console.log(usersTagged);
-
-  // let notifyUser = async(user) => {
-
-  //   let tagAlert = new Notification({
-  //     tagAlert: {
-  //       postID: newPost._id,
-  //       postTitle: newPost.title,
-  //       sender: _username,
-  //       /*
-  //          On front end, have the title in bold and quotation marks, 
-  //          the username in blue, perhaps.
-  //       */
-  //     }
-  //   })
-  //   await tagAlert.save();
-
-  //   let userID = await User.findOne({userName: user}).then((data) => data);
-  //   // console.log(userID._id)
-
-  //   let addTagAlertToNotifs = await User.findByIdAndUpdate(
-  //       userID._id,
-  //       {$push: {"notifications": tagAlert}},
-  //       {upsert: true}
-  //     ).then((data) => {
-  //       if(data) {
-  //         console.log('user notified of them being tagged')
-  //       } else {
-  //         console.log('updating user notifs didnt work')
-  //       }
-  //   })
-  // }
-
-  // if(usersTagged) {
-  //   usersTagged.forEach((user) => {
-  //     console.log(user);
-  //     notifyUser(user);
-  //   })
-  // }

@@ -1,4 +1,50 @@
 
+@08. 31. 2023
+@1330
+     To Do: 
+       - use express-ws package to setup ws route with express
+       - setup websockets for front end (probably using dedicated react web socket 
+          ting?)
+       - on connect, have console.log messages for both front and backend
+
+
+@08. 30. 2023
+@1345 For socket, instant updates: Order of Process:
+
+- user to connect to websocket server on login
+
+- from backend, whenever user:
+    - makes comment on post
+    - sends connectin request
+    - tags user(s) in a post / comment
+a message is sent through the Websockets object to send the alert
+to the specific, included users
+
+- similar process occurs on frontEnd - instant, notif based actions
+  cause a message to be sent over the WS object including the message
+  and who it should be sent to.
+
+Implementation IDEALLY should be scalable, else we'll have to retro fit it (._. )
+
+
+
+@1340 Deleting posts now also deletes it's media, which is saved on GCS !!
+
+
+@08. 29. 2023
+@1400 Adding an 'enter' into the post body creates 2 seperate objects with text,
+      thus breaking the backend process ....
+
+      so, need to circumvent that through the front end...
+
+      Files on GCS can be deleted using their filename,
+      can possibly attach filename to URL thats returned, then detach them
+      when saving url to the content document....
+
+      need bucket name and file name in order to delete....
+
+      file name could also be extracted from URL, it seems
+
 
 05. 14. 2023
 @1225 Saving postContent as subDocs now works well. post.content is an
