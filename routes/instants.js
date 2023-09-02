@@ -12,27 +12,14 @@ let connections = {}
 app.ws('/', (ws, req)=> {
 
     console.log('a user has connected');
-    /*let userID = parseInt(ws.upgradeReq.url.substring(1), 10);*/
-    console.log(ws)
+    let userID = req.url;
+    userID = userID.substring(12)
+    connections[userID] = ws;
+    console.log(userID);
 
-    // connections[userID] = ws;
-    // console.log(userID);
-
-      // 09. 01. 2023 @ 2245 Connection currently isn't being made??
-      // ws.on('open', (userWS)=> { 
-
-      //   console.log("a user has connected");
-
-      //   let userID = parseInt(userWS.upgradeReq.url.substring(1), 10);
-      //   connections[userID] = userWS;
-      //   console.log(userID);
-
-      // })
-
-      // 09. 01. 2023 @ 2245 
-      // message sent by frontend is recieved / acknowledged
     ws.on('message', (e)=> {
-      console.log("a message recieved")
+        console.log('message recieved')
+      console.log(e);
     })
 })
 

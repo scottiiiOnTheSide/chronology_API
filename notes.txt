@@ -1,4 +1,9 @@
 
+
+@09. 02. 2023
+@1245 Websockets officially working on backend !
+
+
 @08. 31. 2023
 @1330
      To Do: 
