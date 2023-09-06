@@ -12,11 +12,7 @@ let ContentSchema = new mongoose.Schema({
   content: {
     type: String,
     required: true
-  },
-  // fileName: {
-  //   type: String,
-  //   required: true
-  // }
+  }
 })
 
 const PostsSchema = new mongoose.Schema({

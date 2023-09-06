@@ -183,7 +183,7 @@ app.get('/search', verify, async(req, res) => {
     }
 } )
 
-
+/* 09. 05. 2023 - To be Dissued */
 app.post('/notif/:type', verify, async (req,res) => {
 
     let type = req.params.type,
@@ -207,8 +207,7 @@ app.post('/notif/:type', verify, async (req,res) => {
         let senderr = mongoose.Types.ObjectId(req.body.sender),
             recipientt = mongoose.Types.ObjectId(req.body.recipient);
       
-        let sender = 
-      await User.findById(senderr).then((user) => {
+        let sender = await User.findById(senderr).then((user) => {
             if (user) {
               let result = {
                 username: user.userName,
@@ -217,10 +216,8 @@ app.post('/notif/:type', verify, async (req,res) => {
               return result;
             } else {
               console.log("Error in getting connection. maybe user has none?")
-            }
-      })
-            
-            
+            }})
+        
         let recipient = await User.findById(recipientt).then((user) => {
             if (user) {
               let result = {
@@ -301,29 +298,29 @@ app.post('/notif/:type', verify, async (req,res) => {
 
             (async() => {
 
-                let one = await Notification.deleteOne(
-                    {_id: notifID}, 
-                ).then((data) => {
-                    if(data) {
-                        // res.send(data)
-                        console.log("independent notification doc of request to recipient, deleted");
-                    } else {
-                        console.log('Nothing to delete?')
-                    }
-                })
+                // let one = await Notification.deleteOne(
+                //     {_id: notifID}, 
+                // ).then((data) => {
+                //     if(data) {
+                //         // res.send(data)
+                //         console.log("independent notification doc of request to recipient, deleted");
+                //     } else {
+                //         console.log('Nothing to delete?')
+                //     }
+                // })
 
-                let oneTwo = await User.findByIdAndUpdate(
-                    {_id: recipientt}, 
-                    {$pull: {"notifications": {"connectionRequest": {_id: mongoose.Types.ObjectId(req.body.notifID)}}}},
-                    {useFindandModify: false}
-                ).then((data) => {
-                    if(data) {
-                        // res.send(data)
-                        console.log("notif in recipient's array, deleted");
-                    } else {
-                        console.log("notif in recipient's not found or deleted")
-                    }
-                })
+                // let oneTwo = await User.findByIdAndUpdate(
+                //     {_id: recipientt}, 
+                //     {$pull: {"notifications": {"connectionRequest": {_id: mongoose.Types.ObjectId(req.body.notifID)}}}},
+                //     {useFindandModify: false}
+                // ).then((data) => {
+                //     if(data) {
+                //         // res.send(data)
+                //         console.log("notif in recipient's array, deleted");
+                //     } else {
+                //         console.log("notif in recipient's not found or deleted")
+                //     }
+                // })
 
                 let two = await User.findByIdAndUpdate(
                     senderr,
@@ -445,8 +442,7 @@ app.post('/notif/:type', verify, async (req,res) => {
       let notifs = user.notifications;
       console.log(`sending ${user.userName} notifs`)
       res.status(200).send(notifs);
-    }
-    
+    }   
 })
 
 

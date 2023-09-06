@@ -1,4 +1,11 @@
 
+09. 06. 2023
+@1655 Reorganized users/notif route in seperate document. Currently more planning and project (re)structuring occuring....
+
+@09. 05. 2023
+@1830 rewriting / reorganizing user/notif route...
+
+
 
 @09. 02. 2023
 @1245 Websockets officially working on backend !

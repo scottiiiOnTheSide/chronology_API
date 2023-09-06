@@ -3,13 +3,37 @@ const mongoose = require('mongoose'),
       encrypt = require('bcryptjs'); //replace with scrypt
      
 const NotificationSchema = new mongoose.Schema({
-  connectionRequest: {
-    type: Map,
-    of: String
+  // connectionRequest: {
+  //   type: Map,
+  //   of: String
+  // },
+  // tagAlert: {
+  //   type: Map,
+  //   of: String
+  // }
+  type: {
+    type: String,
+    required: true
   },
-  tagAlert: {
-    type: Map,
-    of: String
+  isRead: {
+    type: Boolean,
+    required: true
+  },
+  sender: {
+    type: String,
+    required: true
+  },
+  recipients: [{
+    type: String,
+    required: true
+  }],
+  url: {
+    type: String,
+    required: false
+  },
+  message: {
+    type: String,
+    required: false
   }
 });
 
