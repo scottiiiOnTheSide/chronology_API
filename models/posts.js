@@ -15,6 +15,9 @@ let ContentSchema = new mongoose.Schema({
   }
 })
 
+// const CommentSchema = new mongoose.Schema({
+// })
+
 const PostsSchema = new mongoose.Schema({
   owner: {
       type: mongoose.Schema.Types.ObjectID,

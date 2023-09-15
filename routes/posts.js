@@ -323,58 +323,58 @@ app.get('/log', verify, async (req,res) => {
   }
 })
 
-app.get('/socialLog', verify, async (req, res) => {
+// app.get('/socialLog', verify, async (req, res) => {
   
-  const auth = req.header('auth-token');
-  const base64url = auth.split('.')[1];
-  const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
-  const {_id, _username} = decoded;
-  let id = mongoose.Types.ObjectId(_id);
+//   const auth = req.header('auth-token');
+//   const base64url = auth.split('.')[1];
+//   const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+//   const {_id, _username} = decoded;
+//   let id = mongoose.Types.ObjectId(_id);
   
-  const user = await User.findById(_id)
-        .then(res => res.toJSON());
-        connections = user.connections;
+//   const user = await User.findById(_id)
+//         .then(res => res.toJSON());
+//         connections = user.connections;
         
-  // console.log(user.connections);
+//   // console.log(user.connections);
   
-  let allPosts = await Posts.find({
-    'owner': {$in: connections},
-  }).then((err, posts) => {
-      if(err) {
+//   let allPosts = await Posts.find({
+//     'owner': {$in: connections},
+//   }).then((err, posts) => {
+//       if(err) {
 
-        res.status(400).send(err);
+//         res.status(400).send(err);
 
-      } else {
+//       } else {
 
-        let d = new Date(),
-            currentYear = d.getFullYear(),
-            currentMonth = d.getMonth(),
-            currentDay = d.getDate();
+//         let d = new Date(),
+//             currentYear = d.getFullYear(),
+//             currentMonth = d.getMonth(),
+//             currentDay = d.getDate();
 
-        let result = posts.filter((post) => {
+//         let result = posts.filter((post) => {
 
-          /*all posts made within or before current year*/
-          if (post.postedOn_year <= currentYear) {
+//           /*all posts made within or before current year*/
+//           if (post.postedOn_year <= currentYear) {
 
-            /* removes posts within current year, but beyond current month */
-            if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
-                (post.postedOn_year <= currentYear)) {
+//             /* removes posts within current year, but beyond current month */
+//             if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
+//                 (post.postedOn_year <= currentYear)) {
 
-                /* exclude posts within current month, beyond current day*/
-                if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
-                  return null;
-                }
+//                 /* exclude posts within current month, beyond current day*/
+//                 if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
+//                   return null;
+//                 }
 
-                else {
-                  return post;
-                }
-            }
-          }
-        });
-        res.status(200).send(result);
-      }
-  });
-})
+//                 else {
+//                   return post;
+//                 }
+//             }
+//           }
+//         });
+//         res.status(200).send(result);
+//       }
+//   });
+// })
 
 app.get('/monthChart', verify, async (req, res) => {
   /*

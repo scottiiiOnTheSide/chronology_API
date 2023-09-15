@@ -3,14 +3,6 @@ const mongoose = require('mongoose'),
       encrypt = require('bcryptjs'); //replace with scrypt
      
 const NotificationSchema = new mongoose.Schema({
-  // connectionRequest: {
-  //   type: Map,
-  //   of: String
-  // },
-  // tagAlert: {
-  //   type: Map,
-  //   of: String
-  // }
   type: {
     type: String,
     required: true
@@ -36,6 +28,8 @@ const NotificationSchema = new mongoose.Schema({
     required: false
   }
 });
+
+// const GroupSchema = new mongoose.Schema ({});
 
 const UserSchema = new mongoose.Schema({
     firstName: {

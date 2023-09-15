@@ -17,6 +17,10 @@ app.post('/newuser', async (req,res) => {
     if(emailExist) {
         return res.status(400).send("This email is already linked to an account")
     }
+
+    /* 09. 14. 2023
+        Should also check whether username has already been taken
+    */
     
     const userPass = req.body.password
     const salt = await encrypt.genSalt(10);
