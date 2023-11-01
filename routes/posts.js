@@ -3,7 +3,7 @@ const express = require('express'),
       multer = require('multer'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
-      {Posts, Content} = require('../models/posts'),
+      {Posts, Content, Comment} = require('../models/posts'),
       Tags = require('../models/tags'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
@@ -44,16 +44,20 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   const year = d.getFullYear();
   const timeStamp = d.getTime();
   
-  let newPost = new Posts ({});
+  let newPost = new Posts({});
   let postContent = [];
   let tagslist = null;
 
+  console.log(req.body);
+
   //converts provided tags to be stored in doc by name, rather than their IDs
   let tags;
-  if(req.body.tags != '' || req.body.tags == null) {
-    tags = req.body.tags.split(/[, ]+/);
-    tagslist = tags.map((tag) => tag.name)
-  }
+  // if(req.body.tags != '') {
+  //   tags = req.body.tags.split(/[, ]+/);
+  //   tagslist = tags.map((tag) => tag.name)
+  // } else if(req.body.tags == undefined) {
+  //   return;
+  // }
 
 
   /* media processing stuff */
@@ -94,9 +98,6 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
 
       req.body[title] = cdnUrl;
   }
-
-
-  console.log(req.body)
 
   // /* 05. 01. 2023
   //    Loop through all numbered entries within the req.body,
@@ -191,8 +192,13 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   })
 
   await newPost.save().then((post) => {
-    console.log(post._id)
-    res.send({message: "Uploaded"});
+    if(post) {
+      console.log(`"${post.title}" uploaded successfully`);
+      res.status(200).send({postURL: post._id, postTitle: post.title, confirm: true});
+    } else {
+      console.log("There was an issue with the upload...");
+      res.status(400).send(false);
+    }
   });
   
 });
@@ -213,7 +219,7 @@ app.get('/log', verify, async (req,res) => {
 
     let socialPosts = await Posts.find({
       'owner': {$in: connections},
-    });
+    })
 
     console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
@@ -228,8 +234,7 @@ app.get('/log', verify, async (req,res) => {
           if (post.postedOn_year <= currentYear) {
 
             /* removes posts within current year, but beyond current month */
-            if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
-                (post.postedOn_year <= currentYear)) {
+            if((post.postedOn_month <= currentMonth)) {
 
                 /* exclude posts within current month, beyond current day*/
                 if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
@@ -248,7 +253,7 @@ app.get('/log', verify, async (req,res) => {
           posts.sort((a,b) => {
 
             const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
-                  dateB = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day);
+                  dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
 
             if (dateA > dateB) return -1;
             if (dateA < dateB) return 1;
@@ -257,20 +262,26 @@ app.get('/log', verify, async (req,res) => {
         }
 
         sortByDate(results);
+        console.log("Results reordered");
 
-        let reorder = [];
-        for(let i = results.length; i >= 0; i--) {
-          reorder.push(results[i]);
-        }
-        reorder.splice(0, 1);
+        // results.forEach((post) => {
+        //   console.log(post.postedOn_month+ "." +post.postedOn_day+ "." +post.postedOn_year);
+        // })
 
-        res.status(200).send(reorder);
+        /* 10. 02. 2023 No longer necessary ...? */
+        // let reorder = [];
+        // for(let i = results.length; i >= 0; i--) {
+        //   reorder.push(results[i]);
+        // }
+        // reorder.splice(0, 1);
+
+        res.status(200).send(results)
   }
 
   else if (social == 'false') {
     let posts = await Posts.find({owner: _id})
 
-    console.log('Retrieved user posts for ' +user.userName+ " " +posts.length);
+    console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -283,8 +294,7 @@ app.get('/log', verify, async (req,res) => {
           if (post.postedOn_year <= currentYear) {
 
             /* removes posts within current year, but beyond current month */
-            if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
-                (post.postedOn_year <= currentYear)) {
+            if((post.postedOn_month <= currentMonth)) {
 
                 /* exclude posts within current month, beyond current day*/
                 if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
@@ -303,7 +313,7 @@ app.get('/log', verify, async (req,res) => {
           posts.sort((a,b) => {
 
             const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
-                  dateB = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day);
+                  dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
 
             if (dateA > dateB) return -1;
             if (dateA < dateB) return 1;
@@ -312,69 +322,22 @@ app.get('/log', verify, async (req,res) => {
         }
 
         sortByDate(results);
+        console.log("Results reordered");
 
-        let reorder = [];
-        for(let i = results.length; i >= 0; i--) {
-          reorder.push(results[i]);
-        }
-        reorder.splice(0, 1);
+        // results.forEach((post) => {
+        //   console.log(post.postedOn_month+ "." +post.postedOn_day+ "." +post.postedOn_year);
+        // })
 
-        res.status(200).send(reorder);
+        /* 10. 02. 2023 No longer necessary ...? */
+        // let reorder = [];
+        // for(let i = results.length; i >= 0; i--) {
+        //   reorder.push(results[i]);
+        // }
+        // reorder.splice(0, 1);
+
+        res.status(200).send(results)
   }
 })
-
-// app.get('/socialLog', verify, async (req, res) => {
-  
-//   const auth = req.header('auth-token');
-//   const base64url = auth.split('.')[1];
-//   const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
-//   const {_id, _username} = decoded;
-//   let id = mongoose.Types.ObjectId(_id);
-  
-//   const user = await User.findById(_id)
-//         .then(res => res.toJSON());
-//         connections = user.connections;
-        
-//   // console.log(user.connections);
-  
-//   let allPosts = await Posts.find({
-//     'owner': {$in: connections},
-//   }).then((err, posts) => {
-//       if(err) {
-
-//         res.status(400).send(err);
-
-//       } else {
-
-//         let d = new Date(),
-//             currentYear = d.getFullYear(),
-//             currentMonth = d.getMonth(),
-//             currentDay = d.getDate();
-
-//         let result = posts.filter((post) => {
-
-//           /*all posts made within or before current year*/
-//           if (post.postedOn_year <= currentYear) {
-
-//             /* removes posts within current year, but beyond current month */
-//             if((post.postedOn_month <= currentMonth && post.postedOn_year <= currentYear) ||
-//                 (post.postedOn_year <= currentYear)) {
-
-//                 /* exclude posts within current month, beyond current day*/
-//                 if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
-//                   return null;
-//                 }
-
-//                 else {
-//                   return post;
-//                 }
-//             }
-//           }
-//         });
-//         res.status(200).send(result);
-//       }
-//   });
-// })
 
 app.get('/monthChart', verify, async (req, res) => {
   /*
@@ -455,7 +418,6 @@ if (social == 'true' && day) {/* get all posts for full date */
           postedOn_year: year,
           postedOn_day: day,
         });
-      
     
       if (results) {
         res.status(200).send(results);
@@ -489,7 +451,7 @@ if (social == 'false' && !day ) { /* if not a social monthChart request*/
           daysInSelectedMonth = new Date(year, month+1, 0).getDate();
         }
 
-        let postsPerMonth = []
+        // let postsPerMonth = []
   
         for(y = 0; y <= daysInSelectedMonth; y++) {
           let postsPerDate = 0;
@@ -533,17 +495,15 @@ if (social == 'false' && day) {
       } else {
           res.status(200).send(results);
       }}
- 
 });
 
-app.get('/id', verify, async (req,res) => {
+app.get('/:id', verify, async (req,res) => {
     try {
-      let _ID = mongoose.Types.ObjectId(req.query.id);
-      console.log(_ID);
-      //.send(_ID);
+      let _ID = mongoose.Types.ObjectId(req.params.id);
+      // console.log(_ID);
       let singlePost = await Posts.findOne({_id: _ID});
-      console.log(singlePost);
-      res.send(singlePost +`\n`+ singlePost.createdAt);
+      console.log('post found and sent');
+      res.status(200).send(singlePost);
     }
     catch (err) {
       res.status(404) 		
@@ -602,6 +562,83 @@ app.delete('/deletePost', verify, async(req,res) => {
         res.status(200).send(true)
       }
   });
+})
+
+app.post('/comment/:type', verify, async(req, res)=> {
+
+  const type = req.params.type;
+  // console.log(req.body);
+
+  if (type == 'getAll') {
+
+    console.log('Getting comments for ' +req.body.parentID);
+    let comments = await Comment.find({ parentID: mongoose.Types.ObjectId(req.body.parentID)} );
+    // console.log(comments);
+    res.status(200).send(comments);
+
+  }
+  else if(type == 'initial') {
+
+    let newComment = new Comment({
+      ownerUsername: req.body.ownerUsername,
+      ownerID: req.body.ownerID,
+      parentID: req.body.parentID,
+      content: req.body.content,
+      postedOn_month: req.body.postedOn_month,
+      postedOn_day: req.body.postedOn_day,
+      postedOn_year: req.body.postedOn_year,
+      commentNumber: req.body.commentNumber,
+      replies: []
+    })
+    newComment.save();
+
+    await Posts.findOneAndUpdate(
+      {_id:mongoose.Types.ObjectId(req.body.parentID)},
+      {$push: {comments: newComment}},
+      [{upsert: true}, {useFindandModify: false}]).then((data) => {
+        if(data) {
+          console.log(`comment ${newComment._id} was made to a post ${newComment.parentID}`);
+          res.status(200).send(true);
+        } else {
+          console.log(`error in adding comment ${newComment._id} to post ${newComment.parentID}`);
+        }
+    })
+  }
+  else if(type == 'response') {
+
+    let newComment = new Comment({
+      ownerUsername: req.body.ownerUsername,
+      ownerID: req.body.ownerID,
+      parentID: req.body.parentID,
+      content: req.body.content,
+      postedOn_month: req.body.postedOn_month,
+      postedOn_day: req.body.postedOn_day,
+      postedOn_year: req.body.postedOn_year,
+      commentNumber: req.body.commentNumber,
+      replies: []
+    })
+    newComment.save();
+
+    await Comment.findOneAndUpdate(
+      {_id: mongoose.Types.ObjectId(req.body.parentID)},
+      { $push: { replies: newComment } },
+      [{upsert: true}, {useFindandModify: false}]).then((data) => {
+        if(data) {
+          console.log(`reply ${newComment._id} was made to comment ${newComment.parentID}`);
+          console.log(data.replies)
+          res.status(200).send(true);
+        } else {
+          console.log(`error in adding comment ${newComment._id} to comment ${newComment.parentID} replies`);
+        }
+    })
+
+    // let originalComment = await Comment.findOne({_id: mongoose.Types.ObjectId(req.body.parentID)});
+    // originalComment.replies.push(newComment);
+    // Comment.markModified(originalComment);
+    // originalComment.save();
+    // console.log(originalComment.replies);
+  }
+
 })
 
 module.exports = app;

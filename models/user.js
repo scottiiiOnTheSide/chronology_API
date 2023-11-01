@@ -15,15 +15,27 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  senderUsername: {
+    type: String,
+    required: true,
+  },
   recipients: [{
     type: String,
     required: true
   }],
+  recipientUsername: {
+    type: String,
+    required: false,
+  },
   url: {
     type: String,
     required: false
   },
   message: {
+    type: String,
+    required: false
+  },
+  details: {
     type: String,
     required: false
   }
@@ -62,6 +74,9 @@ const UserSchema = new mongoose.Schema({
       type: String,
       required: [true, "This field is necessary "]
     },
+    settings: {
+      data: mongoose.Schema.Types.Mixed,
+    },
     connections: [{
         type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
@@ -71,24 +86,14 @@ const UserSchema = new mongoose.Schema({
     }]
 },{timestamps: true});
 
-/*
-let newConnectionRequest = new Notification ({
-  connectionRequest: {
-    sender: senderID,
-    reciepient: reciepientID,
-    status:
-  }
-})
+/**
+ * 10. 13. 2023
+ * access user setting with: User.settings.data
+ * data: {
+  * settingName: settingValue
+ * }
+ */
 
-status: sent, ignored, accepted
-*/
-
-/*UserSchema.method('password', async (password) => {
-    UserSchema[password].required = true;
-    const salt = await encrypt.genSalt(20);
-    const hash = await encrypt.hash(password, salt);
-    return hash;
-}); */
 UserSchema.plugin(uniqueValidator, {message: 'This is already taken'});
 module.exports.User = mongoose.model('User', UserSchema);
 module.exports.Notification = mongoose.model('Notification', NotificationSchema);
