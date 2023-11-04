@@ -13,10 +13,32 @@ let ContentSchema = new mongoose.Schema({
     type: String,
     required: true
   }
-})
+});
 
-// const CommentSchema = new mongoose.Schema({
-// })
+const CommentSchema = new mongoose.Schema({
+  ownerUsername: {
+    type: String,
+    required: true
+  },
+  ownerID: {
+    type: String,
+    required: true
+  },
+  parentID: {
+      type: mongoose.Schema.Types.ObjectID,
+      // ref: 'Posts'
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  postedOn_month: Number,
+  postedOn_day: Number,
+  postedOn_year: Number,
+  commentNumber: String,
+}, {timestamps: true});
+
+CommentSchema.add({ replies: [CommentSchema]});
 
 const PostsSchema = new mongoose.Schema({
   owner: {
@@ -66,8 +88,10 @@ const PostsSchema = new mongoose.Schema({
     type: Number,
   },
   content: [ContentSchema],
+  comments: [CommentSchema]
 }, {timestamps: true});
 
 
 module.exports.Posts = mongoose.model('Posts', PostsSchema);
 module.exports.Content = mongoose.model('Content', ContentSchema);
+module.exports.Comment = mongoose.model('Comment', CommentSchema);
