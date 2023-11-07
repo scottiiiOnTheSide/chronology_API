@@ -213,15 +213,16 @@ app.get('/log', verify, async (req,res) => {
         .then(res => res.toJSON());
   const connections = user.connections;
 
-  let social = req.query.social;
+  let social = req.query.social,
+      monthChart = req.query.monthChart;
   
   if(social == 'true') {
 
-    let socialPosts = await Posts.find({
-      'owner': {$in: connections},
-    })
+      let socialPosts = await Posts.find({
+        'owner': {$in: connections},
+      })
 
-    console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
+      console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -276,12 +277,12 @@ app.get('/log', verify, async (req,res) => {
         // reorder.splice(0, 1);
 
         res.status(200).send(results)
-  }
-
+    }
   else if (social == 'false') {
+
     let posts = await Posts.find({owner: _id})
 
-    console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
+      console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -335,9 +336,10 @@ app.get('/log', verify, async (req,res) => {
         // }
         // reorder.splice(0, 1);
 
-        res.status(200).send(results)
-  }
+      res.status(200).send(results)
+    } 
 })
+
 
 app.get('/monthChart', verify, async (req, res) => {
   /*
@@ -496,6 +498,8 @@ if (social == 'false' && day) {
           res.status(200).send(results);
       }}
 });
+
+
 
 app.get('/:id', verify, async (req,res) => {
     try {
