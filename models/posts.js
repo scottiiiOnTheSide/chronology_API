@@ -1,3 +1,5 @@
+const { GroupsSchema } = require('./groups.js')
+
 const mongoose = require('mongoose');
 
 let ContentSchema = new mongoose.Schema({
@@ -55,10 +57,6 @@ const PostsSchema = new mongoose.Schema({
       required: true,
       index: true,
   },
-  tags: [{
-      type: String,
-      ref: 'Tags'
-  }],
   taggedUsers: [{
     type: String,
     ref: 'User',
@@ -88,7 +86,8 @@ const PostsSchema = new mongoose.Schema({
     type: Number,
   },
   content: [ContentSchema],
-  comments: [CommentSchema]
+  comments: [CommentSchema],
+  tags: [GroupsSchema],
 }, {timestamps: true});
 
 

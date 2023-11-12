@@ -210,7 +210,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
         type: string | "request", "commentInitial", "commentResponse", "tagging"
         isRead: boolean
         sender: string | userID
-        recipients: string | userID(s)
+        recipients: Array | userID(s)
         url: string | url for post OR original notif ID
         message: string | *sent, *recieved, *accept, *ignore
     */
@@ -321,8 +321,6 @@ app.post('/notif/:type', verify, async(req, res)=> {
     /* if connection request */
     else if(type == 'request') {
 
-        // console.log('line 256')
-        // console.log(req.body)
         /* sender IS always be sender of request,
             recipient is who recieved initial request
         */
@@ -530,10 +528,12 @@ app.post('/notif/:type', verify, async(req, res)=> {
             })
         )
 
+        // recipients = recipients.filter(recip => recip != _id)
+
         await Promise.all(
             recipients.map(async(recip) => {
 
-                if(recip == _id) {
+                if(recip.id == _id) {
                     return
                 } else {
                     let newNotif = new Notification({

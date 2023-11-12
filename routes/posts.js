@@ -4,10 +4,10 @@ const express = require('express'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
       {Posts, Content, Comment} = require('../models/posts'),
-      Tags = require('../models/tags'),
+      // Tags = require('../models/tags'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
-      manageTags = require('../manageTags'),
+      // manageTags = require('../manageTags'),
       manageImages = require('../manageImages'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
@@ -30,7 +30,7 @@ let storage = multer.memoryStorage(), //keeps data in RAM storage
 
 
 
-app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
+app.post('/createPost', verify, upload.any(), async (req,res) => {
   
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
@@ -200,8 +200,8 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
       res.status(400).send(false);
     }
   });
-  
 });
+
 
 app.get('/log', verify, async (req,res) => {
   
@@ -280,7 +280,7 @@ app.get('/log', verify, async (req,res) => {
     }
   else if (social == 'false') {
 
-    let posts = await Posts.find({owner: _id})
+    let posts = await Posts.find({owner: _id}).sort({createdAt: -1})
 
       console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
@@ -331,10 +331,9 @@ app.get('/log', verify, async (req,res) => {
 
         /* 10. 02. 2023 No longer necessary ...? */
         // let reorder = [];
-        // for(let i = results.length; i >= 0; i--) {
+        // for(let i = results.length -1 ; i >= 0; i--) {
         //   reorder.push(results[i]);
         // }
-        // reorder.splice(0, 1);
 
       res.status(200).send(results)
     } 
@@ -500,7 +499,6 @@ if (social == 'false' && day) {
 });
 
 
-
 app.get('/:id', verify, async (req,res) => {
     try {
       let _ID = mongoose.Types.ObjectId(req.params.id);
@@ -515,6 +513,7 @@ app.get('/:id', verify, async (req,res) => {
       console.log("here");
     }
 });
+
 
 app.patch('/updatePost', verify, async (req,res) => {
   
@@ -534,6 +533,7 @@ app.patch('/updatePost', verify, async (req,res) => {
     }
   })
 })
+
 
 app.delete('/deletePost', verify, async(req,res) => {
   
@@ -567,6 +567,7 @@ app.delete('/deletePost', verify, async(req,res) => {
       }
   });
 })
+
 
 app.post('/comment/:type', verify, async(req, res)=> {
 
