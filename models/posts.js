@@ -87,6 +87,12 @@ const PostsSchema = new mongoose.Schema({
   },
   content: [ContentSchema],
   comments: [CommentSchema],
+  commentCount: {
+    type: Number
+  },
+  isPinned: {
+    type: Boolean
+  },
   tags: [GroupsSchema],
 }, {timestamps: true});
 

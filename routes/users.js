@@ -256,6 +256,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
          * Due to the weird way in which notifications are currently stored,
          * this implementation is most efficient ...
          */
+        console.log(req.body);
         let user = await User.findById(_id);
         let notif = user.notifications.filter((notif) => {
             if(notif[0]._id == req.body.notifID) {
@@ -263,7 +264,8 @@ app.post('/notif/:type', verify, async(req, res)=> {
             }
         })
         notif[0][0].isRead = true;
-        user.save();
+        // notif[0][0].save();
+        user.save({ suppressWarning: true });
         console.log(notif);
         res.status(200).send(true);
     }
@@ -528,8 +530,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
             })
         )
 
-        // recipients = recipients.filter(recip => recip != _id)
-
+        let response;
         await Promise.all(
             recipients.map(async(recip) => {
 
@@ -547,6 +548,8 @@ app.post('/notif/:type', verify, async(req, res)=> {
                     });
 
                     newNotif.save();
+                    response = newNotif._id
+                    console.log(newNotif._id)
 
                     let updateSenderList = await User.findByIdAndUpdate(
                             {_id: mongoose.Types.ObjectId(recip.id)},
@@ -560,7 +563,8 @@ app.post('/notif/:type', verify, async(req, res)=> {
                 }
             })
         );
-        res.status(200).send(true);
+        // res.status(200).send(JSON.stringify({_id: response}));
+        res.status(200).send(response)
     }
 
     /* notif of comment on post, reshare, flagging, etc */
@@ -574,6 +578,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
         console.log(req.body);
         let recipients = req.body.recipients;
 
+        let notifID;
         await Promise.all(
             recipients.map(async(recip) => {
 
@@ -588,6 +593,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
                 });
 
                 newNotif.save();
+                notifID = newNotif._id;
 
                 let updateRecipientList = await User.findByIdAndUpdate(
                         mongoose.Types.ObjectId(recip),
@@ -600,7 +606,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
                     });
             })
         );
-        res.status(200).send(true);
+        res.status(200).send(notifID);
 
     }
 })

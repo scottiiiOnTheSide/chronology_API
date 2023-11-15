@@ -220,7 +220,7 @@ app.get('/log', verify, async (req,res) => {
 
       let socialPosts = await Posts.find({
         'owner': {$in: connections},
-      })
+      }).sort({createdAt: -1})
 
       console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
@@ -580,6 +580,13 @@ app.post('/comment/:type', verify, async(req, res)=> {
     let comments = await Comment.find({ parentID: mongoose.Types.ObjectId(req.body.parentID)} );
     // console.log(comments);
     res.status(200).send(comments);
+  }
+  else if(type == 'updateCount') {
+
+    let post = await Posts.findOne({_id: req.query.postID});
+    post.commentCount = req.query.count;
+    post.save()
+    res.status(200).send(true);
 
   }
   else if(type == 'initial') {
@@ -603,7 +610,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
       [{upsert: true}, {useFindandModify: false}]).then((data) => {
         if(data) {
           console.log(`comment ${newComment._id} was made to a post ${newComment.parentID}`);
-          res.status(200).send(true);
+          res.status(200).send(newComment._id);
         } else {
           console.log(`error in adding comment ${newComment._id} to post ${newComment.parentID}`);
         }
