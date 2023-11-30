@@ -64,14 +64,18 @@ app.ws('/', (ws, req)=> {
                         connections[user].send(JSON.stringify(notif));
                         console.log(notif);
                     }
-                    else if(data.type == 'commentReponse') {}
+                    else if(data.type == 'comment' && data.message == 'response') {
+                        let notif = data;
+                        notif.message = 'response-recieved';
+                        connections[user].send(JSON.stringify(notif));
+                        console.log(notif);
+                    }
                     else if(data.type == 'tagging') {
                         let notif = data;
                         notif.message = 'recieved';
                         connections[user].send(JSON.stringify(notif));
                         console.log(data);
                     }
-
                 }
             }
 

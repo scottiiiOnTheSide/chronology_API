@@ -4,10 +4,10 @@ const express = require('express'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
       {Posts, Content, Comment} = require('../models/posts'),
-      Tags = require('../models/tags'),
+      // Tags = require('../models/tags'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
-      manageTags = require('../manageTags'),
+      // manageTags = require('../manageTags'),
       manageImages = require('../manageImages'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
@@ -30,7 +30,7 @@ let storage = multer.memoryStorage(), //keeps data in RAM storage
 
 
 
-app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
+app.post('/createPost', verify, upload.any(), async (req,res) => {
   
   const auth = req.header('auth-token');
   const base64url = auth.split('.')[1];
@@ -194,14 +194,14 @@ app.post('/createPost', verify, manageTags, upload.any(), async (req,res) => {
   await newPost.save().then((post) => {
     if(post) {
       console.log(`"${post.title}" uploaded successfully`);
-      res.status(200).send({postURL: post._id, postTitle: post.title, confirm: true});
+      res.status(200).send({postURL: newPost._id, postTitle: newPost.title, confirm: true});
     } else {
       console.log("There was an issue with the upload...");
       res.status(400).send(false);
     }
   });
-  
 });
+
 
 app.get('/log', verify, async (req,res) => {
   
@@ -213,15 +213,16 @@ app.get('/log', verify, async (req,res) => {
         .then(res => res.toJSON());
   const connections = user.connections;
 
-  let social = req.query.social;
+  let social = req.query.social,
+      monthChart = req.query.monthChart;
   
   if(social == 'true') {
 
-    let socialPosts = await Posts.find({
-      'owner': {$in: connections},
-    })
+      let socialPosts = await Posts.find({
+        'owner': {$in: connections},
+      }).sort({createdAt: -1})
 
-    console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
+      console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -276,12 +277,12 @@ app.get('/log', verify, async (req,res) => {
         // reorder.splice(0, 1);
 
         res.status(200).send(results)
-  }
-
+    }
   else if (social == 'false') {
-    let posts = await Posts.find({owner: _id})
 
-    console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
+    let posts = await Posts.find({owner: _id}).sort({createdAt: -1})
+
+      console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
         let d = new Date(),
             currentYear = d.getFullYear(),
@@ -330,14 +331,14 @@ app.get('/log', verify, async (req,res) => {
 
         /* 10. 02. 2023 No longer necessary ...? */
         // let reorder = [];
-        // for(let i = results.length; i >= 0; i--) {
+        // for(let i = results.length -1 ; i >= 0; i--) {
         //   reorder.push(results[i]);
         // }
-        // reorder.splice(0, 1);
 
-        res.status(200).send(results)
-  }
+      res.status(200).send(results)
+    } 
 })
+
 
 app.get('/monthChart', verify, async (req, res) => {
   /*
@@ -497,6 +498,7 @@ if (social == 'false' && day) {
       }}
 });
 
+
 app.get('/:id', verify, async (req,res) => {
     try {
       let _ID = mongoose.Types.ObjectId(req.params.id);
@@ -511,6 +513,7 @@ app.get('/:id', verify, async (req,res) => {
       console.log("here");
     }
 });
+
 
 app.patch('/updatePost', verify, async (req,res) => {
   
@@ -531,6 +534,7 @@ app.patch('/updatePost', verify, async (req,res) => {
   })
 })
 
+
 app.delete('/deletePost', verify, async(req,res) => {
   
   const id = mongoose.Types.ObjectId(req.query.id);
@@ -545,8 +549,8 @@ app.delete('/deletePost', verify, async(req,res) => {
         console.log('error')
       }
       else {
-        // console.log(data.content)
 
+        /* Deletes all post media from GCS database */
         for(let i = 0; i < data.content.length; i++) {
           if(data.content[i].place % 1 != 0) { //for the media links
             let string = data.content[i].content;
@@ -558,11 +562,16 @@ app.delete('/deletePost', verify, async(req,res) => {
             deleteFile(filename).catch(console.error);
           }
         }
-
-        res.status(200).send(true)
+        console.log(data.title + 'deleted');
       }
   });
+
+  let comments = await Comment.deleteMany({parentPost: req.query.id});
+  console.log(comments.deletedCount + "comments deleted for post:" +req.query.id);
+
+  res.status(200).send(true)
 })
+
 
 app.post('/comment/:type', verify, async(req, res)=> {
 
@@ -575,6 +584,13 @@ app.post('/comment/:type', verify, async(req, res)=> {
     let comments = await Comment.find({ parentID: mongoose.Types.ObjectId(req.body.parentID)} );
     // console.log(comments);
     res.status(200).send(comments);
+  }
+  else if(type == 'updateCount') {
+
+    let post = await Posts.findOne({_id: req.query.postID});
+    post.commentCount = req.query.count;
+    post.save()
+    res.status(200).send(true);
 
   }
   else if(type == 'initial') {
@@ -582,6 +598,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
     let newComment = new Comment({
       ownerUsername: req.body.ownerUsername,
       ownerID: req.body.ownerID,
+      parentPost: req.body.parentPost,
       parentID: req.body.parentID,
       content: req.body.content,
       postedOn_month: req.body.postedOn_month,
@@ -590,15 +607,15 @@ app.post('/comment/:type', verify, async(req, res)=> {
       commentNumber: req.body.commentNumber,
       replies: []
     })
-    newComment.save();
+    // newComment.save();
 
     await Posts.findOneAndUpdate(
       {_id:mongoose.Types.ObjectId(req.body.parentID)},
       {$push: {comments: newComment}},
       [{upsert: true}, {useFindandModify: false}]).then((data) => {
         if(data) {
-          console.log(`comment ${newComment._id} was made to a post ${newComment.parentID}`);
-          res.status(200).send(true);
+          console.log(`comment ${newComment._id} was made to post ${newComment.parentID}`);
+          res.status(200).send(newComment._id);
         } else {
           console.log(`error in adding comment ${newComment._id} to post ${newComment.parentID}`);
         }
@@ -609,6 +626,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
     let newComment = new Comment({
       ownerUsername: req.body.ownerUsername,
       ownerID: req.body.ownerID,
+      parentPost: req.body.parentPost,
       parentID: req.body.parentID,
       content: req.body.content,
       postedOn_month: req.body.postedOn_month,
@@ -617,26 +635,24 @@ app.post('/comment/:type', verify, async(req, res)=> {
       commentNumber: req.body.commentNumber,
       replies: []
     })
-    newComment.save();
+    
+    let post = await Posts.findById(req.body.parentPost);
+    let comments = post.comments,
+        commentPlace = req.body.commentNumber.split("-");
+    let parentComment = comments[parseInt(commentPlace[0]) - 1];
 
-    await Comment.findOneAndUpdate(
-      {_id: mongoose.Types.ObjectId(req.body.parentID)},
-      { $push: { replies: newComment } },
-      [{upsert: true}, {useFindandModify: false}]).then((data) => {
-        if(data) {
-          console.log(`reply ${newComment._id} was made to comment ${newComment.parentID}`);
-          console.log(data.replies)
-          res.status(200).send(true);
-        } else {
-          console.log(`error in adding comment ${newComment._id} to comment ${newComment.parentID} replies`);
-        }
-    })
+    console.log(commentPlace)
+    console.log(parentComment)
 
-    // let originalComment = await Comment.findOne({_id: mongoose.Types.ObjectId(req.body.parentID)});
-    // originalComment.replies.push(newComment);
-    // Comment.markModified(originalComment);
-    // originalComment.save();
-    // console.log(originalComment.replies);
+    let i = 1;
+    while(i <= commentPlace.length - 2) { //should stop before last number
+        parentComment = parentComment.replies[parseInt(commentPlace[i]) - 1];
+        i++;
+    }
+    parentComment.replies.push(newComment);
+    post.save();
+
+    res.status(200).send(true);
   }
 
 })

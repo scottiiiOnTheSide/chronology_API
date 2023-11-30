@@ -10,8 +10,6 @@ module.exports = function (req,res,next) {
         const verified = jwt.verify(token, process.env.TOKEN_SECRET);
         req.user = verified;
         next();
-        // it would seem user is being rewritten to
-        // set equivalent to the user._id 
     }
     catch {
         res.status(400).send("Access Denied");

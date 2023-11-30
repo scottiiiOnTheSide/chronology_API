@@ -15,7 +15,7 @@ app.post('/newuser', async (req,res) => {
 
     const emailExist = await User.findOne({emailAddr:req.body.emailAddr})
     if(emailExist) {
-        return res.status(400).send("This email is already linked to an account")
+        return res.status(400).send({error: true, message: "This email is already linked to an account"})
     }
 
     /* 09. 14. 2023
@@ -50,13 +50,13 @@ app.post('/login', async (req, res) => {
   
     const user = await User.findOne({emailAddr:req.body.emailAddr});
     if(!user) {
-        return res.status(400).send({message: "This email is not valid"});
+        return res.status(400).send({error: true, message: "This email is not valid"});
     }
     
     const passwordValid = await encrypt.compare(req.body.password, user.password);
     //decrpyt password
     if(!passwordValid) {
-        return res.status(400).send({message: "This password is invalid"});
+        return res.status(400).send({error: true, message: "This password is invalid"});
     }
     
     const userName = user.userName;
@@ -67,7 +67,7 @@ app.post('/login', async (req, res) => {
     const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
     //sets JWT within reponse header and returns 
     //it to the front end
-    res.status(200).json(signature);
+    res.status(200).json({confirm: true, payload: signature});
     //res.send(JWTpayload);
     //this info needs to be within user request headers whenever performing account operations. 
 });
@@ -210,7 +210,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
         type: string | "request", "commentInitial", "commentResponse", "tagging"
         isRead: boolean
         sender: string | userID
-        recipients: string | userID(s)
+        recipients: Array | userID(s)
         url: string | url for post OR original notif ID
         message: string | *sent, *recieved, *accept, *ignore
     */
@@ -228,34 +228,6 @@ app.post('/notif/:type', verify, async(req, res)=> {
     /* update original notif to be isRead = true */
     if(type == 'markRead') {
 
-        // let notif = await Notification.findByIdAndUpdate({_id: req.body.notifID}, {isRead: true});
-        // console.log('notif is read?' + notif.isRead);
-        // console.log(notif);
-        // res.status(200).send(notif.isRead);
-        // User.findById({_id: req.body.userID}).then((user)=> {
-        //     let notif = user.notifications.id(req.body.notifID);
-        //     notif['isRead'] = true;
-        //     user.save();
-        // });
-        // res.status(200).send(true);
-        //, notifications: {$elemMatch: {_id: req.body.notifID}}
-        // User.findOneAndUpdate({_id: req.body.userID, 'notifications._id': req.body.notifID},
-        //                       {set: {'notifications.$.isRead': true}},
-        //                       {'new': true, 'safe': true, 'upsert': true});
-        // res.status(200).send(true);
-
-        // console.log(req.body)
-        // (async()=> {
-        //     let user = await User.findById({_id: req.body.userID});
-        //     let notif = user.notifications.find(notif => { return notif._id == req.body.notifID} );
-        //     // console.log(notif);
-        //     console.log(user);
-        // })();
-        /***
-         * 10. 28. 2023
-         * Due to the weird way in which notifications are currently stored,
-         * this implementation is most efficient ...
-         */
         let user = await User.findById(_id);
         let notif = user.notifications.filter((notif) => {
             if(notif[0]._id == req.body.notifID) {
@@ -263,32 +235,35 @@ app.post('/notif/:type', verify, async(req, res)=> {
             }
         })
         notif[0][0].isRead = true;
-        user.save();
+        user.save({ suppressWarning: true });
         console.log(notif);
         res.status(200).send(true);
     }
 
     else if(type == 'sendAll') {
 
-      let user = await User.findById(_id).then((user) => {
-        if(user) {
-          return user
-        }
-        else {
-          console.log("issue finding user. might not exist");
-        }
-      })
+        let user = await User.findById(_id).then((user) => {
+            if(user) {
+              return user
+            }
+            else {
+              console.log("issue finding user. might not exist");
+            }
+        })
       
-      let notifs = user.notifications,
-          reordered = [];
 
-      for(let i = notifs.length-1; i >= 0; i--) {
+        let notifs = user.notifications,
+            reordered = [];
+
+        for(let i = notifs.length-1; i >= 0; i--) {
             reordered.push(notifs[i][0]);
         }
 
-      console.log(`sending ${user.userName} notifs`)
+        console.log(reordered)
 
-      res.status(200).send(reordered);
+        console.log(`sending ${user.userName} notifs`)
+
+        res.status(200).send(reordered);
     }
 
     /** 
@@ -308,6 +283,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
         })
 
       let notifs = user.notifications;
+      console.log(notifs)
       let count = 0;
       for(let i = 0; i < notifs.length; i++) {
         if(notifs[i][0].isRead == false) {
@@ -321,8 +297,6 @@ app.post('/notif/:type', verify, async(req, res)=> {
     /* if connection request */
     else if(type == 'request') {
 
-        // console.log('line 256')
-        // console.log(req.body)
         /* sender IS always be sender of request,
             recipient is who recieved initial request
         */
@@ -514,11 +488,8 @@ app.post('/notif/:type', verify, async(req, res)=> {
             - update recipient's notif list 
             - send res status 200, send true
         **/
-        console.log(req.body);
 
         let recipients = [];
-        console.log('line 520');
-        console.log(req.body.recipients);
         await Promise.all(
             req.body.recipients.map(async(recipient) => {
                 let request = await User.findById(mongoose.Types.ObjectId(recipient));
@@ -530,10 +501,12 @@ app.post('/notif/:type', verify, async(req, res)=> {
             })
         )
 
+        let response;
         await Promise.all(
             recipients.map(async(recip) => {
 
-                if(recip == _id) {
+                if(recip.id == _id) {
+                    response = true;
                     return
                 } else {
                     let newNotif = new Notification({
@@ -543,10 +516,13 @@ app.post('/notif/:type', verify, async(req, res)=> {
                         senderUsername: req.body.senderUsername,
                         url: req.body.postURL,
                         message: 'initial',
-                        recipients: [recip.id]
+                        recipients: [recip.id],
+                        details: req.body.details
                     });
 
                     newNotif.save();
+                    response = newNotif._id
+                    console.log(newNotif._id)
 
                     let updateSenderList = await User.findByIdAndUpdate(
                             {_id: mongoose.Types.ObjectId(recip.id)},
@@ -560,20 +536,18 @@ app.post('/notif/:type', verify, async(req, res)=> {
                 }
             })
         );
-        res.status(200).send(true);
-    }
-
-    /* notif of comment on post, reshare, flagging, etc */
-    else if(type == 'commentResponse') {
-
+        // res.status(200).send(JSON.stringify({_id: response}));
+        res.status(200).send(response)
     }
 
     /* notif of user being tagged in a post or comment(?) */
     else if(type == 'tagging') {
 
-        console.log(req.body);
+        // console.log(req.body);
+        console.log('notif made: tagging');
         let recipients = req.body.recipients;
 
+        let notifID;
         await Promise.all(
             recipients.map(async(recip) => {
 
@@ -582,12 +556,14 @@ app.post('/notif/:type', verify, async(req, res)=> {
                     isRead: false,
                     sender: req.body.senderID,
                     senderUsername: req.body.senderUsername,
-                    url: req.body.postURL,
+                    url: req.body.url,
                     message: 'recieved',
-                    recipients: [recip]
+                    recipients: [recip],
+                    details: req.body.details
                 });
 
                 newNotif.save();
+                notifID = newNotif._id;
 
                 let updateRecipientList = await User.findByIdAndUpdate(
                         mongoose.Types.ObjectId(recip),
@@ -600,7 +576,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
                     });
             })
         );
-        res.status(200).send(true);
+        res.status(200).send(notifID);
 
     }
 })

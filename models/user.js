@@ -5,19 +5,19 @@ const mongoose = require('mongoose'),
 const NotificationSchema = new mongoose.Schema({
   type: {
     type: String,
-    required: true
+    required: false
   },
   isRead: {
     type: Boolean,
-    required: true
+    required: false
   },
   sender: {
     type: String,
-    required: true
+    required: false
   },
   senderUsername: {
     type: String,
-    required: true,
+    required: false,
   },
   recipients: [{
     type: String,
@@ -35,7 +35,7 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: false
   },
-  details: {
+  details: { //is always a JSON object. To be parsed by frontEnd
     type: String,
     required: false
   }
