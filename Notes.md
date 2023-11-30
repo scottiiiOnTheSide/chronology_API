@@ -4,8 +4,188 @@
 -----------------------------------------------------------------------------------------
 
 
-### 11. 15. 2023
+### 11. 29. 2023
 
+@1230 
+****To Do Next:
+		- come up with process for editing a post
+		- Clean up backend code and CSS . . .
+
+Finishing 1.0A
+- implement editing post & deleting comments & adding all comments
+
+@1130 notifs are weird - but they work for now. Will remain as is with the whole double nested issue...
+			however, all old notifs removed - working to implement notif.details now
+			in both <InteractionsList>
+
+
+### 11. 28. 2023
+@1520 new comments and comment replies now created and added to Post doc without creating 
+			individual docs 
+
+****To Do Next:
+		- process for deleting comments
+		- adding notifs to user's notifList -correctly-
+		- adjust route for marking a notif read
+		- process for editing a post
+			- replace text in content fields with new data
+			- delete photos or add to pinned media 
+			- option to pin post in details box
+
+
+@0410 comment created and added to post Doc - however, will need to change getComments function
+			within posts, as comments are no longer individual docs.
+			simply get postData again after each comment upload 
+			- will have to write function to count all nested comments
+
+
+### 11. 27. 2023
+@0355 add sanbanbaka and make post tagging user to investigate below notes
+
+@0345 worked on CSS for <Home> and <InteractionsList> components
+
+@1225 
+
+****To Do:
+		- Discern whether creating post makes seperate docs in DB for each content 
+			( 11. 28. 2023 | it doesnt - never did lol) ✅
+		- can new comment be created and added to post without saving directly?
+			( 11. 28. 2023 | done ) ✅
+		- can notifs be created and added to user's list without being saved ???
+			( 11. 28. 2023 | Current processes work well enough as is)
+
+
+
+
+### 11. 25. 2023
+@1950 Deleted all DB groups, other than users
+			Have noticed that my user notifications remain, and I can mark them read without
+		  the supposed doc being editted (external doc doesnt exist)
+
+Will look to take this approach with post content...
+Also must make sure no new notifs are then created xD
+
+
+@1115 <Entry> page CSS complete!
+- checks whether all fields in form have input
+- returns error messages with popUp notif
+- transition animations between signUp and logIn
+- animation for successful sign up (will add svgs later)
+
+****To Do Next:
+		- CSS for all <Home> & <Post> components
+
+		- delete all DB content and users, start from scratch
+		- document and organize all functions, make sure they work as intended
+			- fix what doesn't work
+
+
+@0100 
+****To Do Next:
+		- create error popUp alert. Activates when ✅
+			- error from API
+			- input field is missing value
+
+same format: popUp stateVar,
+	active: true, false
+	message: API error or frontEnd check for missing field
+
+
+
+### 11. 24. 2023
+@1230 
+****To Do Next:
+		- add check for whether inputs have value onSubmit, if not:
+			error message pop up 'please fill in all inputs'
+
+- after successful signup,  ✅
+	set transition state var in main component,
+	when set true,
+	- set signup false
+	  delay. 
+	  then set transition component on (same set up as other components)
+	  after sequence complete,
+	  turn off transition component then turn on log in
+
+	  two elements in transition component
+	  delay in animation sequence for second element
+	  can define element within main Entry component
+
+
+
+### 11. 23. 2023
+
+@1145 added animation styling for loginOrSignup and the forms
+      added toggling between the different forms
+
+****To Do:
+	  - form submit buttons "login" & "signup" to be nonActive and do nothing unless all
+	  	inputs have values ✅
+	  	- can check ref form.children[0].children for value
+	  	- map array of input details, returned element can have value={state}
+
+@1000 for initial button choice, on option select, loginOrSignup dissappears
+
+
+### 11. 22. 2023
+@1200 element toggle stateVar changes element class:
+
+if true: element.class = on
+- animation to display, then opacity 1
+
+if false: element.class = off
+- animation to opacity 0, display none
+
+To Do Next:
+- add animation classes to <forms> - same for both ✅
+- for loginOrSignup, it dissappears on first click. ✅
+	- can useRef and inline js for change
+- fadeOut page on navigate
+
+
+### 11. 19. 2023
+@1955 Unexpected end of JSON error for user responding to their own comment...
+
+implemented change to commentsSchema - now have field for parentPost, so that
+all comments can be deleted alongside post
+
+
+
+@1355 added component flow for deleting posts via <popUpNotif> :D
+on backEnd - need to implement measure for deleting ALL comments associated with a post ...
+
+@1245 comments issues fixed :D
+
+@1100 Fixed the postConfirmation popUp issue - however, now posting comments doesnt cause
+			a pop up... atleast, when user comments on own post
+
+another user commenting on post give them a popUp, but also a notif about the comment as well
+so, theres a mix up...
+
+
+### 11. 18. 2023
+@2350 postConfirmation keeps popping up after successful submit - fix
+
+@2340 fixed concerning newLines in <CreatePost> 
+		  Issue was the newLines would cause repeated entry of the same textArea, with new content
+		  now update to textarea updates content in at respective index
+
+newLines aren't maintained from submission to display (both comments and post)... will work on
+
+@2110 userLog and unreadNotif count retrieved upon initial login
+have to get the userKey with every api call - which is how it was done in the previous ver.
+
+
+### 11. 17. 2023
+@1620 perhaps in a preStep to 1.0A, after creating new accounts and data, 
+-go to post from interactionsList- can be added.
+
+As of now, new notifs will have change, but not previous. 
+for notifs, postTitle, commentID is kept in notif.details
+anything placed in details is JSON object
+
+
+### 11. 15. 2023
 @1500 will consider the scrollToComment issue 'closed' for now. May be able tp fix eventually
 		  with CSS cleanup
 

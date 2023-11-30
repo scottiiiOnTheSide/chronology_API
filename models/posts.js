@@ -26,9 +26,12 @@ const CommentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  parentPost: {
+    type: String,
+    required: true
+  },
   parentID: {
       type: mongoose.Schema.Types.ObjectID,
-      // ref: 'Posts'
   },
   content: {
     type: String,
@@ -93,7 +96,9 @@ const PostsSchema = new mongoose.Schema({
   isPinned: {
     type: Boolean
   },
-  tags: [GroupsSchema],
+  tags: [{
+    type: String
+  }],
 }, {timestamps: true});
 
 
