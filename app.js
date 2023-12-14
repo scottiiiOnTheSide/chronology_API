@@ -30,6 +30,9 @@ app.use('/users', userRoutes);
 const postRoutes = require('./routes/posts');
 app.use('/posts', postRoutes);
 
+const groupRoutes = require('./routes/groups');
+app.use('/groups', groupRoutes);
+
 const instantRoutes = require('./routes/instants');
 app.use('/', instantRoutes);
 

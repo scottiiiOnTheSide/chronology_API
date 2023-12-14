@@ -4,8 +4,96 @@
 -----------------------------------------------------------------------------------------
 
 
-### 11. 29. 2023
+### 12. 13. 2023
+@2320 Begun setting up groups route for backEnd
+			creation routes all completed (need to verify, ofc)
 
+****To Do Next:
+		- write out posts route
+		- backEnd logic for editing posts
+
+
+### 12. 12. 2023
+@0815 added Try / Catch to all routes.
+			No error _should_ be able to crash the api now...
+
+
+### 12. 11. 2023
+@1230 As of now, its seeming as though i may have brought a
+a very premature end to my beloved PC . . . 
+
+Fortunately, i believe the very last changes that I made to
+this project were indeed commited.
+Evenmoreso, the project looks and works great on mobile !!!
+
+Current Issues:
+- cannot make site full full screen and thus cannot access 
+  the Post / exit button from the <CreatePost> component
+- menuBar is transparent in <Post>
+- visible lag when first selecting a post... this may be due
+  to the fact that post data is gotten when link is
+  clicked? or it has something to do with the animation....
+
+
+### 12. 06. 2023
+@1145 commentCount concern, solution provided. FrontEnd counts comments - updates on loads
+			and comments for posts
+
+
+### 12. 05. 2023
+@1445
+****To Do Next - finishing CSS
+		- style comments ✅
+		- style notifications ✅
+		- fix styling of post options & commentBox ✅
+		- monthChart styling ✅
+			- signify current day some way ✅
+			- transition effect ✅
+
+- deleting comments
+- Cleaning up the backend
+
+
+@0335 CSS for <CreatePost> added
+
+****To Do Next:
+		- create array of image thumbnails for posts within <Log> ✅ 
+		- on post click, slide element before going to <Post> ✅
+
+
+### 12. 03. 2023
+@1400 only needed to add animation by default to <Entry>
+			mount transition effect also added for <Post>
+
+@0545 Added the transition animations effects to current sections and pages (other than Post)
+			but current implementation is abit shoddy
+
+Will switch to giving elements a default entrance animation
+the ::before to appear when component dismount
+
+
+### 11. 30. 2023
+@1555 added ::before psuedo element to <Entry>
+
+latent components, i.e <CreatePost>, to have ::before opacity1 by default
+onMount: use state to change component className to leave
+
+****To Do:
+		- add _latent_ toggle animations to...
+			<CreatePost> ✅   
+			<manageConnections> ✅
+			<interactionList> ✅ 
+		- add _regular_ toggle animations to
+		  <Entry> ✅
+		  <Home> ✅
+
+For Latent:
+	load with enter, true
+	 - wait 100, then enter, false
+	 on leave - enter, true
+
+
+### 11. 29. 2023
 @1230 
 ****To Do Next:
 		- come up with process for editing a post
