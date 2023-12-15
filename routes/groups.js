@@ -110,11 +110,136 @@ app.get('/posts/:action', verify, async (req,res) => {
     const {_id, _username} = decoded; 
     const type = req.body.type;
 
+    /**
+     * needed vars:
+     * req.body.groupID
+     * req.body.name
+     * req.body.postID
+     */
+
     try {
 
-        if(req.params.action == 'getPosts') {}
-        else if(req.params.action == 'addPost') {}
-        else if(req.params.actions == 'removePost') {}            
+        if(req.params.action == 'getPosts') {
+
+            let groupPostIDs = await Group.findOne({id: req.body.groupID, name: req.body.name}).then((data)=> {
+                return data.posts;
+            })
+            console.log(groupPostIDs); //testing code
+
+            let groupPosts = await Posts.find({'_id': { $in: groupPostIDs }});
+            console.log(groupPosts); //testing code
+
+            res.status(200).send(groupPosts);
+        }
+
+        else if(req.params.action == 'addPost') {
+
+            let group = await Group.findOne({id: req.body.groupID, name: req.body.name})
+
+            if(group.type == 'tag') {
+
+                if(group.isPrivate) {
+                    if(group.owner == _id) {
+
+                        group.posts.push(req.body.postID);
+                        group.save();
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+                else {
+                    if(group.hasAccess.contains(_id)) {
+
+                        group.posts.push(req.body.postID);
+                        group.save();
+                        res.status(200).send(true);
+                    }
+                    else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+
+            }
+            else if(group.type == 'collection') {
+
+                if(_id == group.owner) {
+
+                    group.posts.push(req.body.postID);
+                    group.save();
+                    res.status(200).send(true);
+                }
+                else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+            else if(group.type == 'group') {
+
+                if(group.admins.contains(_id) || group.hasAccess.contains(_id)) {
+
+                    group.posts.push(req.body.postID);
+                    group.save();
+                    res.status(200).send(true);
+                } else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+
+        }
+        else if(req.params.actions == 'removePost') {
+            let group = await Group.findOne({id: req.body.groupID, name: req.body.name})
+
+            if(group.type == 'tag') {
+
+                if(group.isPrivate) {
+                    if(group.owner == _id) {
+
+                        let newArray = group.posts.filter((post) => post !== req.body.postID);
+                        group.posts = newArray;
+                        group.save()
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+                else {
+                    if(group.hasAccess.contains(_id)) {
+                        let newArray = group.posts.filter((post) => post !== req.body.postID);
+                        group.posts = newArray;
+                        group.save()
+                        res.status(200).send(true);
+                    }
+                    else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+            }
+            else if(group.type == 'collection') {
+
+                if(_id == group.owner) {
+
+                    let newArray = group.posts.filter((post) => post !== req.body.postID);
+                    group.posts = newArray;
+                    group.save()
+                    res.status(200).send(true);
+                }
+                else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+            else if(group.type == 'group') {
+
+                if(group.admins.contains(_id)) {
+
+                    let newArray = group.posts.filter((post) => post !== req.body.postID);
+                    group.posts = newArray;
+                    group.save()
+                    res.status(200).send(true);
+                } else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+        }            
     } 
     catch(err) {
 
@@ -134,52 +259,138 @@ app.get('/manage/:action', verify, async (req,res) => {
     const {_id, _username} = decoded; 
     const type = req.body.type;
 
+    /**
+     * needed vars:
+     * req.body.groupID
+     * req.body.name
+     * req.body.postID
+     * req.body.userID
+     */
+
     try {
 
         /***
          * if Group, check whether user is an admin 
          */
+
+        let group = await Group.findOne({id: req.body.groupID, name: req.body.name})
+
+        if(req.params.action == 'request') {
+
+            //for requesting invites to private groups
+        }
+
         if(req.params.action == 'addUser') {
 
-            /* adds notification to added user's notifs */
-        }
-        else if(req.params.action == 'removeUser') {}
-            
-        else if(req.params.action == 'addAdmin') {
+            if(group.type == 'tag') { //for PUBLIC tags
 
-            /* adds notification to added user's notifs */
-        }
-        else if(req.params.action == 'removeAdmin') {
-
-            if(req.body.type == 'initial') {
-
-                /* sends out request notif to all group admins */
+                if(group.isPrivate) {
+                    res.status(403).send({message: 'You do not have access'})
+                } else {
+                    group.hasAccess.push(_id);
+                    group.save();
+                    res.status(200).send(true);
+                }
             }
+            else if(group.type == 'collection') {// for PUBLIC collections
 
-            else if(req.body.type == 'update') {
+                if(group.isPrivate) {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+                else {
+                    group.hasAccess.push(_id);
+                    group.save();
+                    res.status(200).send(true);
+                }
 
-                /* updates decision count for all admins */
             }
-
-            else if(req.body.type == 'confirm') {}
-        }
-
-        else if(req.params.action == 'deleteGroup') {
-
-            if(req.body.type == 'initial') {
-
-                /* sends out request notif to all group admins */
+            else if(group.type == 'group') {// for PUBLIC groups
+                if(group.isPrivate) {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+                else {
+                    group.hasAccess.push(_id);
+                    group.save();
+                    res.status(200).send(true);
+                }
             }
-
-            else if(req.body.type == 'update') {
-
-                /* updates decision count for all admins */
-            }
-
-            else if(req.body.type == 'confirm') {}
         }
 
-        
+        else if(req.params.action == 'removeUser') {
+
+            if(group.type == 'tag') {
+
+                if(group.hasAccess.contains(_id)) {
+
+                    let newList = group.hasAccess.filter((user) => user != _id);
+                    group.hasAccess = newList;
+                    group.save();
+                    res.status(200).send(true);
+                } else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+            else if(group.type == 'collection') {
+
+                if(group.hasAccess.contains(_id)) {
+
+                    let newList = group.hasAccess.filter((user) => user != _id);
+                    group.hasAccess = newList;
+                    group.save();
+                    res.status(200).send(true);
+                } else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+            if(group.type == 'group') {
+
+                if(group.hasAccess.contains(_id)) {
+
+                    let newList = group.hasAccess.filter((user) => user != req.body.userID);
+                    group.hasAccess = newList;
+                    group.save();
+                    res.status(200).send(true);
+                } else {
+                    res.status(403).send({message: 'You do not have access'})
+                }
+            }
+        }
+
+        //12. 15. 2023 - To Be Done
+        // else if(req.params.action == 'addAdmin') {
+
+        //     /* adds notification to added user's notifs */
+        // }
+
+        // else if(req.params.action == 'removeAdmin') {
+
+        //     if(req.body.type == 'initial') {
+
+        //         /* sends out request notif to all group admins */
+        //     }
+
+        //     else if(req.body.type == 'update') {
+
+        //         /* updates decision count for all admins */
+        //     }
+
+        //     else if(req.body.type == 'confirm') {}
+        // }
+
+        // else if(req.params.action == 'deleteGroup') {
+
+        //     if(req.body.type == 'initial') {
+
+        //         /* sends out request notif to all group admins */
+        //     }
+
+        //     else if(req.body.type == 'update') {
+
+        //         /* updates decision count for all admins */
+        //     }
+
+        //     else if(req.body.type == 'confirm') {}
+        // }
     } 
     catch(err) {
 

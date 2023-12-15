@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const GroupsSchema = new mongoose.Schema({
   type: {
-    type: String,
+    type: String, //'tag', 'collection', 'group'
     required: true
   },
   name: {

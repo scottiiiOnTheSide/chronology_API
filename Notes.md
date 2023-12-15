@@ -4,6 +4,15 @@
 -----------------------------------------------------------------------------------------
 
 
+### 12. 15. 2023
+@0940 added route for posts: getAll, add, remove.
+			added route for manage: addUser (if public), removeUser (if Public or hasAccess)
+
+****To Do Next:
+		- create frontEnd apiAccess functions for tag & collection operations
+		- write algo for requests
+
+
 ### 12. 13. 2023
 @2320 Begun setting up groups route for backEnd
 			creation routes all completed (need to verify, ofc)
