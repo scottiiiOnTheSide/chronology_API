@@ -396,8 +396,8 @@ app.post('/notif/:type', verify, async(req, res)=> {
                         });
                     })();
 
-                    requestOne.save()
-                    requestTwo.save()
+                    // requestOne.save()
+                    // requestTwo.save()
                     console.log('line 324');
                     console.log(requestTwo);
                     res.status(200).send(requestOne);
@@ -605,7 +605,121 @@ app.post('/notif/:type', verify, async(req, res)=> {
                 })
             );
             res.status(200).send(notifID);
+        }
 
+        else if(type == 'invite') {
+
+            /***
+             * Necessary Variables
+             * type: request, accepted, ignore
+             * sender: userID of requester
+             * senderUsername: userName
+             * recipients: array has one owner or many admins
+             * 
+             * details: 
+             *   - req.body.details should include
+             *     groupName:
+             *     groupID:
+             * 
+             * acceptance or ignore done on frontEnd
+             * 
+             * for ignore:
+             * req.body.details = original request notif ID
+             */
+
+            if(req.body.message == "request") {
+
+                /**
+                 * A L G O
+                 * create and add invite notif to invitee-user's notif list
+                 * 
+                 * requester -> owner
+                 * or
+                 * owner -> invitee
+                 */
+
+                let request = new Notification({
+                        type: req.body.type, //invite
+                        isRead: false,
+                        sender: req.body.userID,
+                        senderUsername: req.body.userName,
+                        recipients: req.body.recipients, 
+                        recipientUsername: recipient.username,
+                        message: 'request',
+                        details: req.body.details
+                    });
+
+                //if
+                (async()=> {
+                    let updateSenderList = await User.update(
+                        { _id: { $in: [req.body.recipients]}},
+                        {$push: {"notifications": request}},
+                        [{upsert: true}, {useFindandModify: false}, {multi: true}],
+                    ).then((res) => {
+                        if(res) {
+                            console.log("notification of invite added to recipient's list")
+                        }
+                    });
+                })();
+
+                res.status(200).send(request);
+            }
+
+            else if(req.body.message == "accepted") {
+
+                /**
+                 * A L G O
+                 * create and add invite notif to invitee-user's notif list
+                 * 
+                 * owner doesn't recieve notification of acceptance,
+                 * only invitee or requester
+                 */
+
+                let request = new Notification({
+                        type: req.body.type, //invite
+                        isRead: false,
+                        sender: req.body.userID,
+                        senderUsername: req.body.userName,
+                        recipients: req.body.recipients, 
+                        recipientUsername: recipient.username,
+                        message: 'accepted',
+                        details: req.body.details
+                    });
+
+                (async()=> {
+                    let updateSenderList = await User.findByIdAndUpdate(
+                        mongoose.Types.ObjectId(req.body.userID),
+                        {$push: {"notifications": request}},
+                        [{upsert: true}, {useFindandModify: false}],
+                    ).then((res) => {
+                        if(res) {
+                            console.log("notification of invite added to recipient's list")
+                        }
+                    });
+                })();
+
+                res.status(200).send(request);
+            }
+
+            else if(req.body.message == "ignore") {
+                
+                /**
+                 * A L G O
+                 * marks recipient notification as read 
+                 */
+
+                (async()=> {
+
+                    let user = await User.findById(_id);
+                    let notifs = user.notifications;
+
+                    let indexOfEditted = notifs.findIndex((notif)=> notif._id == req.body.details);
+                    notifs[indexOfEditted].isRead = true;
+                    user.save();
+                })();
+
+                res.status(200).send(true);
+            }                
         }
         
     } catch(err) {

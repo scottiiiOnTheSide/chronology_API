@@ -10,7 +10,7 @@ const express = require('express'),
 
 require('dotenv').config();
 
-app.get('/create', verify, async (req,res) => {
+app.post('/create', verify, async (req,res) => {
 
   try {
 
@@ -263,8 +263,10 @@ app.get('/manage/:action', verify, async (req,res) => {
      * needed vars:
      * req.body.groupID
      * req.body.name
-     * req.body.postID
      * req.body.userID
+     * req.body.details 
+     *  - for accessing private group, details is an id from either
+     *    owner or an admin
      */
 
     try {
@@ -275,19 +277,21 @@ app.get('/manage/:action', verify, async (req,res) => {
 
         let group = await Group.findOne({id: req.body.groupID, name: req.body.name})
 
-        if(req.params.action == 'request') {
-
-            //for requesting invites to private groups
-        }
-
         if(req.params.action == 'addUser') {
 
             if(group.type == 'tag') { //for PUBLIC tags
 
                 if(group.isPrivate) {
-                    res.status(403).send({message: 'You do not have access'})
+            
+                    if(group.owner == req.body.details) {
+                        group.hasAccess.push(req.body.userID);
+                        group.save();
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
                 } else {
-                    group.hasAccess.push(_id);
+                    group.hasAccess.push(req.body.userID);
                     group.save();
                     res.status(200).send(true);
                 }
@@ -295,10 +299,17 @@ app.get('/manage/:action', verify, async (req,res) => {
             else if(group.type == 'collection') {// for PUBLIC collections
 
                 if(group.isPrivate) {
-                    res.status(403).send({message: 'You do not have access'})
+                    
+                    if(group.owner == req.body.details) {
+                        group.hasAccess.push(req.body.userID);
+                        group.save();
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
                 }
                 else {
-                    group.hasAccess.push(_id);
+                    group.hasAccess.push(req.body.userID);
                     group.save();
                     res.status(200).send(true);
                 }
@@ -307,9 +318,17 @@ app.get('/manage/:action', verify, async (req,res) => {
             else if(group.type == 'group') {// for PUBLIC groups
                 if(group.isPrivate) {
                     res.status(403).send({message: 'You do not have access'})
+
+                    if(group.admins.includes(req.body.details)) {
+                        group.hasAccess.push(req.body.userID);
+                        group.save();
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
                 }
                 else {
-                    group.hasAccess.push(_id);
+                    group.hasAccess.push(req.body.userID);
                     group.save();
                     res.status(200).send(true);
                 }
@@ -320,7 +339,7 @@ app.get('/manage/:action', verify, async (req,res) => {
 
             if(group.type == 'tag') {
 
-                if(group.hasAccess.contains(_id)) {
+                if(group.hasAccess.includes(_id)) {
 
                     let newList = group.hasAccess.filter((user) => user != _id);
                     group.hasAccess = newList;
@@ -332,7 +351,7 @@ app.get('/manage/:action', verify, async (req,res) => {
             }
             else if(group.type == 'collection') {
 
-                if(group.hasAccess.contains(_id)) {
+                if(group.hasAccess.includes(_id)) {
 
                     let newList = group.hasAccess.filter((user) => user != _id);
                     group.hasAccess = newList;
@@ -344,7 +363,7 @@ app.get('/manage/:action', verify, async (req,res) => {
             }
             if(group.type == 'group') {
 
-                if(group.hasAccess.contains(_id)) {
+                if(group.hasAccess.includes(_id) || group.admins.includes(_id)) {
 
                     let newList = group.hasAccess.filter((user) => user != req.body.userID);
                     group.hasAccess = newList;
