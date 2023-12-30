@@ -4,11 +4,9 @@ const express = require('express'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
       {Posts, Content, Comment} = require('../models/posts'),
-      // Tags = require('../models/tags'),
+      {Group} = require('../models/groups'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
-      // manageTags = require('../manageTags'),
-      manageImages = require('../manageImages'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
       path = require('path'),
@@ -51,16 +49,6 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     let tagslist = null;
 
     console.log(req.body);
-
-    //converts provided tags to be stored in doc by name, rather than their IDs
-    let tags;
-    // if(req.body.tags != '') {
-    //   tags = req.body.tags.split(/[, ]+/);
-    //   tagslist = tags.map((tag) => tag.name)
-    // } else if(req.body.tags == undefined) {
-    //   return;
-    // }
-
 
     /* media processing stuff */
       /*  
@@ -113,7 +101,6 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         newPost.owner = _id;
         newPost.author = _username;
         newPost.title = req.body.title;
-        newPost.tags = tagslist;
         newPost.taggedUsers = req.body.taggedUsers;
         newPost.postedOn_month = month;
         newPost.postedOn_day = date;
@@ -123,32 +110,10 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         newPost.owner = _id;
         newPost.author = _username;
         newPost.title = req.body.title;
-        newPost.tags = tagslist;
         newPost.taggedUsers = req.body.taggedUsers;
         newPost.postedOn_month = req.body.postedOn_month;
         newPost.postedOn_day = req.body.postedOn_day;
         newPost.postedOn_year = req.body.postedOn_year;
-    }
-
-    //updates tags to include new post created with them  
-    if(tags) {
-      tags.forEach((tag) => {
-        Tags.findByIdAndUpdate(
-          tag.id,
-          {$push: {"posts": newPost}},
-          {upsert: true},
-          function(err,success) {
-            if(err) {
-              console.log(err)
-            } else {
-              console.log("tag updated")
-            }
-          }
-        )
-      })
-    } 
-    else if (tags == '' || tags == 'undefined') {
-        return null;
     }
 
     let body = {}
@@ -193,15 +158,30 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
       newPost.content.push(element);
     })
 
-    await newPost.save().then((post) => {
-      if(post) {
-        console.log(`"${post.title}" uploaded successfully`);
+    //updates tags to include new post created with them  
+    if(req.body.tags) {
+
+      let tags = req.body.tags.split(',');
+      newPost.tags = tags;
+      newPost.save();
+
+      (async()=> {
+        await Group.updateMany({"name": {$in: tags}},
+                                {$push: {"posts": newPost._id}});
+      })
+    } else {
+      newPost.save();
+    }
+
+    // await newPost.save().then((post) => {
+    //   if(post) {
+        console.log(`"${newPost.title}" uploaded successfully`);
         res.status(200).send({postURL: newPost._id, postTitle: newPost.title, confirm: true});
-      } else {
-        console.log("There was an issue with the upload...");
-        res.status(400).send(false);
-      }
-    });
+    //   } else {
+    //     console.log("There was an issue with the upload...");
+    //     res.status(400).send(false);
+    //   }
+    // });
 
   }
   catch(err) {
@@ -635,7 +615,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
         commentNumber: req.body.commentNumber,
         replies: []
       })
-      // newComment.save();
+      newComment.save();
 
       await Posts.findOneAndUpdate(
         {_id:mongoose.Types.ObjectId(req.body.parentID)},
@@ -662,7 +642,8 @@ app.post('/comment/:type', verify, async(req, res)=> {
         postedOn_year: req.body.postedOn_year,
         commentNumber: req.body.commentNumber,
         replies: []
-      })
+      });
+      newComment.save();
       
       let post = await Posts.findById(req.body.parentPost);
       let comments = post.comments,
@@ -680,7 +661,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
       parentComment.replies.push(newComment);
       post.save();
 
-      res.status(200).send(true);
+      res.status(200).send(newComment._id);
     }
     
   } catch(err) {

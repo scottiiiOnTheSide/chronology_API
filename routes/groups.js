@@ -6,7 +6,8 @@ const express = require('express'),
       {Group} = require('../models/groups'),
       verify = require('../verifyUser'),
       encrypt = require('bcryptjs'),
-      JWT = require('jsonwebtoken');
+      JWT = require('jsonwebtoken'),
+      fs = require('fs');
 
 require('dotenv').config();
 
@@ -72,7 +73,7 @@ app.post('/create', verify, async (req,res) => {
     else if(req.body.type == 'group') {
 
         /*** Pre-existance Check ***/
-        let alreadyExists = await Group.findOne({name: req.body.name, type, req.body.type});
+        let alreadyExists = await Group.findOne({name: req.body.name, type: req.body.type});
         if(alreadyExists) {
             res.status(200).send({alreadyExists: `This ${req.body.type} already exists` });
         } 
@@ -115,21 +116,34 @@ app.get('/posts/:action', verify, async (req,res) => {
      * req.body.groupID
      * req.body.name
      * req.body.postID
+     * req.body.type
      */
 
     try {
 
         if(req.params.action == 'getPosts') {
 
-            let groupPostIDs = await Group.findOne({id: req.body.groupID, name: req.body.name}).then((data)=> {
-                return data.posts;
-            })
-            console.log(groupPostIDs); //testing code
+            if(type == 'tag') {
 
-            let groupPosts = await Posts.find({'_id': { $in: groupPostIDs }});
-            console.log(groupPosts); //testing code
+                let allPosts = Posts.find({tags: `${req.body.name}`}).then((data)=> {
+                    if(data) {
+                        res.status(200).send(data)
+                    } else {
+                        res.status(400).send({message: "No posts for this tag"});
+                    }
+                })
+            }
+            else if(type == 'collection' || type == 'group') {
 
-            res.status(200).send(groupPosts);
+                let group = Group.find({name: req.body.name, type: req.body.type});
+                let posts = Posts.find({ '_id': {$in: group.posts}}).then(data => {
+                    if(data) {
+                        res.status(200).send(data);
+                    } else {
+                        res.status(400).send({message: "No posts in this collection"});
+                    }
+                })
+            }
         }
 
         else if(req.params.action == 'addPost') {
@@ -239,6 +253,32 @@ app.get('/posts/:action', verify, async (req,res) => {
                     res.status(403).send({message: 'You do not have access'})
                 }
             }
+        }
+
+        else if(req.params.action == 'getUserTags') {
+
+        }  
+        else if(req.params.action == 'getSuggestions') {
+
+            /* read topics from file & get user's tags
+                to provide frontEnd with suggestions for tags
+                during post
+            */
+
+            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+
+            res.status(200).send(topics);
+        }
+        else if(req.params.action == 'getPrivatePosts') {
+
+        }
+        else if(req.params.action == 'getCollections') {
+
+            /* retrieve list of names of all user's collections */
+        }
+        else if(req.params.action == 'getGroups') {
+
+            /* retrieve list of names of all groups user is in */
         }            
     } 
     catch(err) {
@@ -417,3 +457,7 @@ app.get('/manage/:action', verify, async (req,res) => {
         res.status(400).send({message: "An Error Has Occured. Please Try Again"});
     }
 })
+
+
+
+module.exports = app;
