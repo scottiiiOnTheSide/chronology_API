@@ -4,9 +4,94 @@
 -----------------------------------------------------------------------------------------
 
 
+### 01. 03. 2024
+
+@1350 newTag submission now works!
+
+****To Do Next:
+		- confirm process for adding new tag on backEnd + frontEnd response work properly
+		- refresh suggestions within <CreatePost> on submit (regardless of confirmation should be fine...)
+		- make sure getting user tags they saved works properly
+		- differentiate tags and topics in suggestions list
+
+upon all above working correctly, can commence building out <Macros> section
+
+
+@1345 backEnd now having issue running find() on Group model...
+
+@1320 set up process for creating new tag:
+			setSocketMessage with data on submit within <CreatePost>
+			primary useEffect in <Instant> socketMessage.action
+			- runs doAction_newTag
+				- if already exists, gives user option to join (should added whether already exists
+				and is private...)
+				- otherwise creates new tag
+
+****To Do Next:
+		- current issue is something wrong with the body included in the api call, seems like it
+			isnt being added ✅
+
+@0140 added styles to newTag modal
+			Added functionality for opening and closing it
+
+****To Do Next:
+		- add functionality for creating new tag ✅
+		  - this process will be the same (more or less) for all <Manage* > functions
+
+
+### 01. 02. 2024
+@1300 issue truly fixed now - had menuButton reset the date to the current date whenever
+			closing the monthChart
+
+@1230 Fixed issue with monthChart - frontEnd would crash after returning to monthChart on
+a different month
+
+@1110 fixed backend issue concerning returning old posts
+
+
+### 01. 01. 2024
+@1930 added skeleton for modal for creating new tags
+
+Not getting posts from last year, as it's a new year
+need to fix backend code...
+
+
+
+H A P P Y  
+	N E W
+		Y E A R S !!!
+2  0  2  4
+
+
+
+### 12. 31. 2023
+@1420 additions made checked off below...
+
+made alternate class state for <CreatePost> for underlay when <NewTag> is up
+
+****To Do Next:
+		- create modal for newTag creation
+		- begin making additions to <Instant> for channelling <Manage* > functions
+		- may need to make <popUpNotif> zIndex higher than <CreatePost> ...
+
+### 12. 30. 2023
+@1400 additions made:
+			selected tags wrapper adjusts when size expands too far 
+			&
+			can now click selected tags in order to remove them
+
+****To Do Next:
+		- add private button to toggle isPrivate ✅
+		- edit ul#autocomplete so that 
+		  - it's within a wrapper ✅
+			- height is limited ✅
+			- button to open modal for newTag is always at bottom ✅
+		- create modal for newTag creation
+		- begin making additions to <Instant> for channelling <Manage* > functions
+
+
 ### 12. 29. 2023
 @2350 tags inclusion within post submission works :D !
-
 need to display tags on post page ...
 
 
@@ -15,9 +100,9 @@ need to display tags on post page ...
 			but great headway
 
 ****To Do Next:
-		- give spans onClick function, so tags can be deSelected...
-		- implement flex direction change when inputWrapper gets too long
-		- add selected suggestions as tags in post . . .
+		- give spans onClick function, so tags can be deSelected... ✅
+		- implement flex direction change when inputWrapper gets too long ✅
+		- add selected suggestions as tags in post . . . ✅
 		- add private button to toggle isPrivate
 		- discern logics for creating a tag from <CreatePost>
 

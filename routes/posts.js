@@ -46,7 +46,6 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     
     let newPost = new Posts({});
     let postContent = [];
-    let tagslist = null;
 
     console.log(req.body);
 
@@ -105,6 +104,7 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         newPost.postedOn_month = month;
         newPost.postedOn_day = date;
         newPost.postedOn_year = year;
+        newPost.isPrivate = req.body.isPrivate;
     }
     else if (req.body.usePostedByDate == 'false') {
         newPost.owner = _id;
@@ -114,6 +114,7 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         newPost.postedOn_month = req.body.postedOn_month;
         newPost.postedOn_day = req.body.postedOn_day;
         newPost.postedOn_year = req.body.postedOn_year;
+        newPost.isPrivate = req.body.isPrivate;
     }
 
     let body = {}
@@ -224,17 +225,18 @@ app.get('/log', verify, async (req,res) => {
             /*all posts made within or before current year*/
             if (post.postedOn_year <= currentYear) {
 
-              /* removes posts within current year, but beyond current month */
-              if((post.postedOn_month <= currentMonth)) {
 
-                  /* exclude posts within current month, beyond current day*/
-                  if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
-                    return null;
-                  }
+              /* removes posts within current year, beyond current month */
+              if(post.postedOn_year == currentYear && post.postedOn_month > currentMonth) {
+                 return null;
+              }
+                  
+              if(post.postedOn_day > currentDay && post.postedOn_month == currentMonth) {
+                 return null;
+              }
 
-                  else {
-                    return post;
-                  }
+              else {
+                return post;
               }
             }
           });
@@ -272,7 +274,7 @@ app.get('/log', verify, async (req,res) => {
 
       let posts = await Posts.find({owner: _id}).sort({createdAt: -1})
 
-        console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
+        // console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
           let d = new Date(),
               currentYear = d.getFullYear(),
@@ -284,17 +286,18 @@ app.get('/log', verify, async (req,res) => {
             /*all posts made within or before current year*/
             if (post.postedOn_year <= currentYear) {
 
-              /* removes posts within current year, but beyond current month */
-              if((post.postedOn_month <= currentMonth)) {
 
-                  /* exclude posts within current month, beyond current day*/
-                  if(post.postedOn_day > currentDay && !post.postedOn_month == currentMonth) {
-                    return null;
-                  }
+              /* removes posts within current year, beyond current month */
+              if(post.postedOn_year == currentYear && post.postedOn_month > currentMonth) {
+                 return null;
+              }
+                  
+              if(post.postedOn_day > currentDay && post.postedOn_month == currentMonth) {
+                 return null;
+              }
 
-                  else {
-                    return post;
-                  }
+              else {
+                return post;
               }
             }
           });
@@ -314,6 +317,7 @@ app.get('/log', verify, async (req,res) => {
 
           sortByDate(results);
           console.log("Results reordered");
+          console.log(results);
 
           // results.forEach((post) => {
           //   console.log(post.postedOn_month+ "." +post.postedOn_day+ "." +post.postedOn_year);
