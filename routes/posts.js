@@ -317,17 +317,7 @@ app.get('/log', verify, async (req,res) => {
 
           sortByDate(results);
           console.log("Results reordered");
-          console.log(results);
-
-          // results.forEach((post) => {
-          //   console.log(post.postedOn_month+ "." +post.postedOn_day+ "." +post.postedOn_year);
-          // })
-
-          /* 10. 02. 2023 No longer necessary ...? */
-          // let reorder = [];
-          // for(let i = results.length -1 ; i >= 0; i--) {
-          //   reorder.push(results[i]);
-          // }
+          // console.log(results);
 
         res.status(200).send(results)
       } 

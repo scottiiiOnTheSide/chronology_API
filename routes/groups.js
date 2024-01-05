@@ -40,7 +40,8 @@ app.post('/create', verify, async (req,res) => {
 
             let newTag = new Groups({
                 type: req.body.type,
-                name: req.body.name 
+                name: req.body.name,
+                hasAccess: [req.body.hasAccess]
             });
 
             if(req.body.isPrivate) {
@@ -70,7 +71,7 @@ app.post('/create', verify, async (req,res) => {
             });
 
             newCollection.save();
-            res.status(200).send(true);
+            res.status(200).send({confirm: true, name: newCollection.name});
         }
     }
     else if(req.body.type == 'groups') {
@@ -83,7 +84,7 @@ app.post('/create', verify, async (req,res) => {
         else {
             req.body.admins.push(_id);
 
-            let newGroups = new Groups({
+            let newGroup = new Groups({
                 type: req.body.type,
                 name: req.body.name,
                 owner: _id,
@@ -91,8 +92,8 @@ app.post('/create', verify, async (req,res) => {
                 admins: req.body.admins
             });
 
-            newGroups.save();
-            res.status(200).send(true);
+            newGroup.save();
+            res.status(200).send({confirm: true, name: newGroup.name});
         }
     }
   } 
@@ -260,6 +261,15 @@ app.get('/posts/:action', verify, async (req,res) => {
 
         else if(req.params.action == 'getUserTags') {
 
+            let userTags = await Groups.find({hasAccess: _id})
+            console.log(userTags);
+            if(userTags.length > 0) {
+                userTags = userTags.map(tag => tag.name);
+                res.status(200).send(userTags);
+            } else {
+                res.status(200).send(false);
+            }
+           
         }  
         else if(req.params.action == 'getSuggestions') {
 
@@ -279,7 +289,7 @@ app.get('/posts/:action', verify, async (req,res) => {
 
             /* retrieve list of names of all user's collections */
         }
-        else if(req.params.action == 'getGroupss') {
+        else if(req.params.action == 'getGroups') {
 
             /* retrieve list of names of all groupss user is in */
         }            

@@ -287,7 +287,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
                 reordered.push(notifs[i][0]);
             }
 
-            console.log(reordered)
+            // console.log(reordered)
 
             console.log(`sending ${user.userName} notifs`)
 
