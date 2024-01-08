@@ -13,6 +13,9 @@ const GroupsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectID,
     ref: 'User'
   },
+  ownerUsername: { //is only for macros (tags, collections)
+    type: String
+  }, 
   admins: [{
     type: mongoose.Schema.Types.ObjectID,
     ref: 'User'

@@ -261,14 +261,31 @@ app.get('/posts/:action', verify, async (req,res) => {
 
         else if(req.params.action == 'getUserTags') {
 
+            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+            let userPosts = await Posts.find({owner: _id}).limit(50);
             let userTags = await Groups.find({hasAccess: _id})
             console.log(userTags);
-            if(userTags.length > 0) {
-                userTags = userTags.map(tag => tag.name);
-                res.status(200).send(userTags);
-            } else {
-                res.status(200).send(false);
-            }
+
+            
+            let userTopics = userPosts.filter(post => {
+                for(let i = 0; i > topics.length; i++) {
+                    if(post.tags.includes(topics[i])) {
+                        return topics[i];
+                    }
+                    else {
+                        return
+                    }
+                }
+            })
+            console.log(userTopics);
+
+
+            // if(userTags.length > 0) {
+            //     // userTags = userTags.map(tag => tag.name);
+            //     res.status(200).send(userTags);
+            // } else {
+            //     res.status(200).send(false);
+            // }
            
         }  
         else if(req.params.action == 'getSuggestions') {
@@ -277,17 +294,18 @@ app.get('/posts/:action', verify, async (req,res) => {
                 to provide frontEnd with suggestions for tags
                 during post
             */
-
             const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
-
             res.status(200).send(topics);
         }
         else if(req.params.action == 'getPrivatePosts') {
 
+            let posts = await Posts.find({owner: _id, isPrivate: true}).sort({createdAt: -1});
+            res.status(200).send(posts);
         }
         else if(req.params.action == 'getCollections') {
 
             /* retrieve list of names of all user's collections */
+
         }
         else if(req.params.action == 'getGroups') {
 
