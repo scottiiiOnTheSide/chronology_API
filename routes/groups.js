@@ -41,13 +41,10 @@ app.post('/create', verify, async (req,res) => {
             let newTag = new Groups({
                 type: req.body.type,
                 name: req.body.name,
-                hasAccess: [req.body.hasAccess]
+                hasAccess: [req.body.hasAccess],
+                isPrivate: req.body.isPrivate ? true : false,
+                owner: req.body.isPrivate ? _id : null,
             });
-
-            if(req.body.isPrivate) {
-                newTag.owner = _id;
-                newTag.isPrivate = true;
-            }
 
             newTag.save();
             res.status(200).send({confirm: true, name: newTag.name});
@@ -261,41 +258,61 @@ app.get('/posts/:action', verify, async (req,res) => {
 
         else if(req.params.action == 'getUserTags') {
 
-            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
-            let userPosts = await Posts.find({owner: _id}).limit(50);
-            let userTags = await Groups.find({hasAccess: _id})
-            console.log(userTags);
+            let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
 
-            
-            let userTopics = userPosts.filter(post => {
-                for(let i = 0; i > topics.length; i++) {
-                    if(post.tags.includes(topics[i])) {
-                        return topics[i];
-                    }
-                    else {
-                        return
-                    }
-                }
-            })
-            console.log(userTopics);
-
-
-            // if(userTags.length > 0) {
-            //     // userTags = userTags.map(tag => tag.name);
-            //     res.status(200).send(userTags);
-            // } else {
-            //     res.status(200).send(false);
-            // }
-           
+            if(userTags.length > 0) {
+                res.status(200).send(userTags);
+            } else {
+                res.status(200).send(false);
+            }
         }  
         else if(req.params.action == 'getSuggestions') {
 
-            /* read topics from file & get user's tags
-                to provide frontEnd with suggestions for tags
-                during post
+            /* read topics from file & get user's tags to provide frontEnd 
+               with topics as suggestions for tags during post
             */
             const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
             res.status(200).send(topics);
+        } 
+        else if(req.params.action == 'allTagsUsed') {
+
+            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+            let userPosts = await Posts.find({owner: _id}).limit(50);
+            let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
+
+            let allTags = [];
+
+            /* Gathers all tags used within most recent posts */
+            userPosts.forEach(post => {
+                if(post.tags) {
+                    post.tags.forEach(tag => {
+                        allTags.push(tag);
+                    })
+                }
+            })
+
+            /* Ensures each tag or topic only appears once within */
+            allTags = [...new Set(allTags)];
+
+            let topicObjects = allTags.map(element => {
+                if(topics.includes(element)) {
+                    return {
+                        name: element,
+                        type: 'topic'
+                    }
+                } else {
+                    return;
+                }
+            })
+
+            console.log(topicObjects);
+            let results = [];
+            results.push(...topicObjects);
+            results.push(...userTags);
+            console.log(results);
+
+
+            res.status(200).send(results);
         }
         else if(req.params.action == 'getPrivatePosts') {
 

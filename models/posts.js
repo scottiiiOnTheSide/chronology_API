@@ -64,7 +64,7 @@ const PostsSchema = new mongoose.Schema({
     type: String,
     ref: 'User',
   }],
-  isPersonal: {
+  isPrivate: {
     type: Boolean,
   },
   setEvent_Year: {
