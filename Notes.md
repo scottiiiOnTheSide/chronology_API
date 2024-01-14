@@ -4,7 +4,53 @@
 -----------------------------------------------------------------------------------------
 
 
+### 01. 14. 2024
+@0150 Began building out the deleteTags section of <ManageMacros >
+
+****To Do Next:
+		- copy onClick effect from <MonthChart> for li within deleteTags so that confirmation
+			div can appear
+		- connect buttons with backend api via <Instant>
+			- routing from initial useEffect, doAction & responses and or interaction options
+
+
+### 01. 13. 2024
+@2330 Made subroute for deleting groups (api/groups/manageGroups/deleteGroup)
+			verify to ensure it works:
+				- deleting a private tag
+				- being removing oneself from a public tag
+					(this route needs to include removing same tag from all user posts)
+
+
+### 01. 11. 2024
+@0245 further development of <ManageMacros > menu options
+			Will limit height of options which have indefinite lists
+
+****To Be Done:
+		- finish layout frontEnd for <ManageMacros > options
+		- connect frontEnd to backEnd functions via <Instant>
+			- routing from initial useEffect, doAction & responses and or interaction options
+		and then
+		- macros subpages!
+
+
+### 01. 10. 2024
+@1405 Alternative solution found to the loading affect for <ManageMacros >
+			is also slightly cleaner than the other implementation used on other sections...
+			may switch them all to this one ...
+
+@0825 done some styling for <ManageMacros >
+
+@0815 issue with the setEnter state func within <ManageMacros >
+			seeming like the useEffect wont trigger when the modal is active...
+
+
 ### 01. 09. 2024
+@2130 began some skeleton work for <ManageMacros>
+
+need to have ::before psuedo class to main div for fading in and out on arrive and leave
+header buttons in main menu expand wrapper li to fit content, height wise
+	- should be limited to size of header button before hand
 
 @1330 getting user's previously used tags works. Currently displaying in <Macros >
 
