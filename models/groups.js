@@ -28,6 +28,9 @@ const GroupsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectID,
     ref: 'Posts'
   }],
+  details: {    //to be JSON. For groups and collections, includes info
+    type: String
+  },
   isPrivate: Boolean,
 })
 GroupsSchema.add({ tags: [GroupsSchema] });

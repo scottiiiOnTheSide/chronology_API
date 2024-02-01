@@ -4,12 +4,67 @@
 -----------------------------------------------------------------------------------------
 
 
+### 02. 01. 2024
+@0955 deleting tags works T- T (so much little errors)
+need to clean up UI process after success response
+also need to have <Macros > data refreshed after closing the menu...
+
+
+### 01. 31. 2024
+@1210 newTag functionality already in place in <Instants >. Connected to the option within
+	    <ManageMacros > works just as expected :D ! It's great to see previous, well planned
+	    functionality be reimplemented to smoothly...
+
+****To Do Next:
+		- remaining functionality
+			- in <ManageMacros > create body object, then use setSocketMessage
+			- in <Instant > intepret socketMessage state change with conditional within Initial useEffect
+			- write action_ functions for
+				- deleting a tag ( accessAPI.manageGroup() )
+				- newCollection ( accessAPI.newGroup() )
+				- renaming a collection, deleting or making collection private ( accessAPI.manageGroup() )
+			- write 'makePrivate' conditional within groups/manage/:makePrivate
+
+
+### 01. 27. 2024
+@1425 Options for manageCollections option in menu now working.
+Note: implementation is -abit- glitchy, but suffices for now...
+
+****To Do Next:
+		- plug in functionality...
+			plan beforehand, pls
+
+
+### 01. 25. 2024
+@1445 finish building skeleton&style for NewCollection & ManageCollections options
+
+****To Do Next:
+		- functionality for option selection in ManageCollections list
+			- initial tap prompts div.initialChoiceWrapper
+			- selecting delete or private closes div.initialChoiceWrapper, opens div.confirm
+				- on click, make change to collection based on which item is selected in State var
+					- then check whether 'delete' or 'private' was also selected
+			- selecting rename opens form
+
+
+### 01. 21. 2024
+@0140 It's been a week (T- T) Gomenasai desu yooo
+Anyhow,
+selecting deleteTag options shows the confirmation options
+
+****To Do Next:
+		- build out NewCollection & ManageCollections options
+		- connect <ManageMacros > to backEnd
+
+Gotta look into lazy loading for the logs with images...
+
+
 ### 01. 14. 2024
 @0150 Began building out the deleteTags section of <ManageMacros >
 
 ****To Do Next:
 		- copy onClick effect from <MonthChart> for li within deleteTags so that confirmation
-			div can appear
+			div can appear ✅
 		- connect buttons with backend api via <Instant>
 			- routing from initial useEffect, doAction & responses and or interaction options
 

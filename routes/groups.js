@@ -339,7 +339,7 @@ app.get('/posts/:action', verify, async (req,res) => {
 
 
 
-app.get('/manage/:action', verify, async (req,res) => {
+app.post('/manage/:action', verify, async (req,res) => {
 
     const auth = req.header('auth-token');
     const base64url = auth.split('.')[1];
@@ -362,7 +362,8 @@ app.get('/manage/:action', verify, async (req,res) => {
          * if Groups, check whether user is an admin 
          */
 
-        let group = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
+        let group = await Groups.findOne({_id: req.body.groupID})
+        console.log(group);
 
         if(req.params.action == 'addUser') {
 
@@ -483,22 +484,23 @@ app.get('/manage/:action', verify, async (req,res) => {
         //     else if(req.body.type == 'confirm') {}
         // }
 
-        else if(req.params.action == 'deleteGroups') {
+        else if(req.params.action == 'deleteGroup') {
 
-            if(req.params.type == 'tag') {
+            if(req.body.type == 'tag') {
 
-                if(group.isPrivate) {
+                if(group.isPrivate == true) {
                     (async()=> {
                         await Groups.deleteOne({_id: group._id});
-                        res.status(200).send(true);
-                    })()
-                } else {
+                        res.status(200).send({confirmation: true, groupName: group.name});
+                    })();
+                } 
+                else {
                     (async()=> {
-                        let newHasAccess = group.hasAccess(id => id != _id);
+                        let newHasAccess = group.hasAccess.filter(id => id != _id);
                         group.hasAccess = newHasAccess;
                         group.save()
-                        res.status(200).send(true);
-                    })
+                        res.status(200).send({confirmation: true, groupName: group.name});
+                    })();
                 }
             }
 
@@ -517,6 +519,14 @@ app.get('/manage/:action', verify, async (req,res) => {
             }
 
             else if(req.body.type == 'confirm') {}
+        }
+
+        else if(req.params.action == 'makePrivate') {
+
+            //01. 31. 2024 gotta write it out :D
+            if(req.params.type == 'tag') {}
+
+            else if (req.params.type == 'collection') {}
         }
     } 
     catch(err) {
