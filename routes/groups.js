@@ -59,16 +59,18 @@ app.post('/create', verify, async (req,res) => {
         } 
         else {
 
+            let description = JSON.stringify({description: req.body.details});
+
             let newCollection = new Groups({
                 type: req.body.type,
                 name: req.body.name,
                 owner: _id,
                 isPrivate: req.body.isPrivate = true ? true : false,
-                posts: req.body.posts
+                details: description
             });
 
             newCollection.save();
-            res.status(200).send({confirm: true, name: newCollection.name});
+            res.status(200).send({confirmation: true, name: newCollection.name});
         }
     }
     else if(req.body.type == 'groups') {
