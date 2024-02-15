@@ -324,6 +324,13 @@ app.get('/posts/:action', verify, async (req,res) => {
         else if(req.params.action == 'getCollections') {
 
             /* retrieve list of names of all user's collections */
+            let userCollections = await Groups.find({owner: _id});
+
+            if(userCollections.length > 0) {
+                res.status(200).send(userCollections);
+            } else {
+                res.status(200).send(false);
+            }
 
         }
         else if(req.params.action == 'getGroups') {
@@ -486,11 +493,18 @@ app.post('/manage/:action', verify, async (req,res) => {
         //     else if(req.body.type == 'confirm') {}
         // }
 
+        else if(req.params.action == 'renameGroup') {
+
+            group.name = req.body.newName;
+            group.save()
+            res.status(200).send(true);
+        }
+
         else if(req.params.action == 'deleteGroup') {
 
             if(req.body.type == 'tag') {
 
-                if(group.isPrivate == true) {
+                if(group.isPrivate == true && group.owner == _id) {
                     (async()=> {
                         await Groups.deleteOne({_id: group._id});
                         res.status(200).send({confirmation: true, groupName: group.name});
@@ -507,7 +521,8 @@ app.post('/manage/:action', verify, async (req,res) => {
             }
 
             else if (req.params.type == 'collection') {
-
+                await Groups.deleteOne({_id: group._id});
+                res.status(200).send({confirmation: true, groupName: group.name});
             }
 
             else if(req.body.type == 'initial') {
@@ -525,10 +540,23 @@ app.post('/manage/:action', verify, async (req,res) => {
 
         else if(req.params.action == 'makePrivate') {
 
-            //01. 31. 2024 gotta write it out :D
-            if(req.params.type == 'tag') {}
+            group.isPrivate = req.body.isPrivate;
+            group.save();
+            res.status(200).send({confirmation: true, 
+                    isPrivate: req.body.isPrivate == true ? 'private' : 'public'});
 
-            else if (req.params.type == 'collection') {}
+            //01. 31. 2024 gotta write it out :D
+            //02. 14. 2024 
+            //as this route should only be accessible by an individual owner
+            //checks for tag or collection shouldn't be necessary
+            //private tags or collections merely require the user to make
+            //a request of the owner
+
+            // if(req.params.type == 'tag') {}
+
+            // else if (req.params.type == 'collection') {
+
+            // }
         }
     } 
     catch(err) {
