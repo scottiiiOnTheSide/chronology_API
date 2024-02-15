@@ -50,7 +50,8 @@ app.post('/create', verify, async (req,res) => {
             res.status(200).send({confirm: true, name: newTag.name});
         }
 
-    } else if (req.body.type == 'collection') {
+    } 
+    else if (req.body.type == 'collection') {
 
         /*** Pre-existance Check ***/
         let alreadyExists = await Groups.findOne({name: req.body.name, type: req.body.type});
@@ -65,7 +66,7 @@ app.post('/create', verify, async (req,res) => {
                 type: req.body.type,
                 name: req.body.name,
                 owner: _id,
-                isPrivate: req.body.isPrivate = true ? true : false,
+                isPrivate: req.body.isPrivate == true ? true : false,
                 details: description
             });
 
@@ -502,7 +503,7 @@ app.post('/manage/:action', verify, async (req,res) => {
 
         else if(req.params.action == 'deleteGroup') {
 
-            if(req.body.type == 'tag') {
+            if(group.type == 'tag') {
 
                 if(group.isPrivate == true && group.owner == _id) {
                     (async()=> {
@@ -520,7 +521,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                 }
             }
 
-            else if (req.params.type == 'collection') {
+            else if (group.type == 'collection') {
                 await Groups.deleteOne({_id: group._id});
                 res.status(200).send({confirmation: true, groupName: group.name});
             }
@@ -538,7 +539,7 @@ app.post('/manage/:action', verify, async (req,res) => {
             else if(req.body.type == 'confirm') {}
         }
 
-        else if(req.params.action == 'makePrivate') {
+        else if(req.params.action == 'privatizeGroup') {
 
             group.isPrivate = req.body.isPrivate;
             group.save();
