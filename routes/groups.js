@@ -66,6 +66,7 @@ app.post('/create', verify, async (req,res) => {
                 type: req.body.type,
                 name: req.body.name,
                 owner: _id,
+                hasAccess: [_id],
                 isPrivate: req.body.isPrivate == true ? true : false,
                 details: description
             });
@@ -107,13 +108,15 @@ app.post('/create', verify, async (req,res) => {
 
 
 
-app.get('/posts/:action', verify, async (req,res) => {
+app.get('/posts', verify, async (req,res) => {
 
     const auth = req.header('auth-token');
     const base64url = auth.split('.')[1];
     const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
     const {_id, _username} = decoded; 
-    const type = req.body.type;
+
+    const action = req.query.action;
+    const groupID = req.query.groupID;
 
     /**
      * needed vars:
@@ -121,23 +124,44 @@ app.get('/posts/:action', verify, async (req,res) => {
      * req.body.name
      * req.body.postID
      * req.body.type
+     * 
+     * As of 02. 20. 2024 should only need
+     * req.body.groupID
+     * 
      */
+
+
 
     try {
 
-        if(req.params.action == 'getPosts') {
+        /* 
+            02. 20. 2024
+            change the top conditionals (if action) to utilize this top, initially searched
+            group.
+            remove the individual 'groups' from each 
+        */        
+        let group = await Groups.findOne({_id: groupID})
 
-            if(type == 'tag') {
+        if(action == 'getPosts') {
 
-                let allPosts = Posts.find({tags: `${req.body.name}`}).then((data)=> {
-                    if(data) {
-                        res.status(200).send(data)
-                    } else {
-                        res.status(400).send({message: "No posts for this tag"});
-                    }
-                })
+            if(group.type == 'tag') {
+
+                // let allPosts = Posts.find({tags: `${req.body.name}`}).then((data)=> {
+                //     if(data) {
+                //         res.status(200).send(data)
+                //     } else {
+                //         res.status(400).send({message: "No posts for this tag"});
+                //     }
+                // })
+                console.log('here');
+
+                if(group.posts.length == 0) {
+                    res.status(400).send({message: "No posts for this tag"});
+                } else {
+                    res.status(200).send(group.posts);
+                }
             }
-            else if(type == 'collection' || type == 'groups') {
+            else if(group.type == 'collection' || group.type == 'groups') {
 
                 let groups = Groups.find({name: req.body.name, type: req.body.type});
                 let posts = Posts.find({ '_id': {$in: groups.posts}}).then(data => {
@@ -150,27 +174,27 @@ app.get('/posts/:action', verify, async (req,res) => {
             }
         }
 
-        else if(req.params.action == 'addPost') {
+        else if(action == 'addPost') {
 
-            let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
+            // let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
 
-            if(groups.type == 'tag') {
+            if(group.type == 'tag') {
 
-                if(groups.isPrivate) {
-                    if(groups.owner == _id) {
+                if(group.isPrivate) {
+                    if(group.owner == _id) {
 
-                        groups.posts.push(req.body.postID);
-                        groups.save();
+                        group.posts.push(req.body.postID);
+                        group.save();
                         res.status(200).send(true);
                     } else {
                         res.status(403).send({message: 'You do not have access'})
                     }
                 }
                 else {
-                    if(groups.hasAccess.contains(_id)) {
+                    if(group.hasAccess.contains(_id)) {
 
-                        groups.posts.push(req.body.postID);
-                        groups.save();
+                        group.posts.push(req.body.postID);
+                        group.save();
                         res.status(200).send(true);
                     }
                     else {
@@ -179,32 +203,32 @@ app.get('/posts/:action', verify, async (req,res) => {
                 }
 
             }
-            else if(groups.type == 'collection') {
+            else if(group.type == 'collection') {
 
-                if(_id == groups.owner) {
+                if(_id == group.owner) {
 
-                    groups.posts.push(req.body.postID);
-                    groups.save();
+                    group.posts.push(req.body.postID);
+                    group.save();
                     res.status(200).send(true);
                 }
                 else {
                     res.status(403).send({message: 'You do not have access'})
                 }
             }
-            else if(groups.type == 'groups') {
+            else if(group.type == 'groups') {
 
-                if(groups.admins.contains(_id) || groups.hasAccess.contains(_id)) {
+                if(group.admins.contains(_id) || group.hasAccess.contains(_id)) {
 
-                    groups.posts.push(req.body.postID);
-                    groups.save();
+                    group.posts.push(req.body.postID);
+                    group.save();
                     res.status(200).send(true);
                 } else {
                     res.status(403).send({message: 'You do not have access'})
                 }
             }
-
         }
-        else if(req.params.actions == 'removePost') {
+
+        else if(action == 'removePost') {
             let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
 
             if(groups.type == 'tag') {
@@ -259,9 +283,19 @@ app.get('/posts/:action', verify, async (req,res) => {
             }
         }
 
-        else if(req.params.action == 'getUserTags') {
+        else if(action == 'getUserTags') {
 
             let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
+
+            userTags = userTags.map(tag => {
+                return {
+                    hasAccess: tag.hasAccess,
+                    name: tag.name,
+                    type: tag.type,
+                    _id: tag._id,
+                    isPrivate: tag.isPrivate
+                }
+            })
 
             if(userTags.length > 0) {
                 res.status(200).send(userTags);
@@ -269,7 +303,7 @@ app.get('/posts/:action', verify, async (req,res) => {
                 res.status(200).send(false);
             }
         }  
-        else if(req.params.action == 'getSuggestions') {
+        else if(action == 'getSuggestions') {
 
             /* read topics from file & get user's tags to provide frontEnd 
                with topics as suggestions for tags during post
@@ -277,11 +311,21 @@ app.get('/posts/:action', verify, async (req,res) => {
             const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
             res.status(200).send(topics);
         } 
-        else if(req.params.action == 'allTagsUsed') {
+        else if(action == 'allTagsUsed') {
 
             const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
             let userPosts = await Posts.find({owner: _id}).limit(50);
             let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
+            userTags = userTags.map(tag => {
+                return {
+                    hasAccess: tag.hasAccess,
+                    name: tag.name,
+                    type: tag.type,
+                    _id: tag._id,
+                    isPrivate: tag.isPrivate,
+                    userOwnername: tag.userOwnername
+                }
+            })
 
             let allTags = [];
 
@@ -308,21 +352,21 @@ app.get('/posts/:action', verify, async (req,res) => {
                 }
             })
 
-            console.log(topicObjects);
+            // console.log(topicObjects);
             let results = [];
             results.push(...topicObjects);
             results.push(...userTags);
-            console.log(results);
+            // console.log(results);
 
 
             res.status(200).send(results);
         }
-        else if(req.params.action == 'getPrivatePosts') {
+        else if(action == 'getPrivatePosts') {
 
             let posts = await Posts.find({owner: _id, isPrivate: true}).sort({createdAt: -1});
             res.status(200).send(posts);
         }
-        else if(req.params.action == 'getCollections') {
+        else if(action == 'getCollections') {
 
             /* retrieve list of names of all user's collections */
             let userCollections = await Groups.find({owner: _id});
@@ -332,9 +376,8 @@ app.get('/posts/:action', verify, async (req,res) => {
             } else {
                 res.status(200).send(false);
             }
-
         }
-        else if(req.params.action == 'getGroups') {
+        else if(action == 'getGroups') {
 
             /* retrieve list of names of all groupss user is in */
         }            

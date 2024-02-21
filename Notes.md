@@ -3,8 +3,45 @@
 #### Project Notes & Planning
 -----------------------------------------------------------------------------------------
 
-### 02. 15. 2024
 
+
+### 02. 21. 2024
+@1215 CSS added for <Macros > page. 
+
+Need to have clicking on a tag or collection trigger the <Home > exit animation...
+
+
+### 02. 20. 2024
+@1115 Fixed issue with api call for getting a macro's posts ...
+
+@0820 started working on navigate function to <Macros > page
+			api call for tags's posts (accessAPI.groupPosts) currently not working
+			not being recieved by back end when called...
+
+
+### 02. 16. 2024
+@1355 Skeleton created for <Macros > page ...
+
+@1315 for security measures, may need to more of the user confirmation on the backEnd
+			When user clicks private collection or tag, privateMacro's owner name should be
+			send from backEnd.
+			request to join macro should result in backEnd sending a adding a request notif
+			in user's notifList - without sending owner's ID to frontEnd 
+
+@1245 Started building out <Macros > page . . .
+			Will list objective tasks ...
+
+@1240 <Log > when showing combination of user's and other's posts should have user's on right
+							and others on the left.
+
+@1210 for Macros section, Tags and Collections to be links to <Macros > page...
+			onClick needs to:
+				- get all posts for tag or within collection,
+					add to location.state
+				- navigate() to macros, using name of Tag or Collection as param
+
+
+### 02. 15. 2024
 @1605 Privatize and Delete funcs now working :D !
 			Collection's private button active state now dependant on isPrivate value
 
