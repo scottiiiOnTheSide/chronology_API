@@ -139,6 +139,12 @@ app.get('/posts', verify, async (req,res) => {
             change the top conditionals (if action) to utilize this top, initially searched
             group.
             remove the individual 'groups' from each 
+
+            02. 22. 2024
+            Have check for whether groupID is actually a topic by filtering it against the 
+            topics. if not, then run .findOne.
+
+            if it is a suggestion, need to run DB search which gets all posts with said topic
         */        
         let group = await Groups.findOne({_id: groupID})
 
@@ -425,16 +431,19 @@ app.post('/manage/:action', verify, async (req,res) => {
                 if(group.isPrivate) {
             
                     if(group.owner == req.body.details) {
-                        group.hasAccess.push(req.body.userID);
+
+                        group.hasAccess.push(_id);
                         group.save();
-                        res.status(200).send(true);
+                        res.status(200).send({confirmation: true, groupName: group.name});
                     } else {
                         res.status(403).send({message: 'noAccess', type: group.type})
-                    }
-                } else {
-                    group.hasAccess.push(req.body.userID);
+                    }   
+                } 
+
+                else {
+                    group.hasAccess.push(_id);
                     group.save();
-                    res.status(200).send({message: 'confirm', name: group.name});
+                    res.status(200).send({confirmation: true, groupName: group.name}); 
                 }
             }
             else if(group.type == 'collection') {// for PUBLIC collections

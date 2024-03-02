@@ -29,6 +29,7 @@ const GroupsSchema = new mongoose.Schema({
     ref: 'Posts'
   }],
   details: {    //to be JSON. For groups and collections, includes info
+                //can also include tags or topics for groups
     type: String
   },
   isPrivate: Boolean,
