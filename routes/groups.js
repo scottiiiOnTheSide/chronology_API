@@ -152,20 +152,20 @@ app.get('/posts', verify, async (req,res) => {
 
             if(group.type == 'tag') {
 
-                // let allPosts = Posts.find({tags: `${req.body.name}`}).then((data)=> {
-                //     if(data) {
-                //         res.status(200).send(data)
-                //     } else {
-                //         res.status(400).send({message: "No posts for this tag"});
-                //     }
-                // })
+                let allPosts = Posts.find({tags: `${group.name}`}).then((data)=> {
+                    if(data) {
+                        res.status(200).send(data)
+                    } else {
+                        res.status(400).send({message: "No posts for this tag"});
+                    }
+                })
                 console.log('here');
 
-                if(group.posts.length == 0) {
-                    res.status(400).send({message: "No posts for this tag"});
-                } else {
-                    res.status(200).send(group.posts);
-                }
+                // if(group.posts.length == 0) {
+                //     res.status(400).send({message: "No posts for this tag"});
+                // } else {
+                //     res.status(200).send(group.posts);
+                // }
             }
             else if(group.type == 'collection' || group.type == 'groups') {
 
