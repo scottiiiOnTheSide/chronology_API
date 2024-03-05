@@ -130,8 +130,6 @@ app.get('/posts', verify, async (req,res) => {
      * 
      */
 
-
-
     try {
 
         /* 
@@ -145,248 +143,266 @@ app.get('/posts', verify, async (req,res) => {
             topics. if not, then run .findOne.
 
             if it is a suggestion, need to run DB search which gets all posts with said topic
-        */        
-        let group = await Groups.findOne({_id: groupID})
+        */    
 
-        if(action == 'getPosts') {
+        if(groupID && !mongoose.isValidObjectId(groupID)) {
 
-            if(group.type == 'tag') {
-
-                let allPosts = Posts.find({tags: `${group.name}`}).then((data)=> {
-                    if(data) {
-                        res.status(200).send(data)
-                    } else {
-                        res.status(400).send({message: "No posts for this tag"});
-                    }
-                })
-                console.log('here');
-
-                // if(group.posts.length == 0) {
-                //     res.status(400).send({message: "No posts for this tag"});
-                // } else {
-                //     res.status(200).send(group.posts);
-                // }
-            }
-            else if(group.type == 'collection' || group.type == 'groups') {
-
-                let groups = Groups.find({name: req.body.name, type: req.body.type});
-                let posts = Posts.find({ '_id': {$in: groups.posts}}).then(data => {
-                    if(data) {
-                        res.status(200).send(data);
-                    } else {
-                        res.status(400).send({message: "No posts in this collection"});
-                    }
-                })
-            }
-        }
-
-        else if(action == 'addPost') {
-
-            // let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
-
-            if(group.type == 'tag') {
-
-                if(group.isPrivate) {
-                    if(group.owner == _id) {
-
-                        group.posts.push(req.body.postID);
-                        group.save();
-                        res.status(200).send(true);
-                    } else {
-                        res.status(403).send({message: 'You do not have access'})
-                    }
-                }
-                else {
-                    if(group.hasAccess.contains(_id)) {
-
-                        group.posts.push(req.body.postID);
-                        group.save();
-                        res.status(200).send(true);
-                    }
-                    else {
-                        res.status(403).send({message: 'You do not have access'})
-                    }
-                }
-
-            }
-            else if(group.type == 'collection') {
-
-                if(_id == group.owner) {
-
-                    group.posts.push(req.body.postID);
-                    group.save();
-                    res.status(200).send(true);
-                }
-                else {
-                    res.status(403).send({message: 'You do not have access'})
-                }
-            }
-            else if(group.type == 'groups') {
-
-                if(group.admins.contains(_id) || group.hasAccess.contains(_id)) {
-
-                    group.posts.push(req.body.postID);
-                    group.save();
-                    res.status(200).send(true);
+            console.log("it's a topic");
+            let allPosts = await Posts.find({tags: `${groupID}`}).then((data)=> {
+                if(data) {
+                    res.status(200).send(data)
                 } else {
-                    res.status(403).send({message: 'You do not have access'})
-                }
-            }
-        }
-
-        else if(action == 'removePost') {
-            let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
-
-            if(groups.type == 'tag') {
-
-                if(groups.isPrivate) {
-                    if(groups.owner == _id) {
-
-                        let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                        groups.posts = newArray;
-                        groups.save()
-                        res.status(200).send(true);
-                    } else {
-                        res.status(403).send({message: 'You do not have access'})
-                    }
-                }
-                else {
-                    if(groups.hasAccess.contains(_id)) {
-                        let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                        groups.posts = newArray;
-                        groups.save()
-                        res.status(200).send(true);
-                    }
-                    else {
-                        res.status(403).send({message: 'You do not have access'})
-                    }
-                }
-            }
-            else if(groups.type == 'collection') {
-
-                if(_id == groups.owner) {
-
-                    let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                    groups.posts = newArray;
-                    groups.save()
-                    res.status(200).send(true);
-                }
-                else {
-                    res.status(403).send({message: 'You do not have access'})
-                }
-            }
-            else if(groups.type == 'groups') {
-
-                if(groups.admins.contains(_id)) {
-
-                    let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                    groups.posts = newArray;
-                    groups.save()
-                    res.status(200).send(true);
-                } else {
-                    res.status(403).send({message: 'You do not have access'})
-                }
-            }
-        }
-
-        else if(action == 'getUserTags') {
-
-            let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
-
-            userTags = userTags.map(tag => {
-                return {
-                    hasAccess: tag.hasAccess,
-                    name: tag.name,
-                    type: tag.type,
-                    _id: tag._id,
-                    isPrivate: tag.isPrivate
+                    res.status(400).send({message: "No posts for this tag"});
                 }
             })
 
-            if(userTags.length > 0) {
-                res.status(200).send(userTags);
-            } else {
-                res.status(200).send(false);
-            }
-        }  
-        else if(action == 'getSuggestions') {
+        } else { //M A I N   R O U T E 
 
-            /* read topics from file & get user's tags to provide frontEnd 
-               with topics as suggestions for tags during post
-            */
-            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
-            res.status(200).send(topics);
-        } 
-        else if(action == 'allTagsUsed') {
+            let group = await Groups.findOne({_id: groupID});
 
-            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
-            let userPosts = await Posts.find({owner: _id}).limit(50);
-            let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
-            userTags = userTags.map(tag => {
-                return {
-                    hasAccess: tag.hasAccess,
-                    name: tag.name,
-                    type: tag.type,
-                    _id: tag._id,
-                    isPrivate: tag.isPrivate,
-                    userOwnername: tag.userOwnername
+            if(action == 'getPosts') {
+            
+                if(group.type == 'tag') {
+
+                    let allPosts = Posts.find({tags: `${group.name}`}).then((data)=> {
+                        if(data) {
+                            res.status(200).send(data)
+                        } else {
+                            res.status(400).send({message: "No posts for this tag"});
+                        }
+                    })
+                    console.log('here');
                 }
-            })
+                else if(group.type == 'collection' || group.type == 'groups') {
 
-            let allTags = [];
-
-            /* Gathers all tags used within most recent posts */
-            userPosts.forEach(post => {
-                if(post.tags) {
-                    post.tags.forEach(tag => {
-                        allTags.push(tag);
+                    let groups = Groups.find({name: req.body.name, type: req.body.type});
+                    let posts = Posts.find({ '_id': {$in: groups.posts}}).then(data => {
+                        if(data) {
+                            res.status(200).send(data);
+                        } else {
+                            res.status(400).send({message: "No posts in this collection"});
+                        }
                     })
                 }
-            })
-
-            /* Ensures each tag or topic only appears once within */
-            allTags = [...new Set(allTags)];
-
-            let topicObjects = allTags.map(element => {
-                if(topics.includes(element)) {
-                    return {
-                        name: element,
-                        type: 'topic'
-                    }
-                } else {
-                    return;
-                }
-            })
-
-            // console.log(topicObjects);
-            let results = [];
-            results.push(...topicObjects);
-            results.push(...userTags);
-            // console.log(results);
-
-
-            res.status(200).send(results);
-        }
-        else if(action == 'getPrivatePosts') {
-
-            let posts = await Posts.find({owner: _id, isPrivate: true}).sort({createdAt: -1});
-            res.status(200).send(posts);
-        }
-        else if(action == 'getCollections') {
-
-            /* retrieve list of names of all user's collections */
-            let userCollections = await Groups.find({owner: _id});
-
-            if(userCollections.length > 0) {
-                res.status(200).send(userCollections);
-            } else {
-                res.status(200).send(false);
             }
-        }
-        else if(action == 'getGroups') {
 
-            /* retrieve list of names of all groupss user is in */
-        }            
+            else if(action == 'addPost') {
+
+                // let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
+
+                if(group.type == 'tag') {
+
+                    if(group.isPrivate) {
+                        if(group.owner == _id) {
+
+                            group.posts.push(req.body.postID);
+                            group.save();
+                            res.status(200).send(true);
+                        } else {
+                            res.status(403).send({message: 'You do not have access'})
+                        }
+                    }
+                    else {
+                        if(group.hasAccess.contains(_id)) {
+
+                            group.posts.push(req.body.postID);
+                            group.save();
+                            res.status(200).send(true);
+                        }
+                        else {
+                            res.status(403).send({message: 'You do not have access'})
+                        }
+                    }
+
+                }
+                else if(group.type == 'collection') {
+
+                    if(_id == group.owner) {
+
+                        group.posts.push(req.body.postID);
+                        group.save();
+                        res.status(200).send(true);
+                    }
+                    else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+                else if(group.type == 'groups') {
+
+                    if(group.admins.contains(_id) || group.hasAccess.contains(_id)) {
+
+                        group.posts.push(req.body.postID);
+                        group.save();
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+            }
+
+            else if(action == 'removePost') {
+                let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
+
+                if(groups.type == 'tag') {
+
+                    if(groups.isPrivate) {
+                        if(groups.owner == _id) {
+
+                            let newArray = groups.posts.filter((post) => post !== req.body.postID);
+                            groups.posts = newArray;
+                            groups.save()
+                            res.status(200).send(true);
+                        } else {
+                            res.status(403).send({message: 'You do not have access'})
+                        }
+                    }
+                    else {
+                        if(groups.hasAccess.contains(_id)) {
+                            let newArray = groups.posts.filter((post) => post !== req.body.postID);
+                            groups.posts = newArray;
+                            groups.save()
+                            res.status(200).send(true);
+                        }
+                        else {
+                            res.status(403).send({message: 'You do not have access'})
+                        }
+                    }
+                }
+                else if(groups.type == 'collection') {
+
+                    if(_id == groups.owner) {
+
+                        let newArray = groups.posts.filter((post) => post !== req.body.postID);
+                        groups.posts = newArray;
+                        groups.save()
+                        res.status(200).send(true);
+                    }
+                    else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+                else if(groups.type == 'groups') {
+
+                    if(groups.admins.contains(_id)) {
+
+                        let newArray = groups.posts.filter((post) => post !== req.body.postID);
+                        groups.posts = newArray;
+                        groups.save()
+                        res.status(200).send(true);
+                    } else {
+                        res.status(403).send({message: 'You do not have access'})
+                    }
+                }
+            }
+
+            else if(action == 'getUserTags') {
+
+                let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
+
+                userTags = userTags.map(tag => {
+                    return {
+                        hasAccess: tag.hasAccess,
+                        name: tag.name,
+                        type: tag.type,
+                        _id: tag._id,
+                        isPrivate: tag.isPrivate
+                    }
+                })
+
+                if(userTags.length > 0) {
+                    res.status(200).send(userTags);
+                } else {
+                    res.status(200).send(false);
+                }
+            }  
+
+            else if(action == 'getSuggestions') {
+
+                /* read topics from file & get user's tags to provide frontEnd 
+                   with topics as suggestions for tags during post
+                */
+                const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+                res.status(200).send(topics);
+            }
+
+            else if(action == 'allTagsUsed') {
+
+                const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+                let userPosts = await Posts.find({owner: _id}).limit(50);
+                let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
+                userTags = userTags.map(tag => {
+                    return {
+                        hasAccess: tag.hasAccess,
+                        name: tag.name,
+                        type: tag.type,
+                        _id: tag._id,
+                        isPrivate: tag.isPrivate,
+                        userOwnername: tag.userOwnername,
+                        userCount: tag.hasAccess.length,
+                    }
+                })
+
+                let allTags = [];
+
+                /* Gathers all tags used within most recent posts */
+                userPosts.forEach(post => {
+                    if(post.tags) {
+                        post.tags.forEach(tag => {
+                            allTags.push(tag);
+                        })
+                    }
+                })
+
+                /* Ensures each tag or topic only appears once within */
+                allTags = [...new Set(allTags)];
+
+                let topicObjects = allTags.map(element => {
+                    if(topics.includes(element)) {
+                        return {
+                            name: element,
+                            type: 'topic',
+                            _id: element
+                        }
+                    } else {
+                        return;
+                    }
+                })
+
+                // console.log(topicObjects);
+                let results = [];
+                results.push(...topicObjects);
+                results.push(...userTags);
+                // console.log(results);
+
+
+                res.status(200).send(results);
+            }
+
+            else if(action == 'getPrivatePosts') {
+
+                let posts = await Posts.find({owner: _id, isPrivate: true}).sort({createdAt: -1});
+                res.status(200).send(posts);
+            }
+
+            else if(action == 'getCollections') {
+
+                /* retrieve list of names of all user's collections */
+                let userCollections = await Groups.find({owner: _id});
+
+                if(userCollections.length > 0) {
+                    res.status(200).send(userCollections);
+                } else {
+                    res.status(200).send(false);
+                }
+            }
+
+            else if(action == 'getGroups') {
+
+                /* retrieve list of names of all groupss user is in */
+            }
+
+        }
+                     
     } 
     catch(err) {
 
