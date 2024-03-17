@@ -43,6 +43,7 @@ app.post('/create', verify, async (req,res) => {
                 name: req.body.name,
                 hasAccess: [req.body.hasAccess],
                 isPrivate: req.body.isPrivate ? true : false,
+                ownerUsername: req.body.isPrivate == true ? _username : undefined,
                 owner: req.body.isPrivate ? _id : null,
             });
 
@@ -66,6 +67,7 @@ app.post('/create', verify, async (req,res) => {
                 type: req.body.type,
                 name: req.body.name,
                 owner: _id,
+                ownerUsername: _username,
                 hasAccess: [_id],
                 isPrivate: req.body.isPrivate == true ? true : false,
                 details: description
@@ -89,8 +91,10 @@ app.post('/create', verify, async (req,res) => {
                 type: req.body.type,
                 name: req.body.name,
                 owner: _id,
+                ownerUsername: _username,
                 isPrivate: req.body.isPrivate = true ? true : false,
-                admins: req.body.admins
+                admins: req.body.admins,
+                hasAccess: [_id]
             });
 
             newGroup.save();
@@ -330,17 +334,17 @@ app.get('/posts', verify, async (req,res) => {
                 const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
                 let userPosts = await Posts.find({owner: _id}).limit(50);
                 let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
-                userTags = userTags.map(tag => {
-                    return {
-                        hasAccess: tag.hasAccess,
-                        name: tag.name,
-                        type: tag.type,
-                        _id: tag._id,
-                        isPrivate: tag.isPrivate,
-                        userOwnername: tag.userOwnername,
-                        userCount: tag.hasAccess.length,
-                    }
-                })
+                // userTags = userTags.map(tag => {
+                //     return {
+                //         hasAccess: tag.hasAccess,
+                //         name: tag.name,
+                //         type: tag.type,
+                //         _id: tag._id,
+                //         isPrivate: tag.isPrivate,
+                //         userOwnername: tag.userOwnername,
+                //         userCount: tag.hasAccess.length,
+                //     }
+                // })
 
                 let allTags = [];
 
@@ -390,8 +394,15 @@ app.get('/posts', verify, async (req,res) => {
                 let userCollections = await Groups.find({owner: _id});
 
                 if(userCollections.length > 0) {
+
+                    // let bookmarks = userCollections.filter(col => {
+                    //     return col.name == 'BOOKMARKS';
+                    // })
+                    let bookmarks = userCollections.pop();
+                    userCollections.unshift(bookmarks);
                     res.status(200).send(userCollections);
                 } else {
+
                     res.status(200).send(false);
                 }
             }
@@ -590,8 +601,18 @@ app.post('/manage/:action', verify, async (req,res) => {
             }
 
             else if (group.type == 'collection') {
-                await Groups.deleteOne({_id: group._id});
-                res.status(200).send({confirmation: true, groupName: group.name});
+
+                if(group.name == 'BOOKMARKS') {
+                    group.posts = [];
+                    group.save(); 
+                    res.status(200).send({confirmation: true, groupName: group.name});
+                    
+                } else {
+                    await Groups.deleteOne({_id: group._id});
+                    res.status(200).send({confirmation: true, groupName: group.name});
+                }
+
+                
             }
 
             else if(req.body.type == 'initial') {
