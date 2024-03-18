@@ -121,13 +121,13 @@ app.get('/posts', verify, async (req,res) => {
 
     const action = req.query.action;
     const groupID = req.query.groupID;
+    const postID = req.query.postID;
 
     /**
      * needed vars:
-     * req.body.groupsID
-     * req.body.name
-     * req.body.postID
-     * req.body.type
+     * groupsID
+     * postID
+     * action
      * 
      * As of 02. 20. 2024 should only need
      * req.body.groupID
@@ -163,6 +163,7 @@ app.get('/posts', verify, async (req,res) => {
         } else { //M A I N   R O U T E 
 
             let group = await Groups.findOne({_id: groupID});
+            // let post = await Posts.findOne({_id: postID});
 
             if(action == 'getPosts') {
             
@@ -180,7 +181,7 @@ app.get('/posts', verify, async (req,res) => {
                 else if(group.type == 'collection' || group.type == 'groups') {
 
                     let groups = Groups.find({name: req.body.name, type: req.body.type});
-                    let posts = Posts.find({ '_id': {$in: groups.posts}}).then(data => {
+                    let posts = Posts.find({ '_id': {$in: group.posts}}).then(data => {
                         if(data) {
                             res.status(200).send(data);
                         } else {
@@ -199,7 +200,7 @@ app.get('/posts', verify, async (req,res) => {
                     if(group.isPrivate) {
                         if(group.owner == _id) {
 
-                            group.posts.push(req.body.postID);
+                            group.posts.push(postID);
                             group.save();
                             res.status(200).send(true);
                         } else {
@@ -209,7 +210,7 @@ app.get('/posts', verify, async (req,res) => {
                     else {
                         if(group.hasAccess.contains(_id)) {
 
-                            group.posts.push(req.body.postID);
+                            group.posts.push(postID);
                             group.save();
                             res.status(200).send(true);
                         }
@@ -223,9 +224,9 @@ app.get('/posts', verify, async (req,res) => {
 
                     if(_id == group.owner) {
 
-                        group.posts.push(req.body.postID);
+                        group.posts.push(postID);
                         group.save();
-                        res.status(200).send(true);
+                        res.status(200).send({confirmation: true, groupName: group.name});
                     }
                     else {
                         res.status(403).send({message: 'You do not have access'})
@@ -235,13 +236,18 @@ app.get('/posts', verify, async (req,res) => {
 
                     if(group.admins.contains(_id) || group.hasAccess.contains(_id)) {
 
-                        group.posts.push(req.body.postID);
+                        group.posts.push(post);
                         group.save();
                         res.status(200).send(true);
                     } else {
                         res.status(403).send({message: 'You do not have access'})
                     }
                 }
+            }
+
+            else if(action == 'checkPost') {
+                //03. 18. 2024
+                //checks whether post is in user's BOOKMARKS or any of their collections
             }
 
             else if(action == 'removePost') {
@@ -606,7 +612,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                     group.posts = [];
                     group.save(); 
                     res.status(200).send({confirmation: true, groupName: group.name});
-                    
+
                 } else {
                     await Groups.deleteOne({_id: group._id});
                     res.status(200).send({confirmation: true, groupName: group.name});
