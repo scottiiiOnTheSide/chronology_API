@@ -4,11 +4,25 @@ const express = require('express'),
       {User, Notification} = require('../models/user'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
-      verify = require('../verifyUser');
+      verify = require('../verifyUser'),
+      path = require('path'),
+      util = require('util'),
+      multer = require('multer'),
+      {Storage} = require('@google-cloud/storage');
 require('dotenv').config();
 
-//may need to change how I import notification 
-// might be {User, Notification} instead
+/* for processing media content */
+let storage = multer.memoryStorage(), //keeps data in RAM storage
+
+    upload = multer({ storage: storage }), //sets target destination for uploads
+
+    GCS = new Storage({ //sets GCS client globally - all paths can use this
+      keyFilename: path.join(__dirname, '../logSeqMediaGCSaccess.json'),
+      projectId: "aerobic-name-372620"
+    }),
+    uploadMedia = GCS.bucket('logseqmedia');
+
+
 
 //Simple 'create new  users' function
 app.post('/newuser', async (req,res) => {
@@ -729,5 +743,122 @@ app.post('/notif/:type', verify, async(req, res)=> {
     }
 })
 
+app.post('/settings', verify, upload.any(), async(req, res)=> {
+
+    const auth = req.header('auth-token');
+    const base64url = auth.split('.')[1];
+    const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+    const {_id, _username} = decoded; 
+
+    console.log(req.body)
+    console.log(req.files)
+    // res.status(200).send(req.body);
+
+    try {
+
+        if(req.body.option == 'username') {
+
+                let check = await User.findOne({userName: req.body.newUsername});
+                console.log(check)
+                if(check) {
+                    res.status(200).send({confirmation: false, message: "This username is taken"})
+                }
+                else {
+                    let thisUser = User.findByIdAndUpdate(_id, 
+                        {username: req.body.newUsername}, (err, data)=> {
+                            if(err) {
+                                res.status(400).send({message: "An Error Has Occured. Please Try Again"})
+                            }
+                            else {
+                                res.status(200).send({confirmation: true, message: `Username changed to ${req.body.newUsername}`});
+                            }
+                    })
+                }
+        }
+
+        else if(req.body.option == 'profilePhoto') {
+
+                // console.log(req.body)
+                // console.log(req.files)
+
+                const user = await User.findOne({_id: _id});
+
+                const d = new Date();
+                const month = d.getMonth();
+                const mm = month + 1;
+                const date = d.getDate();
+                const year = d.getFullYear();
+                const timeStamp = d.getTime();
+
+                /* Processes uploaded photo */
+                const fileNumber = req.files[0].fieldname;
+                const fileName = `${fileNumber}_${_username}_${mm}-${date}-${year}_${timeStamp}`;
+                const file = uploadMedia.file(fileName);
+                const options = {
+                  resumable: false,
+                  metadata: {
+                    contentType: 'image/jpeg/png',
+                  }
+                };
+
+                await file.save(req.files[0].buffer, options);
+
+                await uploadMedia.setMetadata({
+                    enableRequesterPays: true,
+                      website: {
+                        mainPageSuffix: 'index.html',
+                        notFoundPage: '404.html',
+                      },
+                });
+
+              
+                const [cdnUrl] = await file.getSignedUrl({
+                  action: 'read',
+                  expires: '01-01-2499',
+                });
+
+                let title = `${fileNumber}`;
+
+                // req.body[title] = cdnUrl;
+
+                user.profilePhoto = cdnUrl;
+                await user.save()
+
+                res.status(200).send({confirmation: true, message: 'Profile Photo Updated !'})
+        }
+
+        /*Photo upload
+            - upload submitted data via GCS
+            - save link in user model
+        */
+
+        /*Biography
+            - add / replace req.body to user
+        */
+        /*Change password
+            - validate original password
+                - if incorrect, send error
+            - hash new password
+            - replace old with new
+        */
+
+        else if(req.body.option == 'Privacy') {
+
+            /*Change privacy option
+                - on frontEnd, confirm choice with popUpNotif before change
+                - change option from req.body
+                - send confirmation of change
+            */
+        }
+
+        else if(req.body.option == 'invitationCount') {
+
+        } 
+    }
+    catch(err) {
+        console.log(err);
+        res.status(400).send({message: "An Error Has Occured. Please Try Again"});
+    }
+})
 
 module.exports = app;

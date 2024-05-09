@@ -82,7 +82,6 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
           expires: '01-01-2499',
         });
 
-        //necessary...?
         let title = `${fileNumber}`;
 
         req.body[title] = cdnUrl;
@@ -208,6 +207,10 @@ app.get('/log', verify, async (req,res) => {
         monthChart = req.query.monthChart;
     
     if(social == 'true') {
+
+        /* 05. 09. 2024
+           need to filter posts by privacyDefault on or off
+        */
 
         let socialPosts = await Posts.find({
           'owner': {$in: connections},

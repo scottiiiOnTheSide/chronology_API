@@ -245,32 +245,26 @@ app.get('/posts', verify, async (req,res) => {
                 }
             }
 
-            else if(action == 'checkPost') {
-                //03. 18. 2024
-                //checks whether post is in user's BOOKMARKS or any of their collections
-            }
-
             else if(action == 'removePost') {
-                let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
 
-                if(groups.type == 'tag') {
+                if(group.type == 'tag') {
 
-                    if(groups.isPrivate) {
-                        if(groups.owner == _id) {
+                    if(group.isPrivate) {
+                        if(group.owner == _id) {
 
-                            let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                            groups.posts = newArray;
-                            groups.save()
+                            let newArray = group.posts.filter((post) => post !== postID);
+                            group.posts = newArray;
+                            group.save()
                             res.status(200).send(true);
                         } else {
                             res.status(403).send({message: 'You do not have access'})
                         }
                     }
                     else {
-                        if(groups.hasAccess.contains(_id)) {
-                            let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                            groups.posts = newArray;
-                            groups.save()
+                        if(group.hasAccess.contains(_id)) {
+                            let newArray = group.posts.filter((post) => post !== req.body.postID);
+                            group.posts = newArray;
+                            group.save()
                             res.status(200).send(true);
                         }
                         else {
@@ -278,27 +272,29 @@ app.get('/posts', verify, async (req,res) => {
                         }
                     }
                 }
-                else if(groups.type == 'collection') {
+                else if(group.type == 'collection') {
 
-                    if(_id == groups.owner) {
+                    if(_id == group.owner) {
 
-                        let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                        groups.posts = newArray;
-                        groups.save()
-                        res.status(200).send(true);
+                        (async()=> {
+                            let newArray = group.posts.filter((post) => post != postID);
+                            group.posts = newArray;
+                            group.save()
+                            res.status(200).send({confirmation: true, groupName: group.name});
+                        })();   
                     }
                     else {
                         res.status(403).send({message: 'You do not have access'})
                     }
                 }
-                else if(groups.type == 'groups') {
+                else if(group.type == 'groups') {
 
-                    if(groups.admins.contains(_id)) {
+                    if(group.admins.contains(_id)) {
 
-                        let newArray = groups.posts.filter((post) => post !== req.body.postID);
-                        groups.posts = newArray;
-                        groups.save()
-                        res.status(200).send(true);
+                        let newArray = group.posts.filter((post) => post !== postID);
+                        group.posts = newArray;
+                        group.save()
+                        res.status(200).send({confirmation: true, groupName: group.name});
                     } else {
                         res.status(403).send({message: 'You do not have access'})
                     }
@@ -412,6 +408,30 @@ app.get('/posts', verify, async (req,res) => {
                     res.status(200).send(false);
                 }
             }
+
+            // else if(action == 'collectionsCheck') {
+            //     //03. 18. 2024
+            //     //checks whether post is in user's BOOKMARKS or any of their collections
+            //     console.log('collectionsCheck');
+            //     let userCollections = await Groups.find({owner: _id});
+
+            //     let filtered = userCollections.map(item => {
+            //         if(item.posts.includes(postID)) {
+            //             return {
+            //                 ...item,
+            //                 hasCurrentPost: true,
+            //             }
+            //         }
+            //         else {
+            //             return {
+            //                 ...item,
+            //                 hasCurrentPost: false
+            //             }
+            //         }
+            //     })
+
+            //     res.status(200).send(filtered);
+            // }
 
             else if(action == 'getGroups') {
 

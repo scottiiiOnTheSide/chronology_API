@@ -74,6 +74,8 @@ const UserSchema = new mongoose.Schema({
       type: String,
       required: [true, "This field is necessary "]
     },
+    profilePhoto: String,
+    bio: String,
     settings: {
       data: mongoose.Schema.Types.Mixed,
     },
@@ -91,7 +93,8 @@ const UserSchema = new mongoose.Schema({
     }],
     notifications: [{
       type: [NotificationSchema]
-    }]
+    }],
+    isPrivate: String
 },{timestamps: true});
 
 /**
