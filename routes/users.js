@@ -2,6 +2,7 @@ const express = require('express'),
       app = express.Router(),
       mongoose = require('mongoose'),
       {User, Notification} = require('../models/user'),
+      {Posts, Content, Comment} = require('../models/posts'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
       verify = require('../verifyUser'),
@@ -827,28 +828,43 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 res.status(200).send({confirmation: true, message: 'Profile Photo Updated !'})
         }
 
-        /*Photo upload
-            - upload submitted data via GCS
-            - save link in user model
-        */
+        else if(req.body.option == 'biography') {
 
-        /*Biography
-            - add / replace req.body to user
-        */
-        /*Change password
-            - validate original password
-                - if incorrect, send error
-            - hash new password
-            - replace old with new
-        */
+            const user = await User.findOne({_id: _id});
+            user.bio = req.body.biography
+            await user.save()
+            res.status(200).send({confirmation: true})
+        }
 
-        else if(req.body.option == 'Privacy') {
+        else if(req.body.option == 'changePassword') {
 
-            /*Change privacy option
-                - on frontEnd, confirm choice with popUpNotif before change
-                - change option from req.body
-                - send confirmation of change
-            */
+            const user = await User.findOne({_id: _id});
+        
+            const passwordValid = await encrypt.compare(req.body.currentPassword, user.password);
+
+            if(!passwordValid) {
+                res.status(200).send({error: true, message: "This password is incorrect"});
+            }
+            else {
+
+                const salt = await encrypt.genSalt(10);
+                const hashedPass = await encrypt.hash(req.body.newPassword, salt);
+                user.password = hashedPass;
+                await user.save();
+                res.status(200).send({confirmation: true});
+            }
+        }
+
+        else if(req.body.option == 'privacy') {
+
+            await Posts.update(
+                {owner: _id},
+                { $set: {privacyToggleable: req.body.state}},
+                {multi: true}
+            );
+
+            res.status(200).send({confirmation: true})
+            
         }
 
         else if(req.body.option == 'invitationCount') {

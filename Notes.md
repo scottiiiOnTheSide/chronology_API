@@ -4,21 +4,184 @@
 -----------------------------------------------------------------------------------------
 
 
-### 03. 18. 2024
+### 04. 24. 2024
+@1310 Working on submit function for profilePhoto. Copy functionality from <CreatePostt> 
 
+
+### 04. 18. 2024
+@0150 Done with logout modal - however, entirity of it is blurry... pls find fix ✅
+
+****To Do Next:
+		- add logout functionality ✅
+		- add svg arrow to 'About Project' ✅
+		- plan and add subroute options for userSettings on backEnd
+		- change option opening method so only one is open at a time
+		- move logoutModal to Main.jsx instead, fixes blurry issue ✅
+
+****Side Mission:
+		- replace full page components opening and closing animations
+
+
+****Additions until 1.0A...
+- ManageConnections CSS 
+- User Profile
+	- fullList
+	- pinning posts and media
+- Editting posts
+	- pinning media
+
+
+!!! for topics, need to address issue preventing page from opening...
+Will need memoization for homepage...
+All data reloads upon revisiting page
+
+
+### 04. 16. 2024
+@0940 HTML & CSS done for invitation section
+
+
+### 04. 14. 2024
+@1440 
+****To Do Next:
+		- active / inactive states for privacy options ✅
+		- Invitation option html/css ✅
+		- Log Out Confimation modal ✅
+
+@1350 
+!!! all forms, when in focus within profile subOption causes blurriness of elements.... 
+		unsure how to fix currently...
+
+
+### 04. 12. 2024
+@1220 
+!!! image upload for profile photo glitches and needs to be selected twice? see if we can fix
+
+!!! Everything in <Macros> section IS in fact blurry. Due to some fixed height somewhere or 
+		something else. find and fix ✅
+
+
+### 04. 11. 2024
+@1640 added submenu options and functionality for Profile option
+
+****To Do Next:
+		- Create html elements for
+			- Profile sub options ✅
+			- Privacy: 3 buttons and underlying text which changes based on option active ✅
+			- Invitation: number count behind text, referral link with user's referral code (click to copy) ✅
+			- Add arrow svg to 'About Project'
+			- Log Out: full page element confirming log out (exclaimation mark within cirle) ✅
+
+****Side Mission:
+		- replace full page components opening and closing animations
+
+@1425 CSS done for layout in <UserSettings>
+
+!!! new format for opening / closing animations.
+		1.) full page components have 'enter' animation by default
+		2.) use useReducer toggle to add 'exit' class, adding 'leave' animation
+		3.) animation speed of 0.2s - close component with setTimeout after 300ms
+
+
+### 04. 09. 2024
+@1700 made skeleton for <UserSettings>. Can open via button in <InteractionsList> and close from
+			within itself
+
+****To Do Next
+		- CSS for elementss
+
+!!! Will need to plan changes to backEnd, including user model and adding routes forr settings
+
+### 03. 27. 2024
+@2115 Last thing necessary for Collections are the page options (delete & share) and the <FullList> component
+			for deleting posts from one
+
+Leaving aside for now . . .
+Now commencing <UserSettings>
+
+Options to be added:
+- profile
+  - userName
+  - profilePicture
+  - bio
+- privacy
+	On:
+		- Only Connections see *fullName*
+		- only connections see *profileDetails*
+		- No subscribers (can be added)
+		- All Posts only visible to connections
+		- Pinned Stuff only visible to connections
+
+	1/2
+		- Only Connections see *fullName*
+		- only connections see *profileDetails*
+		- Subscribers can request
+		- All Posts visible to Subscribers, Connections
+		- Pinnned Stuff visible to anyone
+
+	Off
+		- anyone can see *fullName*
+		- anyone can view *profileDetails*
+		- anyone can subscribe
+		- posts visible to anyone
+
+		*profileDetails* includes Posts, Connections and Subscription Count and Lists
+
+- logout
+( About Project & Invitation can be added much later . . .)
+
+
+
+### 03. 24. 2024
+@1000 menuBar to say 'Manage' within collections, 'Delete', 'Delete All', 'Share' to be 
+			options...
+			URL may need have more details in order for it to be shareable...
+
+
+### 03. 23. 2024
+@1240
+Roadmap to 1.0A...
+- Collections 3/4
+- Styling <ManageConnections>
+- User Profile & Settings
+
+@1230 moved collectionsCheck to frontEnd. Functionality added for BOOKMARKS, need to add
+			for rest of collection options
+
+*** To Do Next:
+		- functionality to collections options: add, remove, is inactive based on whether collection
+			already has current post ✅
+		- in <Macros > page for collections, menuButton toggles 'delete' option to appear over
+			posts within list...
+				- will have to create div within those li's that only appear upon menuButton being toggled
+
+@0420 in posts/collectionsCheck subroute, filter user's collections by whether current post
+is already within any of them. if so, add 'hasCurrentPost', field to them. can possibly use
+filter then .includes on arrays within each collection
+
+remove bookmarks from collections.map (filter then map)
+use hasCurrentPost field to discern whether bookmark option should appear faded or not,
+ternary in className
+
+
+### 03. 20. 2024
+@0100 Fixed issue with scrolling back to original post in <Log> after returning from <Post>
+
+
+### 03. 18. 2024
 @1655 
 ****To Do Next:
 		- create route option on backEnd posts/checkPost that discerns whether viewed post
-			is already in any of a user's collections
+			is already in any of a user's collections ✅
 		- change 'groupPosts' apiaccess func to 'POST' instead of 'GET'
 			(when necessary to delete multiple posts at once, this will be necessary)
-		- have subMenu in <Posts> for other collections
+		- have subMenu in <Posts> for other collections ✅
 			- both BOOKMARKS option and any collection should be faded if post is already within it
 
 !!! Will need to add 'remove' option for posts within <Log>
 		selecting a post will add it t the [access] stateVar, which can be seen in <Macros > (will nest
 			down from <Home>)
 ??? other options with <Macros> page???
+		- share & delete for collections
 
 @1610 !!! going back to post in log (scroll to post) after returning from a <Post> is off
 
@@ -50,11 +213,11 @@ Roadmap to 1.0A...
 		- make several private posts so that we can create the expand function for
 			the sections... ✅
 		- make seperate note of all the small fixes and changes I've made recently...
-		- create BOOKMARKS collection for user
+		- create BOOKMARKS collection for user ✅
 			- should have a special case on backEnd where deleting BOOKMARKS simply empties it
 			- all users should have BOOKMARKS collection upon signup
-		- adjust details for collections on <Macros >page
-		- add functions for adding to collections on <Post> page
+		- adjust details for collections on <Macros >page ✅
+		- add functions for adding to collections on <Post> page ✅
 
 !!! in <Macros > page for collections, menuButton toggles 'delete' option to appear over
 		posts within list...
@@ -135,7 +298,7 @@ could something equivalent for topics - <Macros > page does api request on load 
 			- functionality for addRemoveRequest button ✅
 			- display posts within macro ✅
 			- postAmount and userAmount should be accurate ✅
-			- display user's collections within <Macros > section
+			- display user's collections within <Macros > section ✅
 			- create a private post, have them be displayed in <Macros > section ✅
 
 Some minor things to note:
@@ -209,7 +372,7 @@ Need to have clicking on a tag or collection trigger the <Home > exit animation.
 To Do Next:
 	- have 'private' button class be dependant on collection.isPrivate ✅
 	- test to ensure Privatize and Delete funcs work ✅
-	- !!! groupPages !!!
+	- !!! groupPages !!! ✅
 
 
 ### 02. 14. 2024

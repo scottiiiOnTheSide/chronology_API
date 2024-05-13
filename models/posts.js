@@ -67,6 +67,9 @@ const PostsSchema = new mongoose.Schema({
   isPrivate: {
     type: Boolean,
   },
+  privacyToggleable: {
+    type: String
+  },
   setEvent_Year: {
     type: Number,
   },
