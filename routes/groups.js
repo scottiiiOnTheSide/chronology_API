@@ -162,7 +162,8 @@ app.get('/posts', verify, async (req,res) => {
 
         } else { //M A I N   R O U T E 
 
-            let group = await Groups.findOne({_id: groupID});
+            const group = await Groups.findOne({_id: groupID});
+            const user = await User.findById(_id);
             // let post = await Posts.findOne({_id: postID});
 
             if(action == 'getPosts') {
@@ -171,6 +172,32 @@ app.get('/posts', verify, async (req,res) => {
 
                     let allPosts = Posts.find({tags: `${group.name}`}).then((data)=> {
                         if(data) {
+
+                            data.filter(posts => {
+                                if(post.owner != _id) {
+
+                                    if(post.isPrivate == true) {
+                                        return null;
+                                    }
+                                    else if(post.privacyToggleable == 'On') {
+                                        return null;
+                                    }
+                                    if(post.privacyToggleable == 'Half') {
+                                        if(user.connections.includes(post.owner) ||
+                                            user.subscriptions.includes(post.owner)) {
+                                            return post;
+                                        }
+                                        else {
+                                            return null;
+                                        }
+                                    }
+                                    else {
+                                        return post;
+                                    }
+                                }
+
+                            })
+
                             res.status(200).send(data)
                         } else {
                             res.status(400).send({message: "No posts for this tag"});

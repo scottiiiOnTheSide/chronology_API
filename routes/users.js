@@ -757,6 +757,18 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
     try {
 
+        if(req.body.option == 'getUserSettings') {
+
+            let user = await User.findById(_id);
+            let settings = {
+                profilePhoto: user.profilePhoto,
+                biography: user.bio,
+                privacy: user.isPrivate,
+                invites: user.invites.length
+            }
+            res.status(200).send(settings);
+        }
+
         if(req.body.option == 'username') {
 
                 let check = await User.findOne({userName: req.body.newUsername});
@@ -778,9 +790,6 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
         }
 
         else if(req.body.option == 'profilePhoto') {
-
-                // console.log(req.body)
-                // console.log(req.files)
 
                 const user = await User.findOne({_id: _id});
 
@@ -857,6 +866,12 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
         else if(req.body.option == 'privacy') {
 
+            await User.update(
+                {_id: _id},
+                { $set: {isPrivate: req.body.state}},
+                {multi: true}
+            );
+
             await Posts.update(
                 {owner: _id},
                 { $set: {privacyToggleable: req.body.state}},
@@ -864,11 +879,9 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
             );
 
             res.status(200).send({confirmation: true})
-            
         }
 
         else if(req.body.option == 'invitationCount') {
-
         } 
     }
     catch(err) {

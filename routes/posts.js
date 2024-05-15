@@ -199,8 +199,7 @@ app.get('/log', verify, async (req,res) => {
     const base64url = auth.split('.')[1];
     const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
     const {_id, _username} = decoded;
-    const user = await User.findById(_id)
-          .then(res => res.toJSON());
+    const user = await User.findById(_id);
     const connections = user.connections;
 
     let social = req.query.social,
@@ -225,9 +224,12 @@ app.get('/log', verify, async (req,res) => {
 
           let results = socialPosts.filter((post) => {
 
-            /*all posts made within or before current year*/
-            if (post.postedOn_year <= currentYear) {
+            if(post.isPrivate == true) {
+              return null;
+            }
 
+            /*all posts made within or before current year*/
+            else if (post.postedOn_year <= currentYear) {
 
               /* removes posts within current year, beyond current month */
               if(post.postedOn_year == currentYear && post.postedOn_month > currentMonth) {

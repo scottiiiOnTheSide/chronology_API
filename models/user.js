@@ -94,7 +94,11 @@ const UserSchema = new mongoose.Schema({
     notifications: [{
       type: [NotificationSchema]
     }],
-    isPrivate: String
+    isPrivate: String,
+    invites: [{
+        type: mongoose.Schema.Types.ObjectID,
+        ref: 'Users',
+    }]
 },{timestamps: true});
 
 /**
