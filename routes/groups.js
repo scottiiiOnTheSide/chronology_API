@@ -112,16 +112,21 @@ app.post('/create', verify, async (req,res) => {
 
 
 
-app.get('/posts', verify, async (req,res) => {
+app.use('/posts', verify, async (req,res) => {
 
     const auth = req.header('auth-token');
     const base64url = auth.split('.')[1];
     const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
     const {_id, _username} = decoded; 
 
-    const action = req.query.action;
-    const groupID = req.query.groupID;
-    const postID = req.query.postID;
+    // const action = req.query.action;
+    // const groupID = req.query.groupID;
+    // const postID = req.query.postID;
+
+    const action = req.body.action;
+    const groupID = req.body.groupID;
+    const postID = req.body.postID;
+
 
     /**
      * needed vars:
@@ -301,10 +306,13 @@ app.get('/posts', verify, async (req,res) => {
                 }
                 else if(group.type == 'collection') {
 
+                    console.log(postID)
+                    // console.log(group.posts)
                     if(_id == group.owner) {
 
                         (async()=> {
-                            let newArray = group.posts.filter((post) => post != postID);
+                            // let newArray = group.posts.filter((post) => post != postID);
+                            let newArray = group.posts.filter(post => !postID.includes(post));
                             group.posts = newArray;
                             group.save()
                             res.status(200).send({confirmation: true, groupName: group.name});
@@ -318,7 +326,8 @@ app.get('/posts', verify, async (req,res) => {
 
                     if(group.admins.contains(_id)) {
 
-                        let newArray = group.posts.filter((post) => post !== postID);
+                        // let newArray = group.posts.filter((post) => post !== postID);
+                        let newArray = group.posts.filter(post => !postID.includes(post));
                         group.posts = newArray;
                         group.save()
                         res.status(200).send({confirmation: true, groupName: group.name});

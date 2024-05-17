@@ -76,6 +76,8 @@ const UserSchema = new mongoose.Schema({
     },
     profilePhoto: String,
     bio: String,
+    pinnedPosts: [String],
+    pinnedMedia: [mongoose.Schema.Types.Mixed],
     settings: {
       data: mongoose.Schema.Types.Mixed,
     },

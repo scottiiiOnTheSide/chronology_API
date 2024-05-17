@@ -3,6 +3,56 @@
 #### Project Notes & Planning
 -----------------------------------------------------------------------------------------
 
+
+### 05. 17. 2024
+@0130 
+	- after removal in <FullList> remove selected items from dataList, empty out selected
+	- after closing <FullList>, update <Macros> page with new group.posts 
+		- use groupPosts api function to update posts, also update post amount
+	- remove 'users engaged' for bookmarks
+	- functionality for removeAll 
+	- implement <Log> if mode is 'view'
+
+@1235 need to adjust groups route for posts/removePost to accomdate multiple ids
+
+
+### 05. 16. 2024
+@1555 
+to do next:
+	- remove # needs to count how many items in dataList are selected ✅
+		could make a use effect to count it everytime dataList changes
+	- functionality for remove # ✅
+	- implement <Log> if mode is 'view'
+
+Might have to come up with new way of seeing user's entire log on their page,
+as using <FullList> would require it still being up after user makes a post 
+selection, which it wouldnt be.
+
+
+### 05. 15. 2024
+@2250 Menu added for <Macros>
+
+@2225 Fixed an issue in <Macros>, where returning after viewing a post messes up page layout
+
+??? is there a way to have page load at scrollTo, rather than scrolling to it?
+
+@1515 skeleton created for <FullList>
+
+****Next Tasks
+		- have 'Remove Items' toggle opening of <FullList> ✅
+		- css for <FullList> ✅
+		- create post with multiple images, then add it to Bookmarks
+		- add menuBar & menu <Macros> page for collections ✅
+		-	add exitButton for tags <Macros> page, make functional 
+		- fix issue with getting posts for tags,
+			issue at /backEnd/routes/groups.js:177
+		- plan backend api functions for FullList, in <Instants>
+			- removing items from collections
+			- adding posts to user's pinnedPosts
+			- adding media to user's pinnedMedia
+				- pinnedMedia to include link to corresponding post (url and post id)
+
+
 ### 05. 14. 2024
 @2245 Need to test privacy concerning posts with privacyToggleable On and Half in <Macros>
 			tags page
@@ -37,7 +87,8 @@ Will need memoization for homepage...at some point
 		- ManageConnections CSS 
 		- User Profile
 			- fullList
-			- pinning posts and media
+				- pinning posts and media
+				- deleting posts from collections
 		- Editting posts
 			- pinning media
 
