@@ -125,7 +125,7 @@ app.use('/posts', verify, async (req,res) => {
 
     const action = req.body.action;
     const groupID = req.body.groupID;
-    const postID = req.body.postID;
+    let postID = req.body.postID;
 
 
     /**
@@ -170,15 +170,15 @@ app.use('/posts', verify, async (req,res) => {
             const group = await Groups.findOne({_id: groupID});
             const user = await User.findById(_id);
             // let post = await Posts.findOne({_id: postID});
-
+            console.log(req.body)
+            console.log(group)
             if(action == 'getPosts') {
             
                 if(group.type == 'tag') {
 
-                    let allPosts = Posts.find({tags: `${group.name}`}).then((data)=> {
-                        if(data) {
+                    let allPosts = await Posts.find({tags: `${group.name}`}).sort({createdAt: -1})
 
-                            data.filter(posts => {
+                    allPosts.filter(posts => {
                                 if(post.owner != _id) {
 
                                     if(post.isPrivate == true) {
@@ -200,26 +200,61 @@ app.use('/posts', verify, async (req,res) => {
                                         return post;
                                     }
                                 }
-
-                            })
-
-                            res.status(200).send(data)
-                        } else {
-                            res.status(400).send({message: "No posts for this tag"});
-                        }
                     })
+
+                    allPosts.sort((a,b) => {
+
+                              const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                                    dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+
+                              if (dateA > dateB) return -1;
+                              if (dateA < dateB) return 1;
+                              return 0;
+                    })
+
+                    res.status(200).send(allPosts);
+
                     console.log('here');
                 }
                 else if(group.type == 'collection' || group.type == 'groups') {
 
-                    let groups = Groups.find({name: req.body.name, type: req.body.type});
-                    let posts = Posts.find({ '_id': {$in: group.posts}}).then(data => {
-                        if(data) {
-                            res.status(200).send(data);
-                        } else {
-                            res.status(400).send({message: "No posts in this collection"});
-                        }
+                    let posts = await Posts.find({ _id: {$in: group.posts}}).sort({createdAt: -1})
+
+                    posts.filter(post => {
+                                if(post.owner != _id) {
+
+                                    if(post.isPrivate == true) {
+                                        return null;
+                                    }
+                                    else if(post.privacyToggleable == 'On') {
+                                        return null;
+                                    }
+                                    if(post.privacyToggleable == 'Half') {
+                                        if(user.connections.includes(post.owner) ||
+                                            user.subscriptions.includes(post.owner)) {
+                                            return post;
+                                        }
+                                        else {
+                                            return null;
+                                        }
+                                    }
+                                    else {
+                                        return post;
+                                    }
+                                }
                     })
+
+                    posts.sort((a,b) => {
+
+                              const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                                    dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+
+                              if (dateA > dateB) return -1;
+                              if (dateA < dateB) return 1;
+                              return 0;
+                    })
+
+                    res.status(200).send(posts);
                 }
             }
 
@@ -284,7 +319,9 @@ app.use('/posts', verify, async (req,res) => {
                     if(group.isPrivate) {
                         if(group.owner == _id) {
 
-                            let newArray = group.posts.filter((post) => post !== postID);
+                            // let newArray = group.posts.filter((post) => post !== postID);
+                            let newArray = group.posts.map(item => item.toString())
+                            newArray = newArray.filter(post => !postID.includes(post));
                             group.posts = newArray;
                             group.save()
                             res.status(200).send(true);
@@ -306,15 +343,17 @@ app.use('/posts', verify, async (req,res) => {
                 }
                 else if(group.type == 'collection') {
 
-                    console.log(postID)
+                    // console.log(postID)
                     // console.log(group.posts)
+                    console.log(postID)
                     if(_id == group.owner) {
 
                         (async()=> {
-                            // let newArray = group.posts.filter((post) => post != postID);
-                            let newArray = group.posts.filter(post => !postID.includes(post));
+                            let newArray = group.posts.map(item => item.toString())
+                            newArray = newArray.filter(post => !postID.includes(post));
+                            console.log(newArray)
                             group.posts = newArray;
-                            group.save()
+                            await group.save()
                             res.status(200).send({confirmation: true, groupName: group.name});
                         })();   
                     }
@@ -327,7 +366,9 @@ app.use('/posts', verify, async (req,res) => {
                     if(group.admins.contains(_id)) {
 
                         // let newArray = group.posts.filter((post) => post !== postID);
-                        let newArray = group.posts.filter(post => !postID.includes(post));
+                        // let newArray = group.posts.filter(post => !postID.includes(post));
+                        let newArray = group.posts.map(item => item.toString())
+                        newArray = newArray.filter(post => !postID.includes(post));
                         group.posts = newArray;
                         group.save()
                         res.status(200).send({confirmation: true, groupName: group.name});
