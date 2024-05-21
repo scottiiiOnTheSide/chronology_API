@@ -750,6 +750,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
     const base64url = auth.split('.')[1];
     const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
     const {_id, _username} = decoded; 
+    const user = await User.findById(_id);
 
     console.log(req.body)
     console.log(req.files)
@@ -758,8 +759,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
     try {
 
         if(req.body.option == 'getUserSettings') {
-
-            let user = await User.findById(_id);
+            
             let settings = {
                 profilePhoto: user.profilePhoto,
                 biography: user.bio,
@@ -790,8 +790,6 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
         }
 
         else if(req.body.option == 'profilePhoto') {
-
-                const user = await User.findOne({_id: _id});
 
                 const d = new Date();
                 const month = d.getMonth();
@@ -839,15 +837,12 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
         else if(req.body.option == 'biography') {
 
-            const user = await User.findOne({_id: _id});
             user.bio = req.body.biography
             await user.save()
             res.status(200).send({confirmation: true})
         }
 
         else if(req.body.option == 'changePassword') {
-
-            const user = await User.findOne({_id: _id});
         
             const passwordValid = await encrypt.compare(req.body.currentPassword, user.password);
 
@@ -877,12 +872,32 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 { $set: {privacyToggleable: req.body.state}},
                 {multi: true}
             );
-
             res.status(200).send({confirmation: true})
         }
 
         else if(req.body.option == 'invitationCount') {
-        } 
+        }
+
+        else if(req.body.option == 'pinnedPosts') {
+
+            if(req.body.type == 'check') {
+
+                let check = user.pinnedPosts.some(post => post == req.body.postID);
+                res.status(200).send({confirmation: check == true ? true : false});
+            }
+            else if(req.body.type == 'add') {
+
+                user.pinnedPosts.push(req.body.postID);
+                await user.save();
+                res.status(200).send({confirmation: true})
+            }   
+            else if(req.body.type == 'remove') {
+                let newArray = user.pinnedPosts.filter(post => post != req.body.postID);
+                user.pinnedPosts = newArray;
+                await user.save();
+                res.status(200).send({confirmation: true});
+            }
+        }
     }
     catch(err) {
         console.log(err);
