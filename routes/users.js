@@ -898,6 +898,48 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 res.status(200).send({confirmation: true});
             }
         }
+
+        else if(req.body.option == 'pinnedMedia') {
+
+            if(req.body.type == 'add') {
+
+                // Filter out any duplicates from req.body.postID already
+                // within user.pinnedMedia
+
+                // let itemCheck = Object.keys(user.pinnedMedia).filter(item => req.body.content.includes(user.pinnedMedia[item]));
+                let itemCheck = user.pinnedMedia.filter(item => {
+                    for(let i = 0; i < req.body.content.length; i++) {
+
+                        if(item.url == req.body.content[i].url) {
+                            return item;
+                        }
+                        else {
+                            return;
+                        }
+                    }
+                })
+                if(itemCheck.length > 0) {
+                    res.status(200).send({confirmation: false, message: 'Some selected content is already in Pinned Media'})
+                } 
+                else {
+                    req.body.content.forEach(item => {
+                        user.pinnedMedia.push(item);
+                    })
+                    await user.save();
+                    res.status(200).send({confirmation: true});
+                }
+
+               
+            }
+            else if(req.body.type == 'remove') {
+
+                let newArray = user.pinnedMedia.map(item => item.toString())
+                newArray = user.pinnedMedia.filter(item => item.url != req.body.postID.includes(item.url));
+                user.pinnedMedia = newArray;
+                user.save();
+                res.status(200).send({confirmation: true})
+            }
+        }
     }
     catch(err) {
         console.log(err);
