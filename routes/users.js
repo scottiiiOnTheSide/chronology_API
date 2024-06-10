@@ -103,7 +103,7 @@ app.post('/login', async (req, res) => {
     } 
 });
 
-app.get('/user', async (req,res) => {
+app.get('/user/:userID', async (req,res) => {
 
     try {
 
@@ -169,6 +169,23 @@ app.get('/user', async (req,res) => {
                 )
             })();    
         } 
+
+        else if(req.query.query == 'singleUser') {
+            if(req.params.userID == _id) {
+
+                let posts = await Posts.find({ _id: {$in: singleUser.pinnedPosts}}).sort({createdAt: -1});
+                res.status(200).send({user: singleUser, pinnedPosts: posts});
+            }
+            else {
+
+                let user = await User.findById(req.params.userID);
+                let posts = await Posts.find({ _id: {$in: user.pinnedPosts}}).sort({createdAt: -1});
+                console.log(posts);
+                user.pinnedPosts = posts;
+
+                res.status(200).send(user);
+            }
+        }
 
         else {
             res.status(200).send(singleUser);
@@ -892,7 +909,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 res.status(200).send({confirmation: true})
             }   
             else if(req.body.type == 'remove') {
-                let newArray = user.pinnedPosts.filter(post => post != req.body.postID);
+                let newArray = user.pinnedPosts.filter(post => post != req.body.content);
                 user.pinnedPosts = newArray;
                 await user.save();
                 res.status(200).send({confirmation: true});
@@ -903,10 +920,11 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
             if(req.body.type == 'add') {
 
+                // 06. 09. 2024
+                // change check so that it
                 // Filter out any duplicates from req.body.postID already
-                // within user.pinnedMedia
+                // within user.pinnedMedia, AND add new ones
 
-                // let itemCheck = Object.keys(user.pinnedMedia).filter(item => req.body.content.includes(user.pinnedMedia[item]));
                 let itemCheck = user.pinnedMedia.filter(item => {
                     for(let i = 0; i < req.body.content.length; i++) {
 
@@ -928,13 +946,12 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                     await user.save();
                     res.status(200).send({confirmation: true});
                 }
-
-               
             }
             else if(req.body.type == 'remove') {
 
-                let newArray = user.pinnedMedia.map(item => item.toString())
-                newArray = user.pinnedMedia.filter(item => item.url != req.body.postID.includes(item.url));
+                // let newArray = user.pinnedMedia.map(item => item.toString())
+                // req.body.content = req.body.content.map(item => item.url);
+                let newArray = user.pinnedMedia.filter(item => item.url != req.body.content);
                 user.pinnedMedia = newArray;
                 user.save();
                 res.status(200).send({confirmation: true})

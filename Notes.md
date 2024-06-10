@@ -3,6 +3,121 @@
 #### Project Notes & Planning
 -----------------------------------------------------------------------------------------
 
+
+### 06. 09. 2024
+@2350 removing from user's pinned (both) now works!
+			need to verify removeAll works for both posts and media
+
+
+### 06. 07. 2024
+@1205 user's pinnedMedia and pinnedPosts can now be seen / selected within <FullList>
+
+TBD...
+	- functions for removing entries from user's pinned ✅
+
+After...
+	- having 'connect' option work when viewing another person's profile 
+	- all instances of another user's username being link to their profile
+	- attaching user's profilePhoto to post doc on backEnd
+	- userSettings to be it's own page
+		- profile settings to be modal instead
+	- log currently not working in bookmarks. Need to revert back to parent component
+		feeding log data
+	!!! Manage connections CSS
+		- apiaccess function for getting user connections not working. I'd made changes
+			to the user subroutes.
+
+****Side Quests:
+		- for topics, need to address issue preventing page from opening... ✅
+		- Upon deleting a post, clear 'scrollToView' from access global state var
+		- replace full page components opening and closing animations
+				1.) full page components have 'enter' animation by default
+				2.) use useReducer toggle to add 'exit' class, adding 'leave' animation
+				3.) animation speed of 0.2s - close component with setTimeout after 300ms
+				4.) this animation should be toggleable by buttons for leaving page
+		- in <CreatePost> make sure info for current date is taken AT THE TIME the post is made - not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
+		- set user.isPrivate setting to 'off' on initial create user
+		- add admin account to user connections list on initial create user
+		- tags need to appear within <Post> and go to their macro page upon being clicked
+
+***!!!***
+Begin reading up on memoization...
+Code splitting ?
+
+### 06. 06. 2024
+@1445 added functionality for options / settings in <UserProfile>
+
+TBD...
+	- have <fullList> functional for removing posts and media from user's pins
+		- include functions specifically for removing from user's own pinnedMedia
+		  and pinnedPosts
+		- make sure data sent to <fullList> is compatiable ✅
+		- source can be 'user's username pinned .. whatever' ✅
+
+@1345 
+!!! Every instance of a username needs to be link to said user's profile
+		- backEnd api should remove some of the unncessary fields when sending the user's data
+
+
+### 06. 05. 2024
+@2355 
+TBD...
+	- style pinnedPosts, add goToPost functionality within element ✅
+	- plan rest of additions:
+		- <fullList> for removing pinnedMedia, pinnedPosts and see all posts
+		- options for account owner 
+				- remove from pinnedMedia
+				- remove from pinnedPosts
+				- user settings
+		- options for other users
+			- connect 
+
+!!! ought to plan functionality for blocking users...
+
+@2240 Clicking on photo in pinnedMedia goes to <Post> 
+
+!!! <InteractionsList> and <UserProfile> need fadeOut toggles for when leaving
+		Im sure there are more...
+
+@1150 pinnedMedia CSS done
+
+TBD...
+	- function to get post data, then navigate() to post ✅
+	- get postData for pinned posts (could add postData to userData on backEnd. navigate func
+		could be written inline, use postData within mapped element) ✅
+
+
+### 05. 29. 2024
+@1525 CSS and HTML more or less set up for <UserProfile>
+
+****To Do Next:
+		- add to pinnedMedia and pinnedPosts, add function to <UserProfile> page for getting
+			postInfo for pinnedPosts, add elements and style
+		- add large quotation marks to bio using before:: and after:: ✅
+
+@1440 <UserSettings> should be it's own page...
+			Forms for the profile functions should have their own modals
+
+!!! websocket randomly disconnecting...
+
+
+### 05. 27. 2024
+@1645 Have to add userProfile data to location.state when going to <UserProfile>
+			or find other way to have data loaded before render method
+
+@1025 Need to fix issuw with <Log> data hydration. It's utilized in many places and it's probably
+			best if it's parent component feeds it the logData
+
+### 05. 25. 2024
+@1230 
+Concerning Getting User Profile Images per Post:
+*Cons*:
+	- an operation where the userProfle photo is updated for all of a user's posts could potentially
+		have a high cost (a user with 1000 posts + many of these operations occuring at once)
+*Pros*
+	- where as a coOperation to get and add a profilePhoto for each post would have a limit: 32 posts
+		per log operation ...
+
 ### 05. 24. 2024
 @1355 Should modify the pinnedMedia content check to add the unique items and exclude duplicates.
 			As of now, it simply discerns duplicates then fails the operation xD
@@ -26,6 +141,7 @@
 		- in <CreatePost> make sure info for current date is taken AT THE TIME the post is made - not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
 		- set user.isPrivate setting to 'off' on initial create user
 		- add admin account to user connections list on initial create user
+		- tags need to appear within <Post> and go to their macro page upon being clicked
 
 
 
