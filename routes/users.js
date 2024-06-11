@@ -771,7 +771,6 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
     console.log(req.body)
     console.log(req.files)
-    // res.status(200).send(req.body);
 
     try {
 
@@ -909,7 +908,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 res.status(200).send({confirmation: true})
             }   
             else if(req.body.type == 'remove') {
-                let newArray = user.pinnedPosts.filter(post => post != req.body.content);
+                let newArray = user.pinnedPosts.filter(post => !req.body.content.includes(post));
                 user.pinnedPosts = newArray;
                 await user.save();
                 res.status(200).send({confirmation: true});
@@ -951,8 +950,10 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
                 // let newArray = user.pinnedMedia.map(item => item.toString())
                 // req.body.content = req.body.content.map(item => item.url);
-                let newArray = user.pinnedMedia.filter(item => item.url != req.body.content);
+                // let newArray = user.pinnedMedia.filter(item => item.url != req.body.content.includes(item.url));
+                let newArray = user.pinnedMedia.filter(item => req.body.content.every(url => url != item.url));
                 user.pinnedMedia = newArray;
+                console.log(user.pinnedMedia)
                 user.save();
                 res.status(200).send({confirmation: true})
             }
