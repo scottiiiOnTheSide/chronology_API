@@ -177,13 +177,11 @@ app.get('/user/:userID', async (req,res) => {
                 res.status(200).send({user: singleUser, pinnedPosts: posts});
             }
             else {
-
+                console.log('this one')
                 let user = await User.findById(req.params.userID);
+                console.log(user);
                 let posts = await Posts.find({ _id: {$in: user.pinnedPosts}}).sort({createdAt: -1});
-                console.log(posts);
-                user.pinnedPosts = posts;
-
-                res.status(200).send(user);
+                res.status(200).send({user: user, pinnedPosts: posts});
             }
         }
 

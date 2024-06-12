@@ -4,6 +4,11 @@
 -----------------------------------------------------------------------------------------
 
 
+### 06. 12. 2024
+@1245 instances of other user's username goes to their profile (in log)
+			- also need to do <Post> as well
+???? when making post, how does post get user's profile picture added?
+
 ### 06. 10. 2024
 @2335 Last nights entry was actually around 10pm, not 11...
 			removeAll now works for both pinnedMedia and pinnedPosts
@@ -11,6 +16,7 @@
 Next...
 - all instances of another user's username being link to their profile
 	- make sure other user's view of profile works
+	- add menu close button lol
 - request connection button functionality
 
 !!! For profilePictures on posts & comments - add profile pic to each doc / new field
