@@ -26,6 +26,9 @@ const CommentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  profilePhoto: {
+    type: String
+  },
   parentPost: {
     type: String,
     required: true
@@ -50,10 +53,13 @@ const PostsSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectID,
       ref: 'User'
   }, 
-  author: {
+  author: { //owner username (T-T )
     type: String,
     required: true,
     index: true,
+  },
+  profilePhoto: {
+    type: String
   },
   title: {
       type: String,

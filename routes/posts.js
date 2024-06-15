@@ -95,7 +95,7 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     // */
 
     if(req.body.usePostedByDate == 'true') {
-      console.log(month +' '+ date +' '+ year)
+        console.log(month +' '+ date +' '+ year);
         newPost.owner = _id;
         newPost.author = _username;
         newPost.title = req.body.title;
@@ -585,6 +585,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
   try {
 
     const type = req.params.type;
+
     if (type == 'getAll') {
 
       console.log('Getting comments for ' +req.body.parentID);
@@ -592,6 +593,7 @@ app.post('/comment/:type', verify, async(req, res)=> {
       // console.log(comments);
       res.status(200).send(comments);
     }
+
     else if(type == 'updateCount') {
 
       let post = await Posts.findOne({_id: req.query.postID});
@@ -600,12 +602,14 @@ app.post('/comment/:type', verify, async(req, res)=> {
       res.status(200).send(true);
 
     }
+
     else if(type == 'initial') {
 
       let newComment = new Comment({
         ownerUsername: req.body.ownerUsername,
         ownerID: req.body.ownerID,
         parentPost: req.body.parentPost,
+        profilePhoto: req.body.profilePhoto,
         parentID: req.body.parentID,
         content: req.body.content,
         postedOn_month: req.body.postedOn_month,
@@ -628,11 +632,13 @@ app.post('/comment/:type', verify, async(req, res)=> {
           }
       })
     }
+
     else if(type == 'response') {
 
       let newComment = new Comment({
         ownerUsername: req.body.ownerUsername,
         ownerID: req.body.ownerID,
+        profilePhoto: req.body.profilePhoto,
         parentPost: req.body.parentPost,
         parentID: req.body.parentID,
         content: req.body.content,
@@ -662,7 +668,6 @@ app.post('/comment/:type', verify, async(req, res)=> {
 
       res.status(200).send(newComment._id);
     }
-    
   } catch(err) {
 
     console.log(err);

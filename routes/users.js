@@ -84,10 +84,10 @@ app.post('/login', async (req, res) => {
             return res.status(400).send({error: true, message: "This password is invalid"});
         }
         
-        const userName = user.userName;
         let JWTpayload = {
             '_id': user._id, 
-            '_username': userName
+            '_username': user.userName,
+            '_profilePhoto': user.profilePhoto
         };
         const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
         //sets JWT within reponse header and returns 
@@ -844,9 +844,25 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 // req.body[title] = cdnUrl;
 
                 user.profilePhoto = cdnUrl;
-                await user.save()
+                await user.save();
 
-                res.status(200).send({confirmation: true, message: 'Profile Photo Updated !'})
+                await Posts.update(
+                    {owner: _id},
+                    { $set: {profilePhoto: cdnUrl}},
+                    {multi: true}
+                );
+
+                await Comment.update(
+                    {ownerID: _id},
+                    { $set: {profilePhoto: cdnUrl}},
+                    {multi: true}
+                );
+
+                res.status(200).send({
+                    confirmation: true, 
+                    message: 'Profile Photo Updated !', 
+                    updatedPhoto: cdnUrl
+                })
         }
 
         else if(req.body.option == 'biography') {
