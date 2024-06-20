@@ -580,17 +580,20 @@ app.delete('/deletePost', verify, async(req,res) => {
 })
 
 
-app.post('/comment/:type', verify, async(req, res)=> {
+app.use('/comment/:type', verify, async(req, res)=> {
 
   try {
 
     const type = req.params.type;
 
-    if (type == 'getAll') {
+    if (type == 'getComments') {
 
-      console.log('Getting comments for ' +req.body.parentID);
-      let comments = await Comment.find({ parentID: mongoose.Types.ObjectId(req.body.parentID)} );
-      // console.log(comments);
+      console.log('Getting comments for ' +req.query.postID);
+      let comments = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID) }).populate({
+        path: 'replies',
+        populate: { path: 'replies'}
+      });
+
       res.status(200).send(comments);
     }
 
@@ -620,17 +623,18 @@ app.post('/comment/:type', verify, async(req, res)=> {
       })
       newComment.save();
 
-      await Posts.findOneAndUpdate(
-        {_id:mongoose.Types.ObjectId(req.body.parentID)},
-        {$push: {comments: newComment}},
-        [{upsert: true}, {useFindandModify: false}]).then((data) => {
-          if(data) {
-            console.log(`comment ${newComment._id} was made to post ${newComment.parentID}`);
-            res.status(200).send(newComment._id);
-          } else {
-            console.log(`error in adding comment ${newComment._id} to post ${newComment.parentID}`);
-          }
-      })
+      // await Posts.findOneAndUpdate(
+      //   {_id:mongoose.Types.ObjectId(req.body.parentID)},
+      //   {$push: {comments: newComment}},
+      //   [{upsert: true}, {useFindandModify: false}]).then((data) => {
+      //     if(data) {
+      //       console.log(`comment ${newComment._id} was made to post ${newComment.parentID}`);
+      //       res.status(200).send(newComment._id);
+      //     } else {
+      //       console.log(`error in adding comment ${newComment._id} to post ${newComment.parentID}`);
+      //     }
+      // })
+      res.status(200).send(newComment._id);
     }
 
     else if(type == 'response') {
@@ -639,8 +643,8 @@ app.post('/comment/:type', verify, async(req, res)=> {
         ownerUsername: req.body.ownerUsername,
         ownerID: req.body.ownerID,
         profilePhoto: req.body.profilePhoto,
-        parentPost: req.body.parentPost,
-        parentID: req.body.parentID,
+        // parentPost: req.body.parentPost,
+        parentComment: req.body.parentComment,
         content: req.body.content,
         postedOn_month: req.body.postedOn_month,
         postedOn_day: req.body.postedOn_day,
@@ -650,21 +654,32 @@ app.post('/comment/:type', verify, async(req, res)=> {
       });
       newComment.save();
       
-      let post = await Posts.findById(req.body.parentPost);
-      let comments = post.comments,
-          commentPlace = req.body.commentNumber.split("-");
-      let parentComment = comments[parseInt(commentPlace[0]) - 1];
+      // let post = await Posts.findById(req.body.parentPost);
+      // let comments = post.comments,
+      //     commentPlace = req.body.commentNumber.split("-");
+      // let parentComment = comments[parseInt(commentPlace[0]) - 1];
 
-      console.log(commentPlace)
-      console.log(parentComment)
+      // console.log(commentPlace)
+      // console.log(parentComment)
 
-      let i = 1;
-      while(i <= commentPlace.length - 2) { //should stop before last number
-          parentComment = parentComment.replies[parseInt(commentPlace[i]) - 1];
-          i++;
-      }
-      parentComment.replies.push(newComment);
-      post.save();
+      // let i = 1;
+      // while(i <= commentPlace.length - 2) { //should stop before last number
+      //     parentComment = parentComment.replies[parseInt(commentPlace[i]) - 1];
+      //     i++;
+      // }
+      // parentComment.replies.push(newComment);
+      // post.save();
+
+      await Comment.findOneAndUpdate(
+        {_id: mongoose.Types.ObjectId(req.body.parentComment)},
+        {$push: {replies: newComment._id}},
+        [{upsert: true}, {useFindandModify: false}]).then((data) => {
+          if(data) {
+            console.log(`reply comment ${newComment._id} was added to parent comment ${req.body.parentComment}`);
+          } else {
+            console.log(`error in adding reply ${newComment._id} to parent ${newComment.parentID}`);
+          }
+      })
 
       res.status(200).send(newComment._id);
     }

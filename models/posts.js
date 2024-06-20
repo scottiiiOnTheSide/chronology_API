@@ -31,11 +31,14 @@ const CommentSchema = new mongoose.Schema({
   },
   parentPost: {
     type: String,
-    required: true
   },
-  parentID: {
+  parentComment: {
       type: mongoose.Schema.Types.ObjectID,
   },
+  replies: [{
+    type: mongoose.Schema.Types.ObjectID,
+    ref: 'Comment'
+  }],
   content: {
     type: String,
     required: true
@@ -46,7 +49,7 @@ const CommentSchema = new mongoose.Schema({
   commentNumber: String,
 }, {timestamps: true});
 
-CommentSchema.add({ replies: [CommentSchema]});
+// CommentSchema.add({ replies: [CommentSchema]});
 
 const PostsSchema = new mongoose.Schema({
   owner: {
