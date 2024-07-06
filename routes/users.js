@@ -103,7 +103,7 @@ app.post('/login', async (req, res) => {
     } 
 });
 
-app.get('/user', async (req,res) => {
+app.get('/user/:userID', async (req,res) => {
 
     try {
 
@@ -170,7 +170,9 @@ app.get('/user', async (req,res) => {
             })();    
         } 
 
-        else {
+        else if (req.query.query == 'singleUser'){
+
+            singleUser = await User.findById(req.params.userID)
             res.status(200).send(singleUser);
         }
         
@@ -750,7 +752,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
     const base64url = auth.split('.')[1];
     const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
     const {_id, _username} = decoded; 
-    const user = await User.findById(_id);
+    let user = await User.findById(_id);
 
     console.log(req.body)
     console.log(req.files)
