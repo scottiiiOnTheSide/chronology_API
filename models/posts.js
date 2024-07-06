@@ -26,13 +26,19 @@ const CommentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  profilePhoto: {
+    type: String
+  },
   parentPost: {
     type: String,
-    required: true
   },
-  parentID: {
+  parentComment: {
       type: mongoose.Schema.Types.ObjectID,
   },
+  replies: [{
+    type: mongoose.Schema.Types.ObjectID,
+    ref: 'Comment'
+  }],
   content: {
     type: String,
     required: true
@@ -43,17 +49,20 @@ const CommentSchema = new mongoose.Schema({
   commentNumber: String,
 }, {timestamps: true});
 
-CommentSchema.add({ replies: [CommentSchema]});
+// CommentSchema.add({ replies: [CommentSchema]});
 
 const PostsSchema = new mongoose.Schema({
   owner: {
       type: mongoose.Schema.Types.ObjectID,
       ref: 'User'
   }, 
-  author: {
+  author: { //owner username (T-T )
     type: String,
     required: true,
     index: true,
+  },
+  profilePhoto: {
+    type: String
   },
   title: {
       type: String,

@@ -165,7 +165,7 @@ app.use('/posts', verify, async (req,res) => {
                 }
             })
 
-        } else { //M A I N   R O U T E 
+        } else { // M A I N   R O U T E 
 
             const group = await Groups.findOne({_id: groupID});
             const user = await User.findById(_id);

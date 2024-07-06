@@ -84,10 +84,10 @@ app.post('/login', async (req, res) => {
             return res.status(400).send({error: true, message: "This password is invalid"});
         }
         
-        const userName = user.userName;
         let JWTpayload = {
             '_id': user._id, 
-            '_username': userName
+            '_username': user.userName,
+            '_profilePhoto': user.profilePhoto
         };
         const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
         //sets JWT within reponse header and returns 
@@ -170,9 +170,28 @@ app.get('/user/:userID', async (req,res) => {
             })();    
         } 
 
+<<<<<<< HEAD
         else if (req.query.query == 'singleUser'){
 
             singleUser = await User.findById(req.params.userID)
+=======
+        else if(req.query.query == 'singleUser') {
+            if(req.params.userID == _id) {
+
+                let posts = await Posts.find({ _id: {$in: singleUser.pinnedPosts}}).sort({createdAt: -1});
+                res.status(200).send({user: singleUser, pinnedPosts: posts});
+            }
+            else {
+                console.log('this one')
+                let user = await User.findById(req.params.userID);
+                console.log(user);
+                let posts = await Posts.find({ _id: {$in: user.pinnedPosts}}).sort({createdAt: -1});
+                res.status(200).send({user: user, pinnedPosts: posts});
+            }
+        }
+
+        else {
+>>>>>>> deb8a18d5ac4001bbcf8550296dc330f3454a5cc
             res.status(200).send(singleUser);
         }
         
@@ -756,7 +775,6 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
     console.log(req.body)
     console.log(req.files)
-    // res.status(200).send(req.body);
 
     try {
 
@@ -832,9 +850,25 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 // req.body[title] = cdnUrl;
 
                 user.profilePhoto = cdnUrl;
-                await user.save()
+                await user.save();
 
-                res.status(200).send({confirmation: true, message: 'Profile Photo Updated !'})
+                await Posts.update(
+                    {owner: _id},
+                    { $set: {profilePhoto: cdnUrl}},
+                    {multi: true}
+                );
+
+                await Comment.update(
+                    {ownerID: _id},
+                    { $set: {profilePhoto: cdnUrl}},
+                    {multi: true}
+                );
+
+                res.status(200).send({
+                    confirmation: true, 
+                    message: 'Profile Photo Updated !', 
+                    updatedPhoto: cdnUrl
+                })
         }
 
         else if(req.body.option == 'biography') {
@@ -894,7 +928,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 res.status(200).send({confirmation: true})
             }   
             else if(req.body.type == 'remove') {
-                let newArray = user.pinnedPosts.filter(post => post != req.body.postID);
+                let newArray = user.pinnedPosts.filter(post => !req.body.content.includes(post));
                 user.pinnedPosts = newArray;
                 await user.save();
                 res.status(200).send({confirmation: true});
@@ -905,10 +939,11 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
             if(req.body.type == 'add') {
 
+                // 06. 09. 2024
+                // change check so that it
                 // Filter out any duplicates from req.body.postID already
-                // within user.pinnedMedia
+                // within user.pinnedMedia, AND add new ones
 
-                // let itemCheck = Object.keys(user.pinnedMedia).filter(item => req.body.content.includes(user.pinnedMedia[item]));
                 let itemCheck = user.pinnedMedia.filter(item => {
                     for(let i = 0; i < req.body.content.length; i++) {
 
@@ -930,14 +965,15 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                     await user.save();
                     res.status(200).send({confirmation: true});
                 }
-
-               
             }
             else if(req.body.type == 'remove') {
 
-                let newArray = user.pinnedMedia.map(item => item.toString())
-                newArray = user.pinnedMedia.filter(item => item.url != req.body.postID.includes(item.url));
+                // let newArray = user.pinnedMedia.map(item => item.toString())
+                // req.body.content = req.body.content.map(item => item.url);
+                // let newArray = user.pinnedMedia.filter(item => item.url != req.body.content.includes(item.url));
+                let newArray = user.pinnedMedia.filter(item => req.body.content.every(url => url != item.url));
                 user.pinnedMedia = newArray;
+                console.log(user.pinnedMedia)
                 user.save();
                 res.status(200).send({confirmation: true})
             }
