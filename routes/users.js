@@ -783,7 +783,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
             res.status(200).send(settings);
         }
 
-        if(req.body.option == 'username') {
+        else if(req.body.option == 'username') {
 
                 let check = await User.findOne({userName: req.body.newUsername});
                 console.log(check)
@@ -791,15 +791,21 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                     res.status(200).send({confirmation: false, message: "This username is taken"})
                 }
                 else {
-                    let thisUser = User.findByIdAndUpdate(_id, 
-                        {username: req.body.newUsername}, (err, data)=> {
-                            if(err) {
-                                res.status(400).send({message: "An Error Has Occured. Please Try Again"})
-                            }
-                            else {
-                                res.status(200).send({confirmation: true, message: `Username changed to ${req.body.newUsername}`});
-                            }
-                    })
+                    await User.findByIdAndUpdate(_id, {username: req.body.newUsername})
+
+                    await Posts.updateMany(
+                        {owner: _id},
+                        { $set: {author: req.body.newUsername}},
+                        {multi: true}
+                    );
+
+                    await Comment.updateMany(
+                        {owner: _id},
+                        { $set: {author: req.body.newUsername}},
+                        {multi: true}
+                    );
+
+                    res.status(200).send({confirmation: true, message: `Username changed to ${req.body.newUsername}`});
                 }
         }
 
@@ -846,13 +852,13 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 user.profilePhoto = cdnUrl;
                 await user.save();
 
-                await Posts.update(
+                await Posts.updateMany(
                     {owner: _id},
                     { $set: {profilePhoto: cdnUrl}},
                     {multi: true}
                 );
 
-                await Comment.update(
+                await Comment.updateMany(
                     {ownerID: _id},
                     { $set: {profilePhoto: cdnUrl}},
                     {multi: true}

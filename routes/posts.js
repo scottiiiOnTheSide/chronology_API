@@ -544,7 +544,7 @@ app.delete('/deletePost', verify, async(req,res) => {
       console.log(`${filename} deleted from GCS`);
     }
 
-    Posts.findByIdAndRemove(id, (err, data)=> {
+    await Posts.findByIdAndRemove(id, (err, data)=> {
         if(!data) {
           console.log('error')
         }
@@ -562,7 +562,7 @@ app.delete('/deletePost', verify, async(req,res) => {
               deleteFile(filename).catch(console.error);
             }
           }
-          console.log(data.title + 'deleted');
+          console.log(data.title + ' deleted');
         }
     });
 
@@ -589,7 +589,7 @@ app.use('/comment/:type', verify, async(req, res)=> {
     if (type == 'getComments') {
 
       console.log('Getting comments for ' +req.query.postID);
-      let comments = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID) }).populate({
+      let comments = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID), topLevel: true }).populate({
         path: 'replies',
         populate: { path: 'replies'}
       });
@@ -599,11 +599,18 @@ app.use('/comment/:type', verify, async(req, res)=> {
 
     else if(type == 'updateCount') {
 
-      let post = await Posts.findOne({_id: req.query.postID});
-      post.commentCount = req.query.count;
-      post.save()
-      res.status(200).send(true);
+      
+      let commentCount = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID) }).count();
 
+      await Posts.updateOne(
+          {_id: req.query.postID},
+          { $set: {commentCount: commentCount}},
+          {multi: true}
+      );
+      console.log('updating comment count for post, which is . . .');
+      console.log(commentCount);
+
+      res.status(200).send(true);
     }
 
     else if(type == 'initial') {
@@ -619,6 +626,7 @@ app.use('/comment/:type', verify, async(req, res)=> {
         postedOn_day: req.body.postedOn_day,
         postedOn_year: req.body.postedOn_year,
         commentNumber: req.body.commentNumber,
+        topLevel: true,
         replies: []
       })
       newComment.save();
@@ -643,13 +651,14 @@ app.use('/comment/:type', verify, async(req, res)=> {
         ownerUsername: req.body.ownerUsername,
         ownerID: req.body.ownerID,
         profilePhoto: req.body.profilePhoto,
-        // parentPost: req.body.parentPost,
+        parentPost: req.body.parentPost,
         parentComment: req.body.parentComment,
         content: req.body.content,
         postedOn_month: req.body.postedOn_month,
         postedOn_day: req.body.postedOn_day,
         postedOn_year: req.body.postedOn_year,
         commentNumber: req.body.commentNumber,
+        topLevel: false,
         replies: []
       });
       newComment.save();
@@ -683,7 +692,8 @@ app.use('/comment/:type', verify, async(req, res)=> {
 
       res.status(200).send(newComment._id);
     }
-  } catch(err) {
+  } 
+  catch(err) {
 
     console.log(err);
     res.status(400).send({message: "An Error Has Occured. Please Try Again"});

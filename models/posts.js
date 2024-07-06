@@ -43,10 +43,10 @@ const CommentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  topLevel: Boolean,
   postedOn_month: Number,
   postedOn_day: Number,
-  postedOn_year: Number,
-  commentNumber: String,
+  postedOn_year: Number
 }, {timestamps: true});
 
 // CommentSchema.add({ replies: [CommentSchema]});
