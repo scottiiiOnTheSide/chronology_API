@@ -1,17 +1,210 @@
 
 ## S y n c S e q . x y z
 #### Project Notes & Planning
------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+
+### 07. 16. 2024
+
+@1425 attempt with <Map> shows that some elements are *still fuzzy*
+	  reverting the changes and returning to original development plans
+
+@1230 Ive decided to test and alternative method for opening the 'widgets'
+	  by having them on their own seperate page
+
+### 07. 14. 2024
+@0920 Took a while to get it up and running, but blurry elements in <Map> and <Cal> 
+		*do not* appear blurry on mobile. 
+
+So for now, production continues as originally planned...
+
+
+### 07. 13. 2024
+@1615 added styles to the map.css for the controls. ChatGPT has provided a solution	
+		for adding a custom button, and guessed correctly that I wished for it to recenter on the original coordinates.
+Need to investigate how the elements appear blurry...
+Find a fix
+Things are even fuzzier within monthChart...
+
+Will first view project on phone to discern whether this continues on mobile...
+
+
+### 07. 12. 2024
+@1600 Need to fix backend subroute for getSuggestions within groups... Suggestions
+	  not loading within <CreatePost>
+
+### 07. 11. 2024
+@1525 Have header text change for map and calendar as well...
+
+@1510 Implemented a quick solution for having external buttons center on spots
+	  on the map.
+	  Next additions:
+	  	- button to return to user's original center / city location
+	  	- would like to move the zoom buttons to the bottom corners and change
+	  		their styling
+	  	- change the colors of the paths on the map (like highways and roads)
+
+Will need to figure out how to get location data from user when creating a post,
+update Post model to include location data ( long, lat)
+would also like it to include city and country name, but that could get confusing...
+
+Current implementation of the <Map> will be simple: shows location data for posts
+in regards to the currently active section (User, Social or Home)
+for groups and macros, the specific macro pages will have a dedicated button outside
+of the button bar...
+
+Both Calendar and Map toggles should be invisible on the Macro and Group sections...
+
+@1325 have implemented function for points on the map, clicking on them zooms closer
+	  into their location.
+	  Should be able to have a state object external of the useEffect for managing the 
+	  points 
+
+@0930 With the help of ChatGPT, I've been able to set the center of the map to NYC.
+	  the state var housing the coordinates is outside of the useEffect there all the
+	  map stuff is declared. Changing the state var causes the whole component to
+	  refresh. Could ask ChatGPT, 
+	  - need to be able to change the center / location of the map WITHOUT refreshing
+	  	entire component
+
+
+### 07. 10. 2024
+@1820 Current focus is to discern how to implement these functions in the map:
+	  - centering on user's city by default
+	  - selecting a post from <Log> below the map zooms in on post's pin,
+	  	selecting a pin scrolls the <Log> to the corressponding post
+	  - recenter on user's location
+
+### 07. 09. 2024
+@2250 installed openLayers npm package for map functionality 
+****To Do Next
+	- discern list of functions I'd like to have with the map
+	  - e.i zoom in / out, multiple pins present, centering on given location,
+	  centering on user's location initially
+	- design Elements within XD
+	- find functions within ol API directory or list of functions
+		- discern what location info and permissions I need to implement them
+		(might not even need location permission if providing location details)
+	- implementation 
+
+@1535 added necessities for <Map> modal in <Home>. Empty div set up for adding the map
+
+### 07. 07. 2024
+@1520 Will be working on these few changes, then we embark on <Map> !!!
+****To Do Next:
+	- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+		not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
+	- when clicked, section menuButton should close <MonthChart> if it's open
+	- For mainNav bar, can choose any option at a time. Not sequential
+	- in <userProfile> clicking on connection count shows list of all user's connections
+		should be same for posts and subscriptions
+	- reducing image uploads at backEnd
+	- memoization
+
+
+@1515 dateSelection added for <MonthChart> 
+	  - small issue, kinda: it shows current month and year rather than whats currently
+	  	being viewed on the calendar...
+
+### 07. 06. 2024
+@1530 CSS pretty much complete for date selection within <MonthChart> 
+	  Now to work on functionality for it...
+	  selecting a month and a year should automatically update the calendar underneath
+
+### 07. 04. 2024
+@1330 Working on implementing dateSelection within <MonthChart>....which needs to be 
+			renamed lol
+
+### 07. 02. 2024
+@1310 Still need to move some more CSS over for individiual sections, but will do so when
+			completing style overhaul
+
+Currently Working on...
+- design for <MonthChart> date selection and ✅
+- last side quests
+- redesign how tags are added to post page..?
+- figure out refferal code stuff
+	- could store user's invite code as first object within invites array?
+
+@1250 enter / exit animation update 
+			- interactionsList ✅
+			- createPost ✅
+			- manageSocials ✅
+
+@0835 working through the Side Quests now . . .
+
+### 07. 01. 2024
+@2200 Made <UserSettings> it's own page
+			need to add logout modal ✅
+			for profile options, only one open at once ✅
+
+### 06. 30. 2024
+@0915 Currently working on design addition for invitation sign ups...
+
+General Level To Do, as of Now...
+
+****Side Quests:
+		- tags need to appear within <Post> and go to their macro page upon being clicked
+		- UserSettings to be it's own page ✅
+			- maybe make profile options their own modals later...
+		- for sections (UserLog, SocialLog) will give each independant stylesheet... ✅
+		- for topics, need to address issue preventing page from opening... ✅
+		- Upon deleting a post, clear 'scrollToView' from access global state var ✅
+		- replace full page components opening and closing animations ✅
+		- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+			not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
+		- when clicked, section menuButton should close <MonthChart> if it's open
+
+****Needed Additions
+		- Specific Month + Year Selection in <MonthChart> ✅
+		- For mainNav bar, can choose any option at a time. Not sequential
+		- in <userProfile> clicking on connection count shows list of all user's connections
+				should be same for posts and subscriptions
+
+****To be implemented with Invite Update
+		- provide choice of privacy setting during sign up
+			- let user know option can be changed
+		- add admin account to user connections list on initial create user & their inviter
+
+Optimization and code clean up
+- Memoization, code splitting(?), reducing image uploads at backEnd
+
+
+### 06. 29. 2024
+@0945 Will work on some side quest points, will then reAssess what else needs to be done
+			Can also begin designing out + planning referral codes for sign up + new sign up
+			process...
+
+@0940 markingRead func for notifications working within <InteractionsList>
+			- need to clean up the code and css for this...
+			- button options should be removed from a notif once it's marked read...
+
+@0920 Add confirmation for removing connections in <ManageConnections>...
+			could be future addition
+
+### 06. 28. 2024
+@0045 need to add 'remove' & 'request' to buttons in <manageConnections>
+
+@1635 connectionRequest from profile works as expected :D !
+			- all notifications need a button for marking read ...
+			- also, some confusion with the usernames on the backEnd:
+				sender recieved connection alert with their username instead of new connection
+
+@1210 Gotta face the connectionRequest system 😭
+
+@1205 Pretty much finished with <ManageConnections> css for now
+			ought to reVerify that requestionConnection and removeConnection funcs still work...
+
+@1000 gotta add state var for search input so it can be cleared when pressing 
+clear button ✅
 
 ### 06. 27. 2024
-
 @2230 CSS more or less complete for connections. 
- - Need to add same styling and functionality to searchResults
+ - Need to add same styling and functionality to searchResults ✅
  - have 'Clear' button be black only once searchBar has value
- - add functions to buttons (profile, remove)
+ - add functions to buttons (profile, remove) ✅
 
 @1130 copy code from <ManageMacros> for connections and search results within 
-	s<ManageConnections>
+	<ManageConnections>
 
 ### 06. 26. 2024
 @1945 for <ManageConnections>, have headerText and main list change upon searchBar being active. Also add 'clear' button within searchBar ✅
@@ -28,20 +221,42 @@ can test whether request connect button works within <UserProfile> now too
 - Change header for comments to say 'replying to' or something else ✅
 - For some reason, the options menu doesnt close after a successfully submitted comment
 		in <Post>
-- Need to confirm sending requests via profilePages works and
+- Need to confirm sending requests via profilePages works ✅
 - profile options in <UserSettings> to be seperate modals
 - scrollTo for:
 	- clicking on username within <Log>
 	- clicking on username within <Comments>
 
 Then . . .
-!!! Manage connections CSS
-		- apiaccess function for getting user connections not working. I'd made changes
-			to the user subroutes.
+!!! Manage connections CSS ✅
 
-Then, Side Quests.
+****Side Quests:
+		- for sections (UserLog, SocialLog) will give each independant stylesheet...
+		- for topics, need to address issue preventing page from opening... ✅
+		- Upon deleting a post, clear 'scrollToView' from access global state var ✅
+		- replace full page components opening and closing animations
+				1.) full page components have 'enter' animation by default
+				2.) use useReducer toggle to add 'exit' class, adding 'leave' animation
+				3.) animation speed of 0.2s - close component with setTimeout after 300ms
+				4.) this animation should be toggleable by buttons for leaving page
+		- in <CreatePost> make sure info for current date is taken AT THE TIME the post is made - not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
+		- set user.isPrivate setting to 'off' on initial create user
+		- add admin account to user connections list on initial create user
+		- tags need to appear within <Post> and go to their macro page upon being clicked
+		- when clicked, section menuButton should close <MonthChart> if it's open
+
+****Needed Additions
+		- Specific Month + Year Selection in <MonthChart>
+		- For mainNav bar, can choose any option at a time. Not sequential
+		- in <userProfile> clicking on connection count shows list of all user's connections
+				should be same for posts and subscriptions
 
 Optimization and code clean up
+- Memoization, code splitting(?), reducing image uploads at backEnd
+
+Would like to update the section Navigation so that any options can be chosen at a time,
+not just the next
+
 
 ### 06. 22. 2024
 @1405 commentCount updating works acceptably now

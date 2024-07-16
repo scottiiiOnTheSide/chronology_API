@@ -169,12 +169,6 @@ app.get('/user/:userID', async (req,res) => {
                 )
             })();    
         } 
-
-<<<<<<< HEAD
-        else if (req.query.query == 'singleUser'){
-
-            singleUser = await User.findById(req.params.userID)
-=======
         else if(req.query.query == 'singleUser') {
             if(req.params.userID == _id) {
 
@@ -191,7 +185,6 @@ app.get('/user/:userID', async (req,res) => {
         }
 
         else {
->>>>>>> deb8a18d5ac4001bbcf8550296dc330f3454a5cc
             res.status(200).send(singleUser);
         }
         
