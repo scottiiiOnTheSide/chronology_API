@@ -109,8 +109,15 @@ const PostsSchema = new mongoose.Schema({
     type: Boolean
   },
   tags: [{
-    type: String
+    name: String,
+    _id: mongoose.Schema.Types.ObjectID
   }],
+  location: {
+    lon: String,
+    lat: String,
+    city: String,
+    state: String
+  },
 }, {timestamps: true});
 
 

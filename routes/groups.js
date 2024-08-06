@@ -61,7 +61,7 @@ app.post('/create', verify, async (req,res) => {
         } 
         else {
 
-            let description = JSON.stringify({description: req.body.details});
+            
 
             let newCollection = new Groups({
                 type: req.body.type,
@@ -70,9 +70,9 @@ app.post('/create', verify, async (req,res) => {
                 ownerUsername: _username,
                 hasAccess: [_id],
                 isPrivate: req.body.isPrivate == true ? true : false,
-                details: description
             });
-
+            newCollection.details.description = req.body.details;
+            // console.log(newCollection);
             newCollection.save();
             res.status(200).send({confirmation: true, name: newCollection.name});
         }
@@ -119,10 +119,6 @@ app.use('/posts', verify, async (req,res) => {
     const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
     const {_id, _username} = decoded; 
 
-    // const action = req.query.action;
-    // const groupID = req.query.groupID;
-    // const postID = req.query.postID;
-
     const action = req.body.action;
     const groupID = req.body.groupID;
     let postID = req.body.postID;
@@ -154,32 +150,78 @@ app.use('/posts', verify, async (req,res) => {
             if it is a suggestion, need to run DB search which gets all posts with said topic
         */    
 
-        if(groupID && !mongoose.isValidObjectId(groupID)) {
+        // if(groupID && !mongoose.isValidObjectId(groupID)) {
 
-            console.log("it's a topic");
-            let allPosts = await Posts.find({tags: `${groupID}`}).then((data)=> {
-                if(data) {
-                    res.status(200).send(data)
-                } else {
-                    res.status(400).send({message: "No posts for this tag"});
-                }
-            })
+        //     console.log("it's a topic");
+        //     let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`}).then((data)=> {
+        //         if(data) {
+        //             res.status(200).send(data)
+        //         } else {
+        //             res.status(400).send({message: "No posts for this tag"});
+        //         }
+        //     })
 
-        } else { // M A I N   R O U T E 
+        // } else { // M A I N   R O U T E 
 
             const group = await Groups.findOne({_id: groupID});
             const user = await User.findById(_id);
-            // let post = await Posts.findOne({_id: postID});
+
             console.log(req.body)
             console.log(group)
-            if(action == 'getPosts') {
-            
-                if(group.type == 'tag') {
 
-                    let allPosts = await Posts.find({tags: `${group.name}`}).sort({createdAt: -1})
+            if(action == 'getTagInfo') {
+
+                res.status(200).send(group);
+            }
+
+            else if(action == 'getPosts') {
+                
+                if(!groupID) {
+
+                    let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`});
 
                     allPosts.filter(posts => {
-                                if(post.owner != _id) {
+                                if(posts.owner != _id) {
+
+                                    if(post.isPrivate == true) {
+                                        return null;
+                                    }
+                                    else if(post.privacyToggleable == 'On') {
+                                        return null;
+                                    }
+                                    if(post.privacyToggleable == 'Half') {
+                                        if(user.connections.includes(post.owner) ||
+                                            user.subscriptions.includes(post.owner)) {
+                                            return post;
+                                        }
+                                        else {
+                                            return null;
+                                        }
+                                    }
+                                    else {
+                                        return post;
+                                    }
+                                }
+                    })
+
+                    allPosts.sort((a,b) => {
+
+                              const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                                    dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+
+                              if (dateA > dateB) return -1;
+                              if (dateA < dateB) return 1;
+                              return 0;
+                    })
+
+                    res.status(200).send(allPosts);
+                }
+                else if(group.type == 'tag') {
+
+                    let allPosts = await Posts.find({"tags.name": `${group.name}`}).sort({createdAt: -1})
+
+                    allPosts.filter(posts => {
+                                if(posts.owner != _id) {
 
                                     if(post.isPrivate == true) {
                                         return null;
@@ -413,17 +455,6 @@ app.use('/posts', verify, async (req,res) => {
                 const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
                 let userPosts = await Posts.find({owner: _id}).limit(50);
                 let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
-                // userTags = userTags.map(tag => {
-                //     return {
-                //         hasAccess: tag.hasAccess,
-                //         name: tag.name,
-                //         type: tag.type,
-                //         _id: tag._id,
-                //         isPrivate: tag.isPrivate,
-                //         userOwnername: tag.userOwnername,
-                //         userCount: tag.hasAccess.length,
-                //     }
-                // })
 
                 let allTags = [];
 
@@ -440,11 +471,10 @@ app.use('/posts', verify, async (req,res) => {
                 allTags = [...new Set(allTags)];
 
                 let topicObjects = allTags.map(element => {
-                    if(topics.includes(element)) {
+                    if(topics.includes(element.name)) {
                         return {
-                            name: element,
+                            name: element.name,
                             type: 'topic',
-                            _id: element
                         }
                     } else {
                         return;
@@ -455,7 +485,7 @@ app.use('/posts', verify, async (req,res) => {
                 let results = [];
                 results.push(...topicObjects);
                 results.push(...userTags);
-                // console.log(results);
+                console.log(results);
 
 
                 res.status(200).send(results);
@@ -477,7 +507,8 @@ app.use('/posts', verify, async (req,res) => {
                     // let bookmarks = userCollections.filter(col => {
                     //     return col.name == 'BOOKMARKS';
                     // })
-                    let bookmarks = userCollections.pop();
+                    let bookmarks = userCollections.filter(col => col.name == 'BOOKMARKS')[0];
+                    userCollections = userCollections.filter(col => col.name != 'BOOKMARKS');
                     userCollections.unshift(bookmarks);
                     res.status(200).send(userCollections);
                 } else {
@@ -515,7 +546,7 @@ app.use('/posts', verify, async (req,res) => {
                 /* retrieve list of names of all groupss user is in */
             }
 
-        }
+        // }
                      
     } 
     catch(err) {

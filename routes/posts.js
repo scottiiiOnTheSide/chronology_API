@@ -4,7 +4,7 @@ const express = require('express'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
       {Posts, Content, Comment} = require('../models/posts'),
-      {Group} = require('../models/groups'),
+      {Groups} = require('../models/groups'),
       {User, Notification} = require('../models/user'),
       verify = require('../verifyUser'),
       encrypt = require('bcryptjs'),
@@ -115,6 +115,10 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         newPost.postedOn_year = req.body.postedOn_year;
         newPost.isPrivate = req.body.isPrivate;
     }
+    if(req.body.geoLon) {
+      newPost.location.lon = req.body.geoLon;
+      newPost.location.lat = req.body.geoLat;
+    }
 
     let body = {}
     Object.assign(body, req.body);
@@ -158,30 +162,41 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
       newPost.content.push(element);
     })
 
-    //updates tags to include new post created with them  
+    //updates tags to include new post created with them
     if(req.body.tags) {
 
-      let tags = req.body.tags.split(',');
-      newPost.tags = tags;
-      newPost.save();
+      let split = req.body.tags.split(',');
+      console.log(split)
+      let tags = await Groups.find({name: {$in: split}, type: 'tag'});
+      console.log(tags)
 
-      (async()=> {
-        await Group.updateMany({"name": {$in: tags}},
-                                {$push: {"posts": newPost._id}});
+      newPost.tags = [];
+
+      tags.forEach(tag => {
+        newPost.tags.push({
+          name: tag.name,
+          _id: tag._id,
+          isPrivate: tag.isPrivate
+        })
       })
-    } else {
-      newPost.save();
+
+      split.forEach(tag => {
+        if(tags.find(t => t.name != tag)) {
+          newPost.tags.push({
+            name: tag
+          })
+        }
+      })
+
+      await Groups.updateMany({"name": {$in: tags.map(tag => tag.name)}},
+                              {type: 'tag'},
+                              {$push: {"posts": newPost._id}});
     }
 
-    // await newPost.save().then((post) => {
-    //   if(post) {
-        console.log(`"${newPost.title}" uploaded successfully`);
-        res.status(200).send({postURL: newPost._id, postTitle: newPost.title, confirm: true});
-    //   } else {
-    //     console.log("There was an issue with the upload...");
-    //     res.status(400).send(false);
-    //   }
-    // });
+    newPost.save();
+    console.log(newPost);
+    console.log(`"${newPost.title}" uploaded successfully`);
+    res.status(200).send({postURL: newPost._id, postTitle: newPost.title, confirm: true});
 
   }
   catch(err) {

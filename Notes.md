@@ -1,7 +1,210 @@
 
 ## S y n c S e q . x y z
 #### Project Notes & Planning
-----------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+
+
+### 08. 06. 2024
+@1345 After ToDoAfters are complete, add new signUp sequence including referral codes
+then CSS overhaul (again)
+
+- x buttons need to be replaced with svg
+- options in post can be more neat
+- text sizing overall
+- color scheme ubiquity
+	- all buttons are black
+	- text a middle gray
+	- try to remove any visible lines
+- macros page to be updated
+- interactionsList to be renamed to notifsList, styles updated
+- monthChart to be renamed to calendar, styles updated
+
+
+### 08. 05. 2024
+@1640 tag buttons in <Post> now goes to it's macros page
+
+****Next....
+	- post count in <Macros> page reverting to 0? pls fix ✅
+	- 'theFirstCollection' is stating 'undefined' where user info should go
+		and thirdCollection is saying public ✅
+
+****To Do After:
+	- issue fixed with getting topics and createdTags for <CreatePost> ✅
+	- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+		not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays ✅
+	- 'See Post' button in <interactionList> not working
+	- when clicked, section menuButton should close <MonthChart> if it's open
+		closing modal should also reset selectedDates to current day ✅
+	- For mainNav bar, can choose any option at a time. Not sequential
+	- reducing image uploads at backEnd
+	- memoization
+	   ?! moving the log state array to the Main component may have removed the need for
+	   	  implementing useMemo on it...
+	   	  might still do so in regards to updating it with more posts, however
+	- response for when sockets disconnect
+	- usernames are incorrectly switched in confirmation message for connectionRequest
+
+
+@0340 Styling done for Tags in <Post>
+
+In order to go to individual macros page, alot more info is needed than what's saved within
+the post doc.
+Will need to
+	- create backEnd route to supply frontEnd with tag
+	- then run getPosts for that tag (getPosts subroute filters the posts, which is why
+		this operation is split)
+	- copy goToMacrosPage function from macros.jsx
+
+@0255 updated upload post subroute so that tags are saved with their respective ids,
+	  topics are not
+
+@0115 In order to view individual macros page for tags, it's id is necessary. Currently,
+	  tags are only saved within post under it's name - just a string.
+
+Im thinking that we still send the post request with tags as strings,
+find the tags on the backEnd. if theyre tags, not topics - add ids to the
+post tags object. if not, only save the names.
+
+
+### 08. 04. 2024
+@1155 more things popping up that I havent considered or need to be added / fixed.
+	  I shall add tags to the <Post> page, finish the most vital additions,
+	  add the referral code sequence to the entry page, and then we upload at 1.0A
+	  CSS overhaul before upload
+
+<Post> page needs redesign, centered around 'post details', tags and map inclusion
+
+****Issue:
+	- location permissions can only be requested once on a website, otherwise users
+	  must set permissions manually.
+	  Where can I leave a notice informing users how to set the locations permission?
+
+
+### 08. 03. 2024
+@0100 
+****To Do Next:
+	- Need to make date filter within map functional ✅
+	- add list of tags + link to macros page within <Post> ✅
+
+@1240 Tagging users currently doesnt work (T-T ). pls fix ✅
+
+### 08. 01. 2024
+@1530 <Map> now reads and creates markers from Log
+Need to do....
+	- add X button to top right corner + make functional ✅
+	- clicking on text takes user to specified post ✅
+	- add post details to text wrapper ✅
+
+Need to think about what to do if there are many posts within a singular point ...
+
+
+@1220 HTML, CSS and JS functionality all present for pinning location within a post
+
+****To Do Next:
+	- Update <Map> so that it takes data from the log state array for the markers and 
+	  popUp panel ✅
+	  	- popUp panel should have a close button ✅
+
+****After, Most Vital
+	- issue fixed with getting topics and createdTags for <CreatePost> ✅
+	- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+		not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
+	- 'See Post' button in <interactionList> not working
+	- when clicked, section menuButton should close <MonthChart> if it's open
+		closing modal should also reset selectedDates to current day
+	- For mainNav bar, can choose any option at a time. Not sequential
+	- reducing image uploads at backEnd
+	- memoization
+****After, Least Vital
+	- in <userProfile> clicking on connection count shows list of all user's connections
+		should be same for posts and subscriptions
+	- in concerns to date picker in <map>
+		- just limit on input number based on days within month
+		- save that number to a state, add var within notice text
+		- R e s e t selectedDate whenever modal is closed (reset to current info)
+
+
+### 07. 31. 2024
+@0005 HTML + CSS done for pinLocation lon and lat inputs
+	  need to add ternary to wrapper and p element,
+	  - if pinLocation lon or lat IS NOT equal to locationData (which is user's current
+	  location) class is inactive.
+
+Proper functionality:
+upon first pressing pinLocation button, navigation.geolocation prompt should appear
+asking user for location permissions.
+lon and lat data is then saved into locationData and pinLocation. they should be equal
+
+changes to Post schema, locationData, mixed type: lon, lat, state, city.
+
+### 07. 29. 2024
+@1900 Need to add html + css for lon lat input
+	  inputs inside div,
+	  selecting input shoooould turn label and underline black, from grey...
+
+@1840 Made a compass svg icon in Adobe XD, and replaced the <Map> button text with it.
+	  Will keep the map functionality as simple as possible for now
+
+### 07. 28. 2024
+@2355 Need to come up with some new design for the map button . . . May also need to remove
+	  emphasis on country / state names . . .
+	  there currently doesnt seem to be any list of worldwide city names abbreviated with
+	  3 letters.
+
+@1540 Checked on tagging within posts - seems to be working fine. 
+		upload, backEnd filtering, getting posts with said tag...
+
+@1455 Added DatePicker to <Map>, however I need to add some checks for the date
+****To Do:
+	- just limit on input number based on days within month
+	- save that number to a state, add var within notice text
+	- R e s e t selectedDate whenever modal is closed (reset to current info)
+
+### 07. 25. 2024
+@1545 
+fix current issue: 
+	- animations for postBoard in <Map> isn't working. must try different
+	  method. maybe direct class change using the ref. ✅
+
+****To Do Next:
+	- make filters functional + css ✅
+		- add datePicker to <Map> 
+			- selectedDate will need to be passed down to <Map> ✅
+		- add placeholder for when MACROS selected ✅
+
+After,
+- add 'pin location' to <CreatePost> ✅
+	- reveals inputs for lon and lat that can be editted
+- add tags and topics to <Post>
+
+
+All this added should denote completion for 1.0A
+
+Additional Tasks:
+	- issue fixed with getting topics and createdTags for <CreatePost> ✅
+	- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+		not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
+	- when clicked, section menuButton should close <MonthChart> if it's open
+	- For mainNav bar, can choose any option at a time. Not sequential
+	- in <userProfile> clicking on connection count shows list of all user's connections
+		should be same for posts and subscriptions
+	- in concerns to date picker in <map>
+		- just limit on input number based on days within month
+		- save that number to a state, add var within notice text
+		- R e s e t selectedDate whenever modal is closed (reset to current info)
+	- reducing image uploads at backEnd
+	- memoization
+
+
+
+@1540 Due to an error in managing these notes, I've lost about this whole months worth of 
+	  notes, without anyway to recover them.
+
+I have to remember to copy the notes to the parent folder after a git pull. I didnt,
+and ended up overwriting the new notes with much older ones.
+
+I've copied what I could from the previous git push.
+
 
 ### 07. 16. 2024
 
@@ -42,38 +245,30 @@ Will first view project on phone to discern whether this continues on mobile...
 	  	- would like to move the zoom buttons to the bottom corners and change
 	  		their styling
 	  	- change the colors of the paths on the map (like highways and roads)
-
 Will need to figure out how to get location data from user when creating a post,
 update Post model to include location data ( long, lat)
 would also like it to include city and country name, but that could get confusing...
-
 Current implementation of the <Map> will be simple: shows location data for posts
 in regards to the currently active section (User, Social or Home)
 for groups and macros, the specific macro pages will have a dedicated button outside
 of the button bar...
-
 Both Calendar and Map toggles should be invisible on the Macro and Group sections...
-
 @1325 have implemented function for points on the map, clicking on them zooms closer
 	  into their location.
 	  Should be able to have a state object external of the useEffect for managing the 
 	  points 
-
 @0930 With the help of ChatGPT, I've been able to set the center of the map to NYC.
 	  the state var housing the coordinates is outside of the useEffect there all the
 	  map stuff is declared. Changing the state var causes the whole component to
 	  refresh. Could ask ChatGPT, 
 	  - need to be able to change the center / location of the map WITHOUT refreshing
 	  	entire component
-
-
 ### 07. 10. 2024
 @1820 Current focus is to discern how to implement these functions in the map:
 	  - centering on user's city by default
 	  - selecting a post from <Log> below the map zooms in on post's pin,
 	  	selecting a pin scrolls the <Log> to the corressponding post
 	  - recenter on user's location
-
 ### 07. 09. 2024
 @2250 installed openLayers npm package for map functionality 
 ****To Do Next
@@ -85,9 +280,7 @@ Both Calendar and Map toggles should be invisible on the Macro and Group section
 		- discern what location info and permissions I need to implement them
 		(might not even need location permission if providing location details)
 	- implementation 
-
 @1535 added necessities for <Map> modal in <Home>. Empty div set up for adding the map
-
 ### 07. 07. 2024
 @1520 Will be working on these few changes, then we embark on <Map> !!!
 ****To Do Next:
@@ -99,16 +292,14 @@ Both Calendar and Map toggles should be invisible on the Macro and Group section
 		should be same for posts and subscriptions
 	- reducing image uploads at backEnd
 	- memoization
-
-
 @1515 dateSelection added for <MonthChart> 
 	  - small issue, kinda: it shows current month and year rather than whats currently
 	  	being viewed on the calendar...
-
 ### 07. 06. 2024
 @1530 CSS pretty much complete for date selection within <MonthChart> 
 	  Now to work on functionality for it...
 	  selecting a month and a year should automatically update the calendar underneath
+
 
 ### 07. 04. 2024
 @1330 Working on implementing dateSelection within <MonthChart>....which needs to be 
@@ -119,7 +310,7 @@ Both Calendar and Map toggles should be invisible on the Macro and Group section
 			completing style overhaul
 
 Currently Working on...
-- design for <MonthChart> date selection and ✅
+- design for <MonthChart> date selection and 
 - last side quests
 - redesign how tags are added to post page..?
 - figure out refferal code stuff
@@ -150,12 +341,12 @@ General Level To Do, as of Now...
 		- for topics, need to address issue preventing page from opening... ✅
 		- Upon deleting a post, clear 'scrollToView' from access global state var ✅
 		- replace full page components opening and closing animations ✅
-		- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+		- in <CreatePost> make sure info for current date is taken AT THE TIME the post is made 
 			not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays
 		- when clicked, section menuButton should close <MonthChart> if it's open
 
 ****Needed Additions
-		- Specific Month + Year Selection in <MonthChart> ✅
+		- Specific Month + Year Selection in <MonthChart>
 		- For mainNav bar, can choose any option at a time. Not sequential
 		- in <userProfile> clicking on connection count shows list of all user's connections
 				should be same for posts and subscriptions
