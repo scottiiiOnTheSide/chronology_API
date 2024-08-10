@@ -4,10 +4,72 @@
 -----------------------------------------------------------------------------------------
 
 
+### 08. 10. 2024
+
+@1805 Image reduction with sharp works, and loading on the site is sooooo much better :D !
+
+@1700 16.14 was the version of Node that the backend was initially built with - updating it
+	  in order to use the sharp module
+
+****issues:
+	- If post is uploaded with only photos, the link text is used in <Log>. Must add a 
+	  check to keep that empty...
+	✅ taggedUsers should be empty if there are none 
+
+Need to add some affect in <CreatePost> when posts take a while to upload...
+
+
+### 08. 09. 2024
+@0145 Can now select any of the 3 nav options at anytime.
+
+### 08. 07. 2024
+@2000 Design combination of Social + Group sections into new Social Section
+	  Style similarly to Macros section (which needs adjustment) Groups on top, then 
+	  Connections(?) and Subscribed(?)
+	  replace 'see all' with plus buttons
+
+Also, why are there 2 'computer' topics in the 'recent tags' <Macros> section?
+
+@1440 Working on changing <CarouselNav> so that any of the three options can be chosen
+		in any state. Algo prepared.
+
+@0150 Finishing up here . . .
+
+****Remaining Most Vital Tasks
+	- if calendar or map is open, the other cannot be. Make check in <ButtonBar>
+	- For mainNav bar, can choose any option at a time. Not sequential ✅
+	- reducing image uploads at backEnd, implement sharp module ✅
+	- response for when sockets disconnect
+	- usernames are incorrectly switched in confirmation message for connectionRequest
+	?! memoization: is it still needed?
+	   ?! moving the log state array to the Main component may have removed the need for
+	   	  implementing useMemo on it...
+	   	  might still do so in regards to updating it with more posts, however
+	- If post is uploaded with only photos, the link text is used in <Log>. Must add a 
+	  check to keep that empty...
+	- Add dimmed opacity effect to <CreatePost> while post is uploading
+		- if upload fails, cancel dimming and show popUp
+		- if upload succeeds, continue with what already happens
+
+_somewhere inbetween: CSS UPDATE_
+
+****After
+	- Implement referral codes + signing up with referral code
+		- see sequence in XD file
+	- Additions to signUp subroute
+		- adding bookmarks to their collections
+		- adding admin0 to their connections and their referer
+
+****About Project Page
+	- Info / rhetoric on project inspiration, design aims, future goals
+	- count for Users & Posts (eventually, interaction count, cities, groups)
+	- link to changelog
+
 ### 08. 06. 2024
 @1345 After ToDoAfters are complete, add new signUp sequence including referral codes
 then CSS overhaul (again)
 
+****Some of the Fixes
 - x buttons need to be replaced with svg
 - options in post can be more neat
 - text sizing overall
@@ -29,12 +91,12 @@ then CSS overhaul (again)
 		and thirdCollection is saying public ✅
 
 ****To Do After:
-	- issue fixed with getting topics and createdTags for <CreatePost> ✅
-	- in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
-		not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays ✅
-	- 'See Post' button in <interactionList> not working
-	- when clicked, section menuButton should close <MonthChart> if it's open
-		closing modal should also reset selectedDates to current day ✅
+	✅ issue fixed with getting topics and createdTags for <CreatePost> 
+	✅ in <CreatePost> make sure info for current date is taken AT THE TIME the post is 
+		not the date in the header. date info remains stagnant if page left up unrefreshed, thus yesterday's date is showing up rather than todays 
+	✅ 'See Post' button in <interactionList> not working
+	✅ when clicked, section menuButton should close <MonthChart> if it's open
+		closing modal should also reset selectedDates to current day 
 	- For mainNav bar, can choose any option at a time. Not sequential
 	- reducing image uploads at backEnd
 	- memoization

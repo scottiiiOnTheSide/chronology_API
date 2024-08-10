@@ -1,6 +1,7 @@
 const express = require('express'),
       app = express.Router(),
       multer = require('multer'),
+      sharp = require('sharp'),
       bodyParser = require('body-parser'),
       mongoose = require('mongoose'),
       {Posts, Content, Comment} = require('../models/posts'),
@@ -43,11 +44,37 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     const date = d.getDate();
     const year = d.getFullYear();
     const timeStamp = d.getTime();
+
+    console.log(req.body);
     
     let newPost = new Posts({});
     let postContent = [];
+    newPost.owner = _id;
+    newPost.author = _username;
+    newPost.title = req.body.title;
+    newPost.isPrivate = req.body.isPrivate;
+    newPost.profilePhoto = req.body.profilePhoto;
+    
+    if(req.body.usePostedByDate == 'true') {
+        newPost.postedOn_month = month;
+        newPost.postedOn_day = date;
+        newPost.postedOn_year = year;
+    }
+    else if (req.body.usePostedByDate == 'false') {
+        newPost.postedOn_month = req.body.postedOn_month;
+        newPost.postedOn_day = req.body.postedOn_day;
+        newPost.postedOn_year = req.body.postedOn_year;
+    }
 
-    console.log(req.body);
+    if(req.body.taggedUsers) {
+      newPost.taggedUsers = req.body.taggedUsers;
+    }
+
+    if(req.body.geoLon) {
+      newPost.location.lon = req.body.geoLon;
+      newPost.location.lat = req.body.geoLat;
+    }
+    
 
     /* media processing stuff */
       /*  
@@ -66,7 +93,10 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
           }
         };
 
-        await file.save(req.files[i].buffer, options);
+        let fileBuffer = req.files[i].buffer;
+        let fileSize = fileBuffer.length;
+        let reducedFile = await sharp(fileBuffer).jpeg({ quality: 32, mozjpeg: true }).toBuffer();
+        await file.save(reducedFile, options);
 
         await uploadMedia.setMetadata({
             enableRequesterPays: true,
@@ -93,32 +123,6 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     //    have said array be post.Content
     //    organizes data in order user originally intended
     // */
-
-    if(req.body.usePostedByDate == 'true') {
-        console.log(month +' '+ date +' '+ year);
-        newPost.owner = _id;
-        newPost.author = _username;
-        newPost.title = req.body.title;
-        newPost.taggedUsers = req.body.taggedUsers;
-        newPost.postedOn_month = month;
-        newPost.postedOn_day = date;
-        newPost.postedOn_year = year;
-        newPost.isPrivate = req.body.isPrivate;
-    }
-    else if (req.body.usePostedByDate == 'false') {
-        newPost.owner = _id;
-        newPost.author = _username;
-        newPost.title = req.body.title;
-        newPost.taggedUsers = req.body.taggedUsers;
-        newPost.postedOn_month = req.body.postedOn_month;
-        newPost.postedOn_day = req.body.postedOn_day;
-        newPost.postedOn_year = req.body.postedOn_year;
-        newPost.isPrivate = req.body.isPrivate;
-    }
-    if(req.body.geoLon) {
-      newPost.location.lon = req.body.geoLon;
-      newPost.location.lat = req.body.geoLat;
-    }
 
     let body = {}
     Object.assign(body, req.body);
@@ -520,7 +524,6 @@ app.get('/monthChart', verify, async (req, res) => {
 app.get('/:id', verify, async (req,res) => {
     try {
       let _ID = mongoose.Types.ObjectId(req.params.id);
-      // console.log(_ID);
       let singlePost = await Posts.findOne({_id: _ID});
       console.log('post found and sent');
       res.status(200).send(singlePost);
