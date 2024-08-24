@@ -3,6 +3,7 @@ const express = require('express'),
       mongoose = require('mongoose'),
       {User, Notification} = require('../models/user'),
       {Posts, Content, Comment} = require('../models/posts'),
+      {Groups} = require('../models/groups'),
       encrypt = require('bcryptjs'),
       JWT = require('jsonwebtoken'),
       verify = require('../verifyUser'),
@@ -26,39 +27,124 @@ let storage = multer.memoryStorage(), //keeps data in RAM storage
 
 
 //Simple 'create new  users' function
-app.post('/newuser', async (req,res) => {
+app.post('/newuser', upload.any(), async (req,res) => {
 
     try {
 
-        const emailExist = await User.findOne({emailAddr:req.body.emailAddr})
-        if(emailExist) {
-            return res.status(400).send({error: true, message: "This email is already linked to an account"})
+        if(req.body.action == 'create') {
+
+            console.log(req.files)
+            console.log(req.body)
+            const emailExist = await User.findOne({emailAddr:req.body.emailAddr})
+            if(emailExist) {
+                return res.status(400).send({error: true, message: "This email is already linked to an account"})
+            }
+            /* 09. 14. 2023
+                Should also check whether username has already been taken
+            */
+            
+            const userPass = req.body.password
+            const salt = await encrypt.genSalt(10);
+            const hashedPass = await encrypt.hash(userPass, salt);
+            
+            const user = new User({
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                emailAddr: req.body.emailAddr,
+                userName: req.body.userName,
+                password: hashedPass,
+                isPrivate: req.body.privacyOption,
+            });
+
+             /* Processes uploaded photo */
+            if(req.files) {
+
+                const d = new Date();
+                const month = d.getMonth() + 1;
+                const date = d.getDate();
+                const year = d.getFullYear();
+                const timeStamp = d.getTime();
+
+                const fileNumber = req.files.fieldname;
+                const fileName = `${fileNumber}_${req.body.userName}_${month}-${date}-${year}_${timeStamp}`;
+                const file = uploadMedia.file(fileName);
+                const options = {
+                  resumable: false,
+                  metadata: {
+                    contentType: 'image/jpeg/png',
+                  }
+                };
+
+                await file.save(req.files.buffer, options);
+
+                await uploadMedia.setMetadata({
+                    enableRequesterPays: true,
+                      website: {
+                        mainPageSuffix: 'index.html',
+                        notFoundPage: '404.html',
+                      },
+                });
+
+              
+                const [cdnUrl] = await file.getSignedUrl({
+                  action: 'read',
+                  expires: '01-01-2499',
+                });
+
+                let title = `${fileNumber}`;
+                user.profilePhoto = cdnUrl;
+            }
+
+            /* Saves user info */
+            // await user.save();
+
+            //Add admin0 and referring user
+            user.connections.push('62bdb874448ee72b6b3b0203');
+            user.connections.push(mongoose.Types.ObjectId(req.body.referrer));
+
+            //create and add user's referral code
+            let userIDtoString = user._id.toString()
+            let refcode = '';
+            // Loop through the string, incrementing by 3 each time
+            for (let i = 2; i < userIDtoString.length; i += 3) {
+                refcode += userIDtoString[i];
+            }
+            user.settings.referralCode = refcode;
+            await user.save();
+
+            /* Creates a BOOKMARKS collection for user */
+            let newCollection = new Groups({
+                type: 'collection',
+                name: 'BOOKMARKS',
+                owner: user._id,
+                ownerUsername: user.username,
+                hasAccess: [user._id],
+                isPrivate: true,
+            });
+
+            // console.log('new user created');
+            console.log(user);
+            
+            // let JWTpayload = {
+            //     '_id': user._id, 
+            //     '_username': user.userName,
+            //     '_profilePhoto': user.profilePhoto
+            // };
+            // const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
+            // res.status(200).json({confirm: true, payload: signature});
         }
 
-        /* 09. 14. 2023
-            Should also check whether username has already been taken
-        */
-        
-        const userPass = req.body.password
-        const salt = await encrypt.genSalt(10);
-        const hashedPass = await encrypt.hash(userPass, salt);
-        
-        const user = new User({
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            emailAddr: req.body.emailAddr,
-            userName: req.body.userName,
-            password: hashedPass
-        });
+        else if(req.body.action == 'getReferrer') {
 
-        try {
-          const savedUser = await user.save();
-          //06.27.2022 Front End takes boolean to confirm signup
-          console.log('new user created');
-          res.send(true);
-        }
-        catch (error) {
-          res.status(500).send(error);
+            let user = await User.find({'settings.referralCode': req.body.refCode});
+            let object = {
+                profilePic: user[0].profilePhoto,
+                username: user[0].userName,
+                firstName: user[0].firstName,
+                lastName: user[0].lastName,
+                _id: user[0]._id
+            }
+            res.status(200).send(object);
         }
         
     } catch(err) {
@@ -268,6 +354,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
         recipients: Array | userID(s)
         url: string | url for post OR original notif ID
         message: string | *sent, *recieved, *accept, *ignore
+
     */
 
     try {

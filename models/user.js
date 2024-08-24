@@ -79,7 +79,7 @@ const UserSchema = new mongoose.Schema({
     pinnedPosts: [String],
     pinnedMedia: [mongoose.Schema.Types.Mixed],
     settings: {
-      data: mongoose.Schema.Types.Mixed,
+      referralCode: String
     },
     connections: [{
         type: mongoose.Schema.Types.ObjectID,
