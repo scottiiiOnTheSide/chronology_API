@@ -46,6 +46,8 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     const timeStamp = d.getTime();
 
     console.log(req.body);
+    console.log(req.files);
+    // console.log(JSON.parse(req.body.taggedUsers));
     
     let newPost = new Posts({});
     let postContent = [];
@@ -54,6 +56,7 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     newPost.title = req.body.title;
     newPost.isPrivate = req.body.isPrivate;
     newPost.profilePhoto = req.body.profilePhoto;
+    newPost.privacyToggleable = req.body.privacyToggleable;
     
     if(req.body.usePostedByDate == 'true') {
         newPost.postedOn_month = month;
@@ -67,7 +70,13 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     }
 
     if(req.body.taggedUsers) {
-      newPost.taggedUsers = req.body.taggedUsers;
+      let taggedUsers = JSON.parse(req.body.taggedUsers);
+      taggedUsers.forEach(user => {
+        newPost.taggedUsers.push({
+          _id: user._id,
+          username: user.username
+        })
+      })
     }
 
     if(req.body.geoLon) {

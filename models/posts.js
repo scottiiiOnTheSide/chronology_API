@@ -70,13 +70,19 @@ const PostsSchema = new mongoose.Schema({
       index: true,
   },
   taggedUsers: [{
-    type: String,
-    ref: 'User',
+    id: mongoose.Schema.Types.ObjectID,
+    username: String
   }],
   isPrivate: {
     type: Boolean,
   },
-  privacyToggleable: {
+  /*
+      allows post to be restricted based on user's privacy setting
+      not the same as isPrivate - which is ALWAYS private
+      "On" means anyone
+      "half" is only for subscribers
+  */
+  privacyToggleable: { 
     type: String
   },
   setEvent_Year: {

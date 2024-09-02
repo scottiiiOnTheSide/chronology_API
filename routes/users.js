@@ -10,6 +10,7 @@ const express = require('express'),
       path = require('path'),
       util = require('util'),
       multer = require('multer'),
+      sharp = require('sharp'),
       {Storage} = require('@google-cloud/storage');
 require('dotenv').config();
 
@@ -31,18 +32,46 @@ app.post('/newuser', upload.any(), async (req,res) => {
 
     try {
 
-        if(req.body.action == 'create') {
+        if(req.body.action == 'getReferrer') {
 
-            console.log(req.files)
-            console.log(req.body)
-            const emailExist = await User.findOne({emailAddr:req.body.emailAddr})
-            if(emailExist) {
-                return res.status(400).send({error: true, message: "This email is already linked to an account"})
+            let user = await User.find({'settings.referralCode': req.body.refCode});
+            let object = {
+                profilePic: user[0].profilePhoto,
+                username: user[0].userName,
+                firstName: user[0].firstName,
+                lastName: user[0].lastName,
+                _id: user[0]._id
             }
-            /* 09. 14. 2023
-                Should also check whether username has already been taken
-            */
-            
+            res.status(200).send(object);
+        }
+
+        else if(req.body.action == 'userExistsCheck') {
+
+            console.log('user exists check');
+            const emailExist = await User.findOne({emailAddr: req.body.emailAddr});
+            const usernameExist = await User.findOne({userName: req.body.userName});
+            console.log(emailExist)
+            console.log(usernameExist)
+
+            if(emailExist && usernameExist) {
+                res.status(400).send({confirm: false, message: "This email is already linked to an account using this username"})
+            }
+            else if(emailExist && !usernameExist) {
+                res.status(400).send({confirm: false, message: "This email has already been used"});
+            }
+            else if(!emailExist && usernameExist) {
+                res.status(400).send({confirm: false, message: "This username is currently in use"});
+            }
+            else {
+                res.status(200).send({confirm: true});
+            }
+        }
+
+        else if(req.body.action == 'create') {
+
+            console.log(req.body)
+            console.log(req.files[0])
+            console.log(req.files.length)
             const userPass = req.body.password
             const salt = await encrypt.genSalt(10);
             const hashedPass = await encrypt.hash(userPass, salt);
@@ -65,7 +94,7 @@ app.post('/newuser', upload.any(), async (req,res) => {
                 const year = d.getFullYear();
                 const timeStamp = d.getTime();
 
-                const fileNumber = req.files.fieldname;
+                const fileNumber = req.files[0].fieldname;
                 const fileName = `${fileNumber}_${req.body.userName}_${month}-${date}-${year}_${timeStamp}`;
                 const file = uploadMedia.file(fileName);
                 const options = {
@@ -74,8 +103,12 @@ app.post('/newuser', upload.any(), async (req,res) => {
                     contentType: 'image/jpeg/png',
                   }
                 };
+                console.log(fileName)
 
-                await file.save(req.files.buffer, options);
+                let fileBuffer = req.files[0].buffer;
+                let fileSize = fileBuffer.length;
+                let reducedFile = await sharp(fileBuffer).jpeg({ quality: 32, mozjpeg: true }).toBuffer();
+                await file.save(reducedFile, options);
 
                 await uploadMedia.setMetadata({
                     enableRequesterPays: true,
@@ -121,30 +154,11 @@ app.post('/newuser', upload.any(), async (req,res) => {
                 hasAccess: [user._id],
                 isPrivate: true,
             });
+            await newCollection.save()
 
-            // console.log('new user created');
+            console.log('new user created');
             console.log(user);
-            
-            // let JWTpayload = {
-            //     '_id': user._id, 
-            //     '_username': user.userName,
-            //     '_profilePhoto': user.profilePhoto
-            // };
-            // const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
-            // res.status(200).json({confirm: true, payload: signature});
-        }
-
-        else if(req.body.action == 'getReferrer') {
-
-            let user = await User.find({'settings.referralCode': req.body.refCode});
-            let object = {
-                profilePic: user[0].profilePhoto,
-                username: user[0].userName,
-                firstName: user[0].firstName,
-                lastName: user[0].lastName,
-                _id: user[0]._id
-            }
-            res.status(200).send(object);
+            res.status(200).send({confirm: true});
         }
         
     } catch(err) {
@@ -173,7 +187,8 @@ app.post('/login', async (req, res) => {
         let JWTpayload = {
             '_id': user._id, 
             '_username': user.userName,
-            '_profilePhoto': user.profilePhoto
+            '_profilePhoto': user.profilePhoto,
+            'privacySetting': user.privacySetting
         };
         const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
         //sets JWT within reponse header and returns 
@@ -217,7 +232,7 @@ app.get('/user/:userID', async (req,res) => {
                 let result = {
                     fullName: `${userInfo.firstName} ${userInfo.lastName}`,
                     userName: userInfo.userName,
-                    id: userInfo._id
+                    _id: userInfo._id
                 }
 
                 list.push(result);
@@ -863,7 +878,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
             let settings = {
                 profilePhoto: user.profilePhoto,
                 biography: user.bio,
-                privacy: user.isPrivate,
+                privacy: user.privacySetting,
                 invites: user.invites.length
             }
             res.status(200).send(settings);
@@ -897,6 +912,8 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
         else if(req.body.option == 'profilePhoto') {
 
+                console.log(req.body)
+                console.log(req.files)
                 const d = new Date();
                 const month = d.getMonth();
                 const mm = month + 1;
@@ -985,7 +1002,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
             await User.update(
                 {_id: _id},
-                { $set: {isPrivate: req.body.state}},
+                { $set: {privacySetting: req.body.state}},
                 {multi: true}
             );
 

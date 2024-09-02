@@ -171,7 +171,12 @@ app.use('/posts', verify, async (req,res) => {
 
             if(action == 'getTagInfo') {
 
-                res.status(200).send(group);
+                if(!group) {
+                    res.status(200).send({response:'topic'});
+                }
+                else {
+                    res.status(200).send(group);
+                }
             }
 
             else if(action == 'getPosts') {
@@ -452,11 +457,10 @@ app.use('/posts', verify, async (req,res) => {
 
             else if(action == 'allTagsUsed') {
 
-                const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
-                let userPosts = await Posts.find({owner: _id}).limit(50);
-                let userTags = await Groups.find({hasAccess: _id, type: 'tag'});
-
                 let allTags = [];
+                let topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+                const userPosts = await Posts.find({owner: _id}).limit(50);
+                const userTags = await Groups.find({hasAccess: _id, type: 'tag'});
 
                 /* Gathers all tags used within most recent posts */
                 userPosts.forEach(post => {
@@ -467,28 +471,30 @@ app.use('/posts', verify, async (req,res) => {
                     }
                 })
 
-                /* Ensures each tag or topic only appears once within */
-                allTags = [...new Set(allTags)];
-
-                let topicObjects = allTags.map(element => {
+                /* marks topics as such */
+                allTags = allTags.map(element => {
                     if(topics.includes(element.name)) {
-                        return {
+                        return ({
                             name: element.name,
-                            type: 'topic',
-                        }
+                            type: 'topic'
+                        })
                     } else {
-                        return;
+                        return element
                     }
                 })
 
-                // console.log(topicObjects);
-                let results = [];
-                results.push(...topicObjects);
-                results.push(...userTags);
-                console.log(results);
+                let removeDups = (array) => {
+                    let seenItems = new Set();
+                    return array.filter(item => {
+                        let isDup = seenItems.has(item.name);
+                        seenItems.add(item.name);
+                        return !isDup;
+                    })
+                }
 
-
-                res.status(200).send(results);
+                allTags = removeDups(allTags);
+                
+                res.status(200).send(allTags);
             }
 
             else if(action == 'getPrivatePosts') {

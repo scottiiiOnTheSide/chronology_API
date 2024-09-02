@@ -79,7 +79,13 @@ const UserSchema = new mongoose.Schema({
     pinnedPosts: [String],
     pinnedMedia: [mongoose.Schema.Types.Mixed],
     settings: {
-      referralCode: String
+      referralCode: String,
+      topics: [String],
+      preferredLocations: [{
+        lonLat: [String], //longitude, latitude - convert on frontEnd
+        city: String,
+        state: String
+      }]
     },
     connections: [{
         type: mongoose.Schema.Types.ObjectID,
@@ -96,7 +102,7 @@ const UserSchema = new mongoose.Schema({
     notifications: [{
       type: [NotificationSchema]
     }],
-    isPrivate: String,
+    privacySetting: String,
     invites: [{
         type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
