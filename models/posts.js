@@ -52,6 +52,9 @@ const CommentSchema = new mongoose.Schema({
 // CommentSchema.add({ replies: [CommentSchema]});
 
 const PostsSchema = new mongoose.Schema({
+  type: {
+    type: String //draft, event or entry. Entry is default
+  },
   owner: {
       type: mongoose.Schema.Types.ObjectID,
       ref: 'User'

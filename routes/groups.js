@@ -183,7 +183,7 @@ app.use('/posts', verify, async (req,res) => {
                 
                 if(!groupID) {
 
-                    let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`});
+                    let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`, 'type': {$ne: "draft"}});
 
                     allPosts.filter(posts => {
                                 if(posts.owner != _id) {
@@ -223,7 +223,7 @@ app.use('/posts', verify, async (req,res) => {
                 }
                 else if(group.type == 'tag') {
 
-                    let allPosts = await Posts.find({"tags.name": `${group.name}`}).sort({createdAt: -1})
+                    let allPosts = await Posts.find({"tags.name": `${group.name}`, 'type': {$ne: "draft"}}).sort({createdAt: -1})
 
                     allPosts.filter(posts => {
                                 if(posts.owner != _id) {
@@ -265,7 +265,7 @@ app.use('/posts', verify, async (req,res) => {
                 }
                 else if(group.type == 'collection' || group.type == 'groups') {
 
-                    let posts = await Posts.find({ _id: {$in: group.posts}}).sort({createdAt: -1})
+                    let posts = await Posts.find({ _id: {$in: group.posts}, 'type': {$ne: "draft"}}).sort({createdAt: -1})
 
                     posts.filter(post => {
                                 if(post.owner != _id) {

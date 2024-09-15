@@ -38,6 +38,18 @@ GroupsSchema.add({ tags: [GroupsSchema] });
 module.exports.Groups = mongoose.model('Groups', GroupsSchema);
 module.exports.GroupsSchema = GroupsSchema;
 /**
+ *  09. 07. 2024
+ * 
+ *  For private tags, posts within them can be seen without access,
+ *  but following them requires access (?)
+ * 
+ *   
+ */
+
+
+
+
+/**
  * This schema is to used for 
  * TAGS , 
  * USER GROUPS , 

@@ -51,6 +51,7 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     
     let newPost = new Posts({});
     let postContent = [];
+    newPost.type = req.body.type;
     newPost.owner = _id;
     newPost.author = _username;
     newPost.title = req.body.title;
@@ -230,18 +231,18 @@ app.get('/log', verify, async (req,res) => {
     const user = await User.findById(_id);
     const connections = user.connections;
 
-    let social = req.query.social,
+    let type = req.query.type,
         monthChart = req.query.monthChart;
     
-    if(social == 'true') {
+    if(type == 'social') {
 
         /* 05. 09. 2024
            need to filter posts by privacyDefault on or off
         */
 
-        let socialPosts = await Posts.find({
-          'owner': {$in: connections},
-        }).sort({createdAt: -1})
+        let socialPosts = await Posts.find(
+          {'owner': {$in: connections}, 'type': {$ne: "draft"}}
+        ).sort({createdAt: -1})
 
         console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
@@ -303,9 +304,11 @@ app.get('/log', verify, async (req,res) => {
 
           res.status(200).send(results)
       }
-    else if (social == 'false') {
+    else if (type == 'user') {
 
-      let posts = await Posts.find({owner: _id}).sort({createdAt: -1})
+      let posts = await Posts.find(
+        {owner: _id, type: {$ne: "draft"}}, 
+      ).sort({createdAt: -1})
 
         // console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
@@ -353,7 +356,17 @@ app.get('/log', verify, async (req,res) => {
           // console.log(results);
 
         res.status(200).send(results)
-      } 
+      }
+    else if (type == 'drafts') {
+
+      let posts = await Posts.find(
+        {owner: _id, type: "draft"}, 
+      ).sort({createdAt: -1})
+
+      // console.log('line366 in /posts' +posts);
+
+      res.status(200).send(posts);
+    } 
     
   } catch(err) {
 

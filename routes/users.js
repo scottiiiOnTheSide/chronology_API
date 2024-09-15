@@ -746,13 +746,10 @@ app.post('/notif/:type', verify, async(req, res)=> {
              * sender: userID of requester
              * senderUsername: userName
              * recipients: array has one owner or many admins
+             * groupName:
+             * groupID:
              * 
-             * details: 
-             *   - req.body.details should include
-             *     groupName:
-             *     groupID:
-             * 
-             * acceptance or ignore done on frontEnd
+             * acceptance or ignore done on by group owner on frontEnd
              * 
              * for ignore:
              * req.body.details = original request notif ID
@@ -762,7 +759,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
 
                 /**
                  * A L G O
-                 * create and add invite notif to invitee-user's notif list
+                 * create and add invite notif to the invited's notif list
                  * 
                  * requester -> owner
                  * or
@@ -1080,6 +1077,22 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
                 user.save();
                 res.status(200).send({confirmation: true})
             }
+        }
+
+        else if(req.body.action == 'addTopics') {
+
+            await User.updateOne(
+                {_id: _id},
+                {$addToSet: {"settings.topics": { $each: req.body.topics }}
+            });
+            res.status(200).send({confirmation: true});
+        }
+        else if(req.body.action == 'removeTopics') {
+            await User.updateOne(
+                {_id: _id},
+                {$pull: {"settings.topics": { $in: req.body.topics }}
+            });
+            res.status(200).send({confirmation: true});
         }
     }
     catch(err) {
