@@ -35,7 +35,7 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: false
   },
-  details: { //is always a JSON object. To be parsed by frontEnd
+  details: { 
     postTitle: String,
     postID: mongoose.Schema.Types.ObjectID,
     groupName: String,

@@ -41,16 +41,14 @@ app.post('/create', verify, async (req,res) => {
             let newTag = new Groups({
                 type: req.body.type,
                 name: req.body.name,
-                hasAccess: [req.body.hasAccess],
+                admins: [_id],
+                adminUsernames: [_username],
                 isPrivate: req.body.isPrivate ? true : false,
-                ownerUsername: req.body.isPrivate == true ? _username : undefined,
-                owner: req.body.isPrivate ? _id : null,
             });
 
             newTag.save();
             res.status(200).send({confirm: true, name: newTag.name});
         }
-
     } 
     else if (req.body.type == 'collection') {
 
@@ -66,9 +64,8 @@ app.post('/create', verify, async (req,res) => {
             let newCollection = new Groups({
                 type: req.body.type,
                 name: req.body.name,
-                owner: _id,
-                ownerUsername: _username,
-                hasAccess: [_id],
+                admins: [_id],
+                adminUsernames: [_username],
                 isPrivate: req.body.isPrivate == true ? true : false,
             });
             newCollection.details.description = req.body.details;
@@ -90,11 +87,9 @@ app.post('/create', verify, async (req,res) => {
             let newGroup = new Groups({
                 type: req.body.type,
                 name: req.body.name,
-                owner: _id,
-                ownerUsername: _username,
-                isPrivate: req.body.isPrivate = true ? true : false,
-                admins: req.body.admins,
-                hasAccess: [_id]
+                admins: [_id],
+                adminUsernames: [_username],
+                isPrivate: req.body.isPrivate = true ? true : false
             });
 
             newGroup.save();
@@ -185,8 +180,8 @@ app.use('/posts', verify, async (req,res) => {
 
                     let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`, 'type': {$ne: "draft"}});
 
-                    allPosts.filter(posts => {
-                                if(posts.owner != _id) {
+                    allPosts.filter(post => {
+                                if(post.owner != _id) {
 
                                     if(post.isPrivate == true) {
                                         return null;
@@ -225,8 +220,8 @@ app.use('/posts', verify, async (req,res) => {
 
                     let allPosts = await Posts.find({"tags.name": `${group.name}`, 'type': {$ne: "draft"}}).sort({createdAt: -1})
 
-                    allPosts.filter(posts => {
-                                if(posts.owner != _id) {
+                    allPosts.filter(post => {
+                                if(post.owner != _id) {
 
                                     if(post.isPrivate == true) {
                                         return null;
@@ -234,7 +229,7 @@ app.use('/posts', verify, async (req,res) => {
                                     else if(post.privacyToggleable == 'On') {
                                         return null;
                                     }
-                                    if(post.privacyToggleable == 'Half') {
+                                    else if(post.privacyToggleable == 'Half') {
                                         if(user.connections.includes(post.owner) ||
                                             user.subscriptions.includes(post.owner)) {
                                             return post;
@@ -523,30 +518,6 @@ app.use('/posts', verify, async (req,res) => {
                 }
             }
 
-            // else if(action == 'collectionsCheck') {
-            //     //03. 18. 2024
-            //     //checks whether post is in user's BOOKMARKS or any of their collections
-            //     console.log('collectionsCheck');
-            //     let userCollections = await Groups.find({owner: _id});
-
-            //     let filtered = userCollections.map(item => {
-            //         if(item.posts.includes(postID)) {
-            //             return {
-            //                 ...item,
-            //                 hasCurrentPost: true,
-            //             }
-            //         }
-            //         else {
-            //             return {
-            //                 ...item,
-            //                 hasCurrentPost: false
-            //             }
-            //         }
-            //     })
-
-            //     res.status(200).send(filtered);
-            // }
-
             else if(action == 'getGroups') {
 
                 /* retrieve list of names of all groupss user is in */
@@ -593,7 +564,15 @@ app.post('/manage/:action', verify, async (req,res) => {
 
         if(req.params.action == 'addUser') {
 
-            if(group.type == 'tag') { //for PUBLIC tags
+            if(req.body.topic) {
+                await User.updateOne(
+                    {_id: _id},
+                    {$push: {'settings.topics': req.body.topic}}
+                );
+                res.status(200).send({confirmation: true});
+            }
+
+            else if(group.type == 'tag') { //for PUBLIC tags
 
                 if(group.isPrivate) {
             
@@ -630,7 +609,6 @@ app.post('/manage/:action', verify, async (req,res) => {
                     group.save();
                     res.status(200).send(true);
                 }
-
             }
             else if(group.type == 'groups') {// for PUBLIC groupss
                 if(group.isPrivate) {
@@ -654,7 +632,15 @@ app.post('/manage/:action', verify, async (req,res) => {
 
         else if(req.params.action == 'removeUser') {
 
-            if(group.type == 'tag') {
+            if(req.body.topic) {
+                await User.updateOne(
+                    {_id: _id},
+                    {$pull: {'settings.topics': req.body.topic}}
+                );
+                res.status(200).send({confirmation: true});
+            }
+
+            else if(group.type == 'tag') {
 
                 if(group.hasAccess.includes(_id)) {
 

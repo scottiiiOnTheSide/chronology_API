@@ -367,6 +367,11 @@ app.get('/log', verify, async (req,res) => {
 
       res.status(200).send(posts);
     } 
+    else if (type == 'deleteDraft') {
+
+      await Posts.findByIdAndDelete(mongoose.Types.ObjectId(req.query.postID));
+      res.status(200).send(true);
+    }
     
   } catch(err) {
 

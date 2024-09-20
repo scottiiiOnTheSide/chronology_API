@@ -9,17 +9,13 @@ const GroupsSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  owner: {
-    type: mongoose.Schema.Types.ObjectID,
-    ref: 'User'
-  },
-  ownerUsername: { //is only for macros (tags, collections)
-    type: String
-  }, 
   admins: [{
     type: mongoose.Schema.Types.ObjectID,
     ref: 'User'
   }],
+  adminUsernames: [{
+    type: String
+  }], 
   hasAccess: [{
     type: mongoose.Schema.Types.ObjectID,
     ref: 'User'

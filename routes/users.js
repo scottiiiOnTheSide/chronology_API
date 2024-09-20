@@ -188,7 +188,8 @@ app.post('/login', async (req, res) => {
             '_id': user._id, 
             '_username': user.userName,
             '_profilePhoto': user.profilePhoto,
-            'privacySetting': user.privacySetting
+            'privacySetting': user.privacySetting,
+            'settings': user.settings
         };
         const signature = JWT.sign(JWTpayload, process.env.TOKEN_SECRET);
         //sets JWT within reponse header and returns 
@@ -718,7 +719,9 @@ app.post('/notif/:type', verify, async(req, res)=> {
                         url: req.body.url,
                         message: 'recieved',
                         recipients: [recip],
-                        details: req.body.details
+                        details: {
+                            postTitle: req.body.postTitle
+                        }
                     });
 
                     newNotif.save();
