@@ -28,73 +28,91 @@ app.post('/create', verify, async (req,res) => {
 
     console.log(req.body);
 
-    if(type == 'tag') {
+    if(req.body.type == 'tag') {
 
-        /*** Pre-existance Check ***/
-        let alreadyExists = await Groups.findOne({name: req.body.name, type: req.body.type});
-        if(alreadyExists) {
-            console.log(alreadyExists);
-            res.status(200).send({alreadyExists: `This ${req.body.type} already exists`, id: alreadyExists._id });
-        } 
-        else {
+        console.log('making new tag...')
+        let alreadyExists = await Groups.findOne({
+            name: req.body.name, 
+            type: req.body.type,
+            'admins.0': _id,
+        }).then(data => {
 
-            let newTag = new Groups({
-                type: req.body.type,
-                name: req.body.name,
-                admins: [_id],
-                adminUsernames: [_username],
-                isPrivate: req.body.isPrivate ? true : false,
-            });
+            if(data) {
+                console.log('this is the existing group' +data)
+                res.status(200).send({alreadyExists: `This ${req.body.type} already exists` });
+            }
+            else {
 
-            newTag.save();
-            res.status(200).send({confirm: true, name: newTag.name});
-        }
+                let newGroup = new Groups({
+                    type: req.body.type,
+                    name: req.body.name,
+                    admins: [_id],
+                    adminUsernames: [_username],
+                    hasAccess: [_id],
+                    isPrivate: req.body.isPrivate = true ? true : false
+                });
+                newGroup.save();
+                res.status(200).send({confirm: true, name: newGroup.name});
+            }
+        })
     } 
     else if (req.body.type == 'collection') {
 
-        /*** Pre-existance Check ***/
-        let alreadyExists = await Groups.findOne({name: req.body.name, type: req.body.type});
-        if(alreadyExists) {
-            res.status(200).send({alreadyExists: `This ${req.body.type} already exists` });
-        } 
-        else {
+        console.log('making collection...')
+        let alreadyExists = await Groups.findOne({
+            name: req.body.name, 
+            type: req.body.type,
+            'admins.0': _id,
+        }).then(data => {
 
-            
+            if(data) {
+                console.log('this is the existing group' +data)
+                res.status(200).send({alreadyExists: `This ${req.body.type} already exists` });
+            }
+            else {
 
-            let newCollection = new Groups({
-                type: req.body.type,
-                name: req.body.name,
-                admins: [_id],
-                adminUsernames: [_username],
-                isPrivate: req.body.isPrivate == true ? true : false,
-            });
-            newCollection.details.description = req.body.details;
-            // console.log(newCollection);
-            newCollection.save();
-            res.status(200).send({confirmation: true, name: newCollection.name});
-        }
+                let newGroup = new Groups({
+                    type: req.body.type,
+                    name: req.body.name,
+                    admins: [_id],
+                    adminUsernames: [_username],
+                    hasAccess: [_id],
+                    isPrivate: req.body.isPrivate = true ? true : false
+                });
+                newGroup.details.description = req.body.details;
+                newGroup.save();
+                res.status(200).send({confirmation: true, name: newGroup.name});
+            }
+        })
     }
     else if(req.body.type == 'groups') {
 
         /*** Pre-existance Check ***/
-        let alreadyExists = await Groups.findOne({name: req.body.name, type: req.body.type});
-        if(alreadyExists) {
-            res.status(200).send({alreadyExists: `This ${req.body.type} already exists` });
-        } 
-        else {
-            req.body.admins.push(_id);
+        let alreadyExists = await Groups.findOne({
+            name: req.body.name, 
+            type: req.body.type,
+            'admins.0': _id,
+        }).then(data => {
+            if(data) {
+                console.log('this is the existing group' +data)
+                res.status(200).send({alreadyExists: `This ${req.body.type} already exists` });
+            }
+            else {
+                req.body.admins.push(_id);
 
-            let newGroup = new Groups({
-                type: req.body.type,
-                name: req.body.name,
-                admins: [_id],
-                adminUsernames: [_username],
-                isPrivate: req.body.isPrivate = true ? true : false
-            });
+                let newGroup = new Groups({
+                    type: req.body.type,
+                    name: req.body.name,
+                    admins: [_id],
+                    adminUsernames: [_username],
+                    hasAccess: [_id],
+                    isPrivate: req.body.isPrivate = true ? true : false
+                });
 
-            newGroup.save();
-            res.status(200).send({confirm: true, name: newGroup.name});
-        }
+                newGroup.save();
+                res.status(200).send({confirm: true, name: newGroup.name});
+            }
+        }) 
     }
   } 
   catch(err) {
@@ -160,9 +178,6 @@ app.use('/posts', verify, async (req,res) => {
 
             const group = await Groups.findOne({_id: groupID});
             const user = await User.findById(_id);
-
-            console.log(req.body)
-            console.log(group)
 
             if(action == 'getTagInfo') {
 
@@ -331,7 +346,7 @@ app.use('/posts', verify, async (req,res) => {
                 }
                 else if(group.type == 'collection') {
 
-                    if(_id == group.owner) {
+                    if(_id == group.admins[0]) {
 
                         group.posts.push(postID);
                         group.save();
@@ -452,10 +467,20 @@ app.use('/posts', verify, async (req,res) => {
 
             else if(action == 'allTagsUsed') {
 
+                /* rewrite this route so that we get:
+                    users 32 most recent posts
+                    all their topics from their settings
+                    all their tags, saved docs
+
+                    first filter their recent posts for tags.
+                    then add in the remainder.
+                */
+
                 let allTags = [];
                 let topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
                 const userPosts = await Posts.find({owner: _id}).limit(50);
                 const userTags = await Groups.find({hasAccess: _id, type: 'tag'});
+                const userTopics = user.settings.topics;
 
                 /* Gathers all tags used within most recent posts */
                 userPosts.forEach(post => {
@@ -466,18 +491,48 @@ app.use('/posts', verify, async (req,res) => {
                     }
                 })
 
-                /* marks topics as such */
+                /* 
+                    marks topics as such 
+                    removes tags user's have used but no longer have access to
+                */
                 allTags = allTags.map(element => {
-                    if(topics.includes(element.name)) {
+
+                    /* if userTags has tag used in a post, include it */
+                    if (userTags.includes(element.name)) {
                         return ({
                             name: element.name,
-                            type: 'topic'
+                            _id: element._id,
+                            type: 'tag'
+                        }) 
+                    } 
+
+                    /* if a topic is identified, add it if it's also in user's topics */
+                    else if(topics.includes(element.name)) {
+                        if(userTopics.includes(element.name)) {
+                            return ({
+                                name: element.name,
+                                type: 'topic'
+                            })
+                        }
+                        else return false  
+                    } 
+                    else return false
+                })
+
+                /* if allTags includes tag user has access to but hasnt' used */
+                userTags.forEach(tag => {
+                    if(!allTags.includes(tag.name)) {
+                        allTags.push({
+                            name: tag.name,
+                            _id: tag._id,
+                            type: 'tag'
                         })
-                    } else {
-                        return element
                     }
                 })
 
+                console.log(allTags)
+
+                /* Remove any duplicates */
                 let removeDups = (array) => {
                     let seenItems = new Set();
                     return array.filter(item => {
@@ -486,8 +541,8 @@ app.use('/posts', verify, async (req,res) => {
                         return !isDup;
                     })
                 }
-
                 allTags = removeDups(allTags);
+
                 
                 res.status(200).send(allTags);
             }
@@ -501,13 +556,13 @@ app.use('/posts', verify, async (req,res) => {
             else if(action == 'getCollections') {
 
                 /* retrieve list of names of all user's collections */
-                let userCollections = await Groups.find({owner: _id});
+                let userCollections = await Groups.find(
+                    {admins: {$elemMatch: {$eq: _id}}, 
+                    type: 'collection'}
+                );
 
                 if(userCollections.length > 0) {
 
-                    // let bookmarks = userCollections.filter(col => {
-                    //     return col.name == 'BOOKMARKS';
-                    // })
                     let bookmarks = userCollections.filter(col => col.name == 'BOOKMARKS')[0];
                     userCollections = userCollections.filter(col => col.name != 'BOOKMARKS');
                     userCollections.unshift(bookmarks);
@@ -571,7 +626,6 @@ app.post('/manage/:action', verify, async (req,res) => {
                 );
                 res.status(200).send({confirmation: true});
             }
-
             else if(group.type == 'tag') { //for PUBLIC tags
 
                 if(group.isPrivate) {
@@ -580,7 +634,7 @@ app.post('/manage/:action', verify, async (req,res) => {
 
                         group.hasAccess.push(_id);
                         group.save();
-                        res.status(200).send({confirmation: true, groupName: group.name});
+                        res.status(200).send({confirmation: true});
                     } else {
                         res.status(403).send({message: 'noAccess', type: group.type})
                     }   
@@ -589,7 +643,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                 else {
                     group.hasAccess.push(_id);
                     group.save();
-                    res.status(200).send({confirmation: true, groupName: group.name}); 
+                    res.status(200).send({confirmation: true}); 
                 }
             }
             else if(group.type == 'collection') {// for PUBLIC collections
@@ -599,7 +653,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                     if(group.owner == req.body.details) {
                         group.hasAccess.push(req.body.userID);
                         group.save();
-                        res.status(200).send(true);
+                        res.status(200).send({confirmation: true});
                     } else {
                         res.status(403).send({message: 'You do not have access'})
                     }
@@ -607,7 +661,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                 else {
                     group.hasAccess.push(req.body.userID);
                     group.save();
-                    res.status(200).send(true);
+                    res.status(200).send({confirmation: true});
                 }
             }
             else if(group.type == 'groups') {// for PUBLIC groupss
@@ -617,7 +671,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                     if(group.admins.includes(req.body.details)) {
                         group.hasAccess.push(req.body.userID);
                         group.save();
-                        res.status(200).send(true);
+                        res.status(200).send({confirmation: true});
                     } else {
                         res.status(403).send({message: 'You do not have access'})
                     }
@@ -625,7 +679,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                 else {
                     group.hasAccess.push(req.body.userID);
                     group.save();
-                    res.status(200).send(true);
+                    res.status(200).send({confirmation: true});
                 }
             }
         }
@@ -639,7 +693,6 @@ app.post('/manage/:action', verify, async (req,res) => {
                 );
                 res.status(200).send({confirmation: true});
             }
-
             else if(group.type == 'tag') {
 
                 if(group.hasAccess.includes(_id)) {
@@ -647,7 +700,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                     let newList = group.hasAccess.filter((user) => user != _id);
                     group.hasAccess = newList;
                     group.save();
-                    res.status(200).send(true);
+                    res.status(200).send({confirmation: true});
                 } else {
                     res.status(403).send({message: 'You do not have access'})
                 }
@@ -664,7 +717,7 @@ app.post('/manage/:action', verify, async (req,res) => {
                     res.status(403).send({message: 'You do not have access'})
                 }
             }
-            if(group.type == 'groups') {
+            else if(group.type == 'groups') {
 
                 if(group.hasAccess.includes(_id) || group.admins.includes(_id)) {
 

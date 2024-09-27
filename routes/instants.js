@@ -35,6 +35,12 @@ app.ws('/', (ws, req)=> {
                     if(data.senderID == recipients[i]) {
                         return
                     }
+                    else if(data.action == 'updateNotifs') {
+                        console.log('recievied' +data);
+                        let notif = data;
+                        notif.type = 'updateNotifs';
+                        connections[user].send(JSON.stringify(notif));
+                    }
                     else if(data.type == 'request' && data.message == 'sent') {
                         let notif = JSON.stringify({
                             type: 'request',

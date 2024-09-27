@@ -20,13 +20,13 @@ const NotificationSchema = new mongoose.Schema({
     required: false,
   },
   recipients: [{
-    type: String,
+    type: mongoose.Schema.Types.ObjectID,
     required: true
   }],
-  recipientUsername: {
+  recipientUsernames: [{
     type: String,
     required: false,
-  },
+  }],
   url: {
     type: String,
     required: false
@@ -39,7 +39,7 @@ const NotificationSchema = new mongoose.Schema({
     postTitle: String,
     postID: mongoose.Schema.Types.ObjectID,
     groupName: String,
-    groupId: mongoose.Schema.Types.ObjectID,
+    groupID: mongoose.Schema.Types.ObjectID,
     info: String
   }
 });
@@ -84,7 +84,7 @@ const UserSchema = new mongoose.Schema({
     settings: {
       referralCode: String,
       topics: [String],
-      preferredLocations: [{
+      preferredLocation: [{
         lonLat: [String], //longitude, latitude - convert on frontEnd
         city: String,
         state: String
