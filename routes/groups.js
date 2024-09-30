@@ -175,8 +175,10 @@ app.use('/posts', verify, async (req,res) => {
         //     })
 
         // } else { // M A I N   R O U T E 
-
-            const group = await Groups.findOne({_id: groupID});
+            let group;
+            if(groupID != "undefined") {
+                group = await Groups.findOne({_id: groupID});
+            }
             const user = await User.findById(_id);
 
             if(action == 'getTagInfo') {
@@ -191,7 +193,7 @@ app.use('/posts', verify, async (req,res) => {
 
             else if(action == 'getPosts') {
                 
-                if(!groupID) {
+                if(groupID == 'undefined') {
 
                     let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`, 'type': {$ne: "draft"}});
 
@@ -526,6 +528,15 @@ app.use('/posts', verify, async (req,res) => {
                             name: tag.name,
                             _id: tag._id,
                             type: 'tag'
+                        })
+                    }
+                })
+
+                userTopics.forEach(topic => {
+                    if(!allTags.includes(topic)) {
+                        allTags.push({
+                            name: topic,
+                            type: 'topic'
                         })
                     }
                 })

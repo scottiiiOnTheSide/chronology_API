@@ -194,6 +194,7 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         })
       })
 
+      /* for finding topics ...? */
       split.forEach(tag => {
         if(tags.find(t => t.name != tag)) {
           newPost.tags.push({

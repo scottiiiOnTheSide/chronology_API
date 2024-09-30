@@ -11,7 +11,8 @@ const express = require('express'),
       util = require('util'),
       multer = require('multer'),
       sharp = require('sharp'),
-      {Storage} = require('@google-cloud/storage');
+      {Storage} = require('@google-cloud/storage'),
+      fs = require('fs');
 require('dotenv').config();
 
 /* for processing media content */
@@ -29,6 +30,8 @@ let storage = multer.memoryStorage(), //keeps data in RAM storage
 
 //Simple 'create new  users' function
 app.post('/newuser', upload.any(), async (req,res) => {
+
+    console.log(req.body)
 
     try {
 
@@ -67,6 +70,12 @@ app.post('/newuser', upload.any(), async (req,res) => {
             }
         }
 
+        else if(req.body.action == 'getTopics') {
+            console.log('sending topics')
+            const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+            res.status(200).send(topics);
+        }
+
         else if(req.body.action == 'create') {
 
             console.log(req.body)
@@ -76,6 +85,8 @@ app.post('/newuser', upload.any(), async (req,res) => {
             const salt = await encrypt.genSalt(10);
             const hashedPass = await encrypt.hash(userPass, salt);
             
+            const selectedTopics = req.body.topics.split(',');
+            console.log(selectedTopics);
             const user = new User({
                 firstName: req.body.firstName,
                 lastName: req.body.lastName,
@@ -84,6 +95,7 @@ app.post('/newuser', upload.any(), async (req,res) => {
                 password: hashedPass,
                 isPrivate: req.body.privacyOption,
             });
+            user.settings.topics = selectedTopics;
 
              /* Processes uploaded photo */
             if(req.files) {
