@@ -163,37 +163,42 @@ app.use('/posts', verify, async (req,res) => {
             if it is a suggestion, need to run DB search which gets all posts with said topic
         */    
 
-        // if(groupID && !mongoose.isValidObjectId(groupID)) {
-
-        //     console.log("it's a topic");
-        //     let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`}).then((data)=> {
-        //         if(data) {
-        //             res.status(200).send(data)
-        //         } else {
-        //             res.status(400).send({message: "No posts for this tag"});
-        //         }
-        //     })
-
         // } else { // M A I N   R O U T E 
-            let group;
-            if(groupID != "undefined") {
-                group = await Groups.findOne({_id: groupID});
-            }
+            // const topics = fs.readFileSync('./topics.txt').toString('utf-8').replace(/\r\n/g,'\n').split('\n');
+            // let group; 
+            // // if(!topics.some((topic) => topic == groupID)) {  //if groupID IS NOT a topic
+            // let isTag = topics.some((topic) => topic == groupID)
+            // if(isTag == true) {
+            //     group = await Groups.findOne({_id: groupID});
+            // } else {
+            //     group = undefined;
+            // }
             const user = await User.findById(_id);
 
             if(action == 'getTagInfo') {
 
-                if(!group) {
-                    res.status(200).send({response:'topic'});
+                if(groupID == 'topic') {
+
+                    let hasAccess;
+                    if(user.settings.topics.includes(req.body.groupName)) {
+                        // hasAccess = [_id];
+                        hasAccess = true;
+                    } 
+                    else {
+                        hasAccess = false;
+                    }
+
+                    res.status(200).send({response:'topic', hasAccess: hasAccess});
                 }
                 else {
+                    let group = await Groups.findOne({_id: groupID});
                     res.status(200).send(group);
                 }
             }
 
             else if(action == 'getPosts') {
-                
-                if(groupID == 'undefined') {
+
+                if(groupID == 'topic') {
 
                     let allPosts = await Posts.find({'tags.name': `${req.body.groupName}`, 'type': {$ne: "draft"}});
 
@@ -233,8 +238,12 @@ app.use('/posts', verify, async (req,res) => {
 
                     res.status(200).send(allPosts);
                 }
-                else if(group.type == 'tag') {
+                else {
+                    
+                    let group = await Groups.findOne({_id: groupID});
+                    if(group.type == 'tag') {
 
+                    let group = await Groups.findOne({_id: groupID});
                     let allPosts = await Posts.find({"tags.name": `${group.name}`, 'type': {$ne: "draft"}}).sort({createdAt: -1})
 
                     allPosts.filter(post => {
@@ -274,53 +283,140 @@ app.use('/posts', verify, async (req,res) => {
                     res.status(200).send(allPosts);
 
                     console.log('here');
-                }
-                else if(group.type == 'collection' || group.type == 'groups') {
+                    }
+                    else if(group.type == 'collection' || group.type == 'groups') {
 
-                    let posts = await Posts.find({ _id: {$in: group.posts}, 'type': {$ne: "draft"}}).sort({createdAt: -1})
+                        let group = await Groups.findOne({_id: groupID});
+                        let posts = await Posts.find({ _id: {$in: group.posts}, 'type': {$ne: "draft"}}).sort({createdAt: -1})
 
-                    posts.filter(post => {
-                                if(post.owner != _id) {
+                        posts.filter(post => {
+                                    if(post.owner != _id) {
 
-                                    if(post.isPrivate == true) {
-                                        return null;
-                                    }
-                                    else if(post.privacyToggleable == 'On') {
-                                        return null;
-                                    }
-                                    if(post.privacyToggleable == 'Half') {
-                                        if(user.connections.includes(post.owner) ||
-                                            user.subscriptions.includes(post.owner)) {
-                                            return post;
-                                        }
-                                        else {
+                                        if(post.isPrivate == true) {
                                             return null;
                                         }
+                                        else if(post.privacyToggleable == 'On') {
+                                            return null;
+                                        }
+                                        if(post.privacyToggleable == 'Half') {
+                                            if(user.connections.includes(post.owner) ||
+                                                user.subscriptions.includes(post.owner)) {
+                                                return post;
+                                            }
+                                            else {
+                                                return null;
+                                            }
+                                        }
+                                        else {
+                                            return post;
+                                        }
                                     }
-                                    else {
-                                        return post;
-                                    }
-                                }
-                    })
+                        })
 
-                    posts.sort((a,b) => {
+                        posts.sort((a,b) => {
 
-                              const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
-                                    dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+                                  const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                                        dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
 
-                              if (dateA > dateB) return -1;
-                              if (dateA < dateB) return 1;
-                              return 0;
-                    })
+                                  if (dateA > dateB) return -1;
+                                  if (dateA < dateB) return 1;
+                                  return 0;
+                        })
 
-                    res.status(200).send(posts);
+                        res.status(200).send(posts);
+                    }
                 }
+                // else if(group.type == 'tag') {
+
+                //     let group = await Groups.findOne({_id: groupID});
+                //     let allPosts = await Posts.find({"tags.name": `${group.name}`, 'type': {$ne: "draft"}}).sort({createdAt: -1})
+
+                //     allPosts.filter(post => {
+                //                 if(post.owner != _id) {
+
+                //                     if(post.isPrivate == true) {
+                //                         return null;
+                //                     }
+                //                     else if(post.privacyToggleable == 'On') {
+                //                         return null;
+                //                     }
+                //                     else if(post.privacyToggleable == 'Half') {
+                //                         if(user.connections.includes(post.owner) ||
+                //                             user.subscriptions.includes(post.owner)) {
+                //                             return post;
+                //                         }
+                //                         else {
+                //                             return null;
+                //                         }
+                //                     }
+                //                     else {
+                //                         return post;
+                //                     }
+                //                 }
+                //     })
+
+                //     allPosts.sort((a,b) => {
+
+                //               const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                //                     dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+
+                //               if (dateA > dateB) return -1;
+                //               if (dateA < dateB) return 1;
+                //               return 0;
+                //     })
+
+                //     res.status(200).send(allPosts);
+
+                //     console.log('here');
+                // }
+                // else if(group.type == 'collection' || group.type == 'groups') {
+
+                //     let group = await Groups.findOne({_id: groupID});
+                //     let posts = await Posts.find({ _id: {$in: group.posts}, 'type': {$ne: "draft"}}).sort({createdAt: -1})
+
+                //     posts.filter(post => {
+                //                 if(post.owner != _id) {
+
+                //                     if(post.isPrivate == true) {
+                //                         return null;
+                //                     }
+                //                     else if(post.privacyToggleable == 'On') {
+                //                         return null;
+                //                     }
+                //                     if(post.privacyToggleable == 'Half') {
+                //                         if(user.connections.includes(post.owner) ||
+                //                             user.subscriptions.includes(post.owner)) {
+                //                             return post;
+                //                         }
+                //                         else {
+                //                             return null;
+                //                         }
+                //                     }
+                //                     else {
+                //                         return post;
+                //                     }
+                //                 }
+                //     })
+
+                //     posts.sort((a,b) => {
+
+                //               const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                //                     dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+
+                //               if (dateA > dateB) return -1;
+                //               if (dateA < dateB) return 1;
+                //               return 0;
+                //     })
+
+                //     res.status(200).send(posts);
+                // }
             }
 
             else if(action == 'addPost') {
 
                 // let groups = await Groups.findOne({id: req.body.groupsID, name: req.body.name})
 
+                //10.06.2024 Adding a post to a tag isnt an operation on the frontEnd...
                 if(group.type == 'tag') {
 
                     if(group.isPrivate) {
@@ -344,7 +440,6 @@ app.use('/posts', verify, async (req,res) => {
                             res.status(403).send({message: 'You do not have access'})
                         }
                     }
-
                 }
                 else if(group.type == 'collection') {
 
@@ -352,6 +447,13 @@ app.use('/posts', verify, async (req,res) => {
 
                         group.posts.push(postID);
                         group.save();
+
+                        //update user's interactionCounts if user is not postOwner
+                        if(_id != req.body.postOwner) {
+                            let ids = [_id, req.body.postOwner];
+                            let newPoint = await User.updateMany({ _id: {$in: ids }}, {$inc: {interactionCount: 1}});
+                        }
+
                         res.status(200).send({confirmation: true, groupName: group.name});
                     }
                     else {
@@ -513,7 +615,8 @@ app.use('/posts', verify, async (req,res) => {
                         if(userTopics.includes(element.name)) {
                             return ({
                                 name: element.name,
-                                type: 'topic'
+                                type: 'topic',
+                                _id: 'topic'
                             })
                         }
                         else return false  
@@ -577,11 +680,13 @@ app.use('/posts', verify, async (req,res) => {
                     let bookmarks = userCollections.filter(col => col.name == 'BOOKMARKS')[0];
                     userCollections = userCollections.filter(col => col.name != 'BOOKMARKS');
                     userCollections.unshift(bookmarks);
-                    res.status(200).send(userCollections);
-                } else {
+                //     res.status(200).send(userCollections);
+                } 
+                // else {
 
-                    res.status(200).send(false);
-                }
+                //     // res.status(200).send(false);
+                // }
+                res.status(200).send(userCollections);
             }
 
             else if(action == 'getGroups') {

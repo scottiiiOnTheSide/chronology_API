@@ -4,8 +4,8 @@ const express = require('express'),
       mongoose = require('mongoose'),
       router = express.Router(),
       cors = require('cors'),
-      {User, Notification} = require('./models/user');
-      // GCS = require('./manageImages');
+      {User, Notification} = require('./models/user'),
+      {Posts} = require('./models/posts');
 require('dotenv').config();
 const expressWS = require('express-ws')(app);
 
@@ -35,6 +35,18 @@ app.use('/groups', groupRoutes);
 
 const instantRoutes = require('./routes/instants');
 app.use('/', instantRoutes);
+
+
+app.use('/publicStats', async(req, res)=> {
+    //return amount of users, total posts 
+    let userCount = await User.countDocuments();
+    let postCount = await Posts.countDocuments();
+
+    res.status(200).send({
+        userCount: userCount,
+        postCount: postCount
+    })
+})
 
 
 app.listen(3333, '0.0.0.0', ()=> {

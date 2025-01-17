@@ -53,11 +53,17 @@ const CommentSchema = new mongoose.Schema({
 
 const PostsSchema = new mongoose.Schema({
   type: {
-    type: String //draft, event or entry. Entry is default
+    type: String //draft, event, entry, rePost or quote
+  },
+  originalPost: {
+    type: mongoose.Schema.Types.ObjectID,  // Reference to the original post
+    ref: 'Posts',
+    default: null  // Only filled when it's a repost
   },
   owner: {
       type: mongoose.Schema.Types.ObjectID,
-      ref: 'User'
+      ref: 'User',
+      required: true
   }, 
   author: { //owner username (T-T )
     type: String,
@@ -69,11 +75,13 @@ const PostsSchema = new mongoose.Schema({
   },
   title: {
       type: String,
-      required: true,
       index: true,
   },
   taggedUsers: [{
-    id: mongoose.Schema.Types.ObjectID,
+    _id: { 
+      type: mongoose.Schema.Types.ObjectID,
+      ref: 'User'
+    },
     username: String
   }],
   isPrivate: {
@@ -123,11 +131,12 @@ const PostsSchema = new mongoose.Schema({
   }],
   location: {
     lon: String,
-    lat: String,
+    lat: String, //longitude, latitude - convert on frontEnd
     city: String,
     state: String
   },
 }, {timestamps: true});
+
 
 
 module.exports.Posts = mongoose.model('Posts', PostsSchema);

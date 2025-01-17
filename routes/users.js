@@ -94,6 +94,7 @@ app.post('/newuser', upload.any(), async (req,res) => {
                 userName: req.body.userName,
                 password: hashedPass,
                 isPrivate: req.body.privacyOption,
+                interactionCount: 0
             });
             user.settings.topics = selectedTopics;
 
@@ -161,8 +162,8 @@ app.post('/newuser', upload.any(), async (req,res) => {
             let newCollection = new Groups({
                 type: 'collection',
                 name: 'BOOKMARKS',
-                owner: user._id,
-                ownerUsername: user.username,
+                admins: [user._id],
+                adminUsernames: [user.username],
                 hasAccess: [user._id],
                 isPrivate: true,
             });
@@ -232,15 +233,32 @@ app.get('/user/:userID', async (req,res) => {
         const {_id, _username} = decoded;
         let removalID = req.query.remove;
 
-        let singleUser = await User.findById(_id).then((user) => {
+        let singleUser;
+        if(req.params.userID != _id) {
+            console.log(req.params.userID)
+
+            singleUser = await User.findById(mongoose.Types.ObjectId(req.params.userID)).then((user) => {
               if(!user) {
                  console.log("error retrieving user");
                 } else {
                   return user;
                 }
           });
+        } else {
+
+            singleUser = await User.findById(_id).then((user) => {
+              if(!user) {
+                 console.log("error retrieving user");
+                } else {
+                  return user;
+                }
+          });
+        }
+            
           
         if(req.query.query == 'getAllConnects') {
+
+            //add isconnected and issubscribed
 
             let connects = singleUser.connections;
             connects = await User.find({'_id': {$in: connects }});
@@ -250,12 +268,17 @@ app.get('/user/:userID', async (req,res) => {
                 let result = {
                     fullName: `${userInfo.firstName} ${userInfo.lastName}`,
                     userName: userInfo.userName,
-                    _id: userInfo._id
+                    _id: userInfo._id,
+                    profilePhoto: userInfo.profilePhoto
                 }
 
                 list.push(result);
             })
             res.status(200).send(list);
+
+            //if singleUser._id == _id,
+            //if connect connections, subscribers or subscriptions include current
+            //user, add mutual: true to result
         } 
 
         else if (req.query.query == 'removeConnect') {
@@ -288,10 +311,46 @@ app.get('/user/:userID', async (req,res) => {
                 )
             })();    
         } 
+
+        else if (req.query.query == 'removeSub') {
+
+            (async() => {
+                let one = User.updateOne(
+                  { _id: _id},
+                  {$pull: { 'subscriptions': `${removalID}` }},
+                  function(err, val) {
+                    if(val) {
+                      console.log(singleUser.connections);
+                      console.log('removee disconnected from remover');
+                      res.status(200).send(true);
+                    } else {
+                      console.log(err)
+                    }
+                  }
+                )
+
+                let two = User.updateOne(
+                    { _id:  mongoose.Types.ObjectId(removalID)},
+                    {$pull: {'subscribers': `${_id}`}},
+                    function(err, val) {
+                        if(val) {
+                            console.log('remover disconnected from removee');
+                        } else {
+                            console.log(err)
+                        }
+                    }
+                )
+            })();
+        }
+
         else if(req.query.query == 'singleUser') {
             if(req.params.userID == _id) {
 
+                let isSubscribed = singleUser.subscribers.includes(_id);
+                let isConnected = singleUser.connections.includes(_id);
+
                 let posts = await Posts.find({ _id: {$in: singleUser.pinnedPosts}}).sort({createdAt: -1});
+                let postCount = await Posts.countDocuments({'owner': _id, 'type': {$ne: "draft"}});
                 let collections = await Groups.find(
                     {admins: {$elemMatch: {$eq: _id}},
                     name: {$ne: 'BOOKMARKS'}, 
@@ -300,23 +359,34 @@ app.get('/user/:userID', async (req,res) => {
                 res.status(200).send({
                     user: singleUser, 
                     pinnedPosts: posts,
-                    collections: collections 
+                    collections: collections,
+                    postCount: postCount,
+                    isConnected: isConnected,
+                    isSubscribed: isSubscribed
                 });
             }
             else {
-                console.log('this one')
                 let user = await User.findById(req.params.userID);
+                let isSubscribed = user.subscriptions.includes(_id);
+                let isConnected = user.connections.includes(_id);
                 let posts = await Posts.find({ _id: {$in: user.pinnedPosts}}).sort({createdAt: -1});
+                let postCount = await Posts.countDocuments({'owner': req.params.userID, 'type': {$ne: "draft"}})
                 let collections = await Groups.find(
                     {admins: {$elemMatch: {$eq: req.params.userID}},
                     name: {$ne: 'BOOKMARKS'}, 
                     type: 'collection'}
                 );
+
                 res.status(200).send({
                     user: user, 
                     pinnedPosts: posts,
-                    collections: collections 
+                    collections: collections,
+                    postCount: postCount,
+                    isConnected: isConnected,
+                    isSubscribed: isSubscribed
                 });
+                // isConnected?
+                // isSubscribed?
             }
         }
 
@@ -425,6 +495,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
             then fix 'mark read' subroute
         */
 
+
         /* update original notif to be isRead = true */
         if(type == 'markRead') {
 
@@ -443,7 +514,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
             // })
             // notif.isRead = true;
             user.save({ suppressWarning: true });
-            console.log(notif);
+            // console.log(notif);
             res.status(200).send(true);
         }
 
@@ -466,18 +537,16 @@ app.post('/notif/:type', verify, async(req, res)=> {
                 reordered.push(notifs[i][0]);
             }
 
-            console.log(`sending ${user.userName} notifs`)
-
+            console.log(`sending ${user.userName}'s' notifications`)
             res.status(200).send(reordered);
         }
 
+        else if(type == 'sendUnreadCount') {
         /** 
          * 10. 27. 2023
          * Notifs are currently in array, per each array entry (._ .)
          * will most likely be fixed once I create new profiles
          */
-        else if(type == 'sendUnreadCount') {
-
             let user = await User.findById(_id).then((user) => {
                 if(user) {
                   return user
@@ -501,317 +570,450 @@ app.post('/notif/:type', verify, async(req, res)=> {
         /* if connection request */
         else if(type == 'request') {
 
-            /* sender IS always be sender of request,
-                recipient is who recieved initial request
-            */
-            let sender = await User.findById(mongoose.Types.ObjectId(req.body.senderID));
-            sender = {
-                username: sender.userName,
-                id: sender._id
+            let check;
+            let userToCheck = await User.findById(req.body.recipients[0]);
+            let notif = userToCheck.notifications.filter((notif) => {
+                if(notif[0].sender == _id && notif[0].type == 'request') {
+                    // if(notif[0].isRead == false) {
+                    //     check = true;
+                    //     return notif;
+                    // }
+                    if(notif[0].message.includes('sub') || notif[0].isRead == true) {
+                        return;
+                    }
+                    else {
+                        check = true;
+                        return notif;
+                        console.log(notif)
+                    }
+                }
+            })
+            if(!req.body.message.includes('sub') && check == true) {
+                console.log(notif);
+                console.log(`${_username} has already sent this user a request`);
+                // 10.16.2024
+                // create and send a message depending on which check is true
+                // groupRequest, connection or subscription
+
+                res.status(200).send({confirmation: false}) 
             }
-            // console.log(sender);
 
-            let recipient = await User.findById(mongoose.Types.ObjectId(req.body.recipients[0]))
-            recipient = {
-                username: recipient.userName,
-                id: recipient._id
-            }
-            // console.log(recipient);
+            else { 
 
-            /**
-             * 10. 13. 2023
-             * use senderID and recipient and message: ignored, to check whether there's an ignored
-             * request. Can then send user mesage 'you already sent a request!'
-             */
+                let sender = await User.findById(mongoose.Types.ObjectId(req.body.senderID));
+                sender = {
+                    username: sender.userName,
+                    id: sender._id
+                }
 
-            /* initial request */
-            if(req.body.message == "sent") {
+                let recipient = await User.findById(mongoose.Types.ObjectId(req.body.recipients[0]))
+                let connectionCheck;
+                recipient = {
+                    username: recipient.userName,
+                    id: recipient._id
+                }
 
-                // console.log('processing a connection request');
+                /**
+                 * 10. 13. 2023
+                 * use senderID and recipient and message: ignored, to check whether there's an ignored
+                 * request. Can then send user mesage 'you already sent a request!'
+                 */
 
-                // try {
-                    let requestTwo = new Notification({
-                        senderUsername: sender.username,
-                        recipients: [recipient.id],
-                        type: req.body.type,
-                        isRead: false,
-                        sender: sender.id,
-                        message: 'recieved'
+                /* initial request */
+                if(req.body.message == "sent") {
+
+                    // try {
+                        let requestTwo = new Notification({
+                            senderUsername: sender.username,
+                            recipients: [recipient.id],
+                            type: req.body.type,
+                            isRead: false,
+                            sender: sender.id,
+                            message: 'recieved'
+                        });
+
+                        let requestOne = new Notification({
+                            type: req.body.type,
+                            isRead: true,
+                            sender: sender.id,
+                            senderUsername: sender.username,
+                            recipients: [recipient.id],
+                            recipientUsernames: [recipient.username],
+                            message: 'sent'
+                        });
+
+                        
+                        (async()=> {
+                            let updateSenderList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(sender.id),
+                                {$push: {"notifications": requestOne}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log("notification of connection request added to sender's list")
+                                }
+                            });
+
+                            let updateRecipientList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(recipient.id),
+                                {$push: {"notifications": requestTwo}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log("notification of connection request added to recipient's list")
+                                }
+                            });
+                        })();
+
+                        requestOne.save()
+                        requestTwo.save()
+                        // console.log('line 324');
+                        // console.log(requestTwo);
+                        // res.status(200).send(requestOne);
+                        res.status(200).send({confirm: true, message: 'request'});
+                } //message: request
+
+                 /* if accepted */
+                else if(req.body.message == 'accepted') {
+
+                    console.log('accepting connection...')
+
+                    if(userToCheck.connections.includes(sender.id)) {
+                        res.status(200).send({confirmation: false})
+                    } else {
+
+                    (async ()=> {
+                        let addSenderToReciever = await User.findByIdAndUpdate(sender.id,
+                            {$push: {"connections": recipient.id}},
+                            {upsert: true}
+                        ).then((data)=> {
+                            if(data) {
+                                console.log("recipient added to sender's list of connections")
+                            }
+                        })
+
+                        let addRecieverToSender = await User.findByIdAndUpdate(recipient.id,
+                            {$push: {"connections": sender.id}},
+                            {upsert: true}
+                        ).then((data)=> {
+                            if(data) {
+                                console.log("sender added to recipient's list of connections")
+                            }else {
+                                console.log("error in adding sender to recipient's list")
+                            }
+                        })
+                    })()
+
+                    /* make new notif confirming connection between users, save them to
+                        each other's notif lists */
+                    let acceptedOne = new Notification({
+                            type: req.body.type,
+                            isRead: false,
+                            sender: sender.id,
+                            senderUsername: sender.username,
+                            recipients: recipient.id,
+                            recipientUsernames: [recipient.username],
+                            message: 'accept'
+                    });
+                    let acceptedTwo = new Notification({
+                            type: req.body.type,
+                            isRead: false,
+                            sender: sender.id,
+                            senderUsername: sender.username,
+                            recipients: recipient.id,
+                            recipientUsernames: [sender.username],
+                            message: 'accept'
                     });
 
-                    let requestOne = new Notification({
-                        type: req.body.type,
-                        isRead: true,
-                        sender: sender.id,
-                        senderUsername: sender.username,
-                        recipients: [recipient.id],
-                        recipientUsername: recipient.username,
-                        message: 'sent'
-                    });
+                    (async ()=> {
+                            let updateSenderList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(sender.id),
+                                {$push: {"notifications": acceptedOne}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log(`notif of acceptance added to ${sender.userName}'s list`)
+                                }else {
+                                    console.log("error in adding notif to sender's list")
+                                }
+                            })
 
-                    
-                    (async()=> {
-                        let updateSenderList = await User.findByIdAndUpdate(
-                            mongoose.Types.ObjectId(sender.id),
-                            {$push: {"notifications": requestOne}},
-                            [{upsert: true}, {useFindandModify: false}],
-                        ).then((res) => {
-                            if(res) {
-                                console.log("notification of connection request added to sender's list")
+                            let updateRecipientList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(recipient.id),
+                                {$push: {"notifications": acceptedTwo}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log(`notif of acceptance added to ${recipient.userName}'s list`)
+                                }else {
+                                    console.log("error in adding notif to recipient's list")
+                                }
+                            })
+                    })();
+
+                    acceptedOne.save()
+                    acceptedTwo.save()
+
+                    //update user's interaction count
+                    let ids = [sender.id, recipient.id];
+                    let newPoint = await User.updateMany({ _id: {$in: ids }}, {$inc: {interactionCount: 1}});
+
+                    console.log( `${sender.username} is now connected with ${recipient.username}` );
+                    res.status(200).send({confirm: true, message: 'accepted'});
+                    }
+                } //message: accepted
+
+                else if(req.body.message == "accessRequested") {
+
+                    /**
+                     * A L G O
+                     * create and add invite notif to the invited's notif list
+                     * 
+                     * requester -> owner
+                     * or
+                     * owner -> invitee
+                     */
+
+                    //09. 26. 2024
+                    // for preexisting check
+                    // need: senderID, message as accessRequested and isRead as false
+                    console.log(req.body)
+                    let request = new Notification({
+                            type: req.body.type, //invite
+                            isRead: false,
+                            sender: _id,
+                            senderUsername: _username,
+                            recipients: [req.body.recipients], 
+                            recipientUsername: [recipient.username],
+                            message: 'accessRequested',
+                            details: {
+                                groupID: req.body.groupID,
+                                groupName: req.body.groupName
                             }
                         });
 
-                        let updateRecipientList = await User.findByIdAndUpdate(
-                            mongoose.Types.ObjectId(recipient.id),
-                            {$push: {"notifications": requestTwo}},
-                            [{upsert: true}, {useFindandModify: false}],
+                    //if
+                    (async()=> {
+                        let updateRecipientNotifs = await User.update(
+                            { _id: { $in: [req.body.recipients]}}, //in order to update multiple recipients / admins
+                            {$push: {"notifications": request}},
+                            [{upsert: true}, {useFindandModify: false}, {multi: true}],
                         ).then((res) => {
                             if(res) {
-                                console.log("notification of connection request added to recipient's list")
+                                console.log("notification of request added to recipient's list")
                             }
                         });
                     })();
 
-                    // requestOne.save()
-                    // requestTwo.save()
-                    console.log('line 324');
-                    console.log(requestTwo);
-                    res.status(200).send(requestOne);
-            }
+                    res.status(200).send({confirmation: true, message: 'accessRequested'});
+                } //message: accessRequested
 
-             /* if accepted */
-            else if(req.body.message == 'accept') {
+                else if(req.body.message == "accessGranted") {
 
-                (async ()=> {
-                    let addSenderToReciever = await User.findByIdAndUpdate(sender.id,
-                        {$push: {"connections": recipient.id}},
-                        {upsert: true}
-                    ).then((data)=> {
-                        if(data) {
-                            console.log("recipient added to sender's list of connections")
-                        }
-                    })
+                    /**
+                     * A L G O
+                     * create and add invite notif to invitee-user's notif list
+                     * 
+                     * owner doesn't recieve notification of acceptance,
+                     * only invitee or requester
+                     */
 
-                    let addRecieverToSender = await User.findByIdAndUpdate(recipient.id,
-                        {$push: {"connections": sender.id}},
-                        {upsert: true}
-                    ).then((data)=> {
-                        if(data) {
-                            console.log("sender added to recipient's list of connections")
-                        }else {
-                            console.log("error in adding sender to recipient's list")
-                        }
-                    })
-                })()
+                    let request = new Notification({
+                            type: req.body.type, //invite
+                            isRead: false,
+                            sender: _id,
+                            senderUsername: _username,
+                            recipients: req.body.recipients[0], //original requester 
+                            recipientUsername: recipient.username,
+                            message: 'accessGranted',
+                            details: {
+                                groupID: req.body.groupID,
+                                groupName: req.body.groupName
+                            }
+                        });
 
-                /* make new notif confirming connection between users, save them to
-                    each other's notif lists */
-                let acceptedOne = new Notification({
-                        type: req.body.type,
-                        isRead: false,
-                        sender: sender.id,
-                        senderUsername: sender.username,
-                        recipients: recipient.id,
-                        recipientUsername: recipient.username,
-                        message: 'accept'
-                });
-                let acceptedTwo = new Notification({
-                        type: req.body.type,
-                        isRead: false,
-                        sender: sender.id,
-                        senderUsername: sender.username,
-                        recipients: recipient.id,
-                        recipientUsername: recipient.username,
-                        message: 'accept'
-                });
-
-                (async ()=> {
+                    (async()=> {
                         let updateSenderList = await User.findByIdAndUpdate(
-                            mongoose.Types.ObjectId(sender.id),
-                            {$push: {"notifications": acceptedOne}},
+                            mongoose.Types.ObjectId(req.body.recipients[0]),
+                            {$push: {"notifications": request}},
                             [{upsert: true}, {useFindandModify: false}],
                         ).then((res) => {
                             if(res) {
-                                console.log(`notif of acceptance added to ${sender.userName}'s list`)
-                            }else {
-                                console.log("error in adding notif to sender's list")
+                                console.log("notification of access added to recipient's list")
                             }
-                        })
+                        });
+                    })();
 
-                        let updateRecipientList = await User.findByIdAndUpdate(
-                            mongoose.Types.ObjectId(recipient.id),
-                            {$push: {"notifications": acceptedTwo}},
-                            [{upsert: true}, {useFindandModify: false}],
-                        ).then((res) => {
-                            if(res) {
-                                console.log(`notif of acceptance added to ${recipient.userName}'s list`)
-                            }else {
-                                console.log("error in adding notif to recipient's list")
-                            }
-                        })
-                })();
+                    console.log(req.body)
+                    let group = await Groups.findOne({_id: req.body.groupID})
+                    console.log(group);
+                    group.hasAccess.push(req.body.recipients[0]);
+                    await group.save();
 
-                acceptedOne.save()
-                acceptedTwo.save()
-                console.log( `${sender.username} is now connected with ${recipient.username}` );
-                res.status(200).send(true);
-            }
+                    //update users' interactionCount
+                    let ids = [_id, req.body.recipients[0]];
+                    let newPoint = await User.updateMany({ _id: {$in: ids }}, {$inc: {interactionCount: 1}});
 
-            /* if ignored */
-            else if(req.body.message == 'ignore') {
-
-                /* if request is ignored, req.body should include the ._id of the
-                    connectRequest notif, so that it can be modified
-
-                    sender in req.body NEEDS to be sender of request
-                    recipient is ID of user ignoring the request
-                */
-                let originalRequest = 
-                Notification.findByIdAndUpdate(mongoose.Types.ObjectId(req.body.originalID), 
-                    {message: 'ignore', isRead: true},
-                    (err, doc)=> {
-                        if(err) {
-                            console.log(err)
-                            console.log('unable to find original notification to modify');
-                        }
-                        else {
-                            console.log('connection request ignored')
+                    let user = await User.findById(_id);
+                    let notif = user.notifications.filter((notif) => {
+                        if(notif[0]._id == req.body.originalID) {
+                            return notif;
                         }
                     })
-                console.log({message:`${sender.username}'s original request to ${recipient.username} has been ignored`})
-                res.status(200).send(true);      
+                    notif[0][0].isRead = true;
+                    await user.save({ suppressWarning: true });
+
+                    res.status(200).send({confirmation: true, data: request}); //message: accessGranted
+                } //message: accessGranted
+
+                else if(req.body.message == "subscriptionRequestSent") {
+                    //request notif in recipient's list
+
+                    //originalRecipient
+                    let requestTwo = new Notification({
+                            senderUsername: sender.username,
+                            recipients: [recipient.id],
+                            type: req.body.type,
+                            isRead: false,
+                            sender: sender.id,
+                            message: 'subscriptionRequested'
+                        });
+
+                    //original sender
+                        let requestOne = new Notification({
+                            type: req.body.type,
+                            isRead: true,
+                            sender: sender.id,
+                            senderUsername: sender.username,
+                            recipients: [recipient.id],
+                            recipientUsernames: [recipient.username],
+                            message: 'subscriptionRequest'
+                        });
+
+                        
+                        (async()=> {
+                            let updateSenderList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(sender.id),
+                                {$push: {"notifications": requestOne}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log("notification of connection request added to sender's list")
+                                }
+                            });
+
+                            let updateRecipientList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(recipient.id),
+                                {$push: {"notifications": requestTwo}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log("notification of connection request added to recipient's list")
+                                }
+                            });
+                        })();
+
+                        requestOne.save()
+                        requestTwo.save()
+
+                        res.status(200).send({confirm: true, message: 'subscriptionRequestSent', _id: requestTwo._id});
+                } //message: subscriptionRequested
+
+                // when message is subAccepted, original reciever becomes sender - it gets flipped
+                // when message is subscribed, original sender is subscriber
+                else if(req.body.message == "subscriptionAccepted" || req.body.message == 'subscribed') {
+      
+                    //sender of acceptance notif is user being add
+
+                    (async ()=> {
+
+                        let first = req.body.message == 'subscriptionAccepted' ? sender.id : recipient.id,
+                            second = req.body.message == 'subscriptionAccepted' ? recipient.id : sender.id;
+
+                        let addSenderToReciever = await User.findByIdAndUpdate(first,
+                            {$push: {"subscribers": second}},
+                            {upsert: true}
+                        ).then((data)=> {
+                            if(data) {
+                                console.log("recipient added to sender's list of subscriptions")
+                            }
+                        })
+
+                        let addRecieverToSender = await User.findByIdAndUpdate(second,
+                            {$push: {"subscriptions": first}},
+                            {upsert: true}
+                        ).then((data)=> {
+                            if(data) {
+                                console.log("sender added as recipient's list of subscriber")
+                            }else {
+                                console.log("error in adding sender to recipient's list")
+                            }
+                        })
+                    })()
+
+                    //original recipient of initial request
+                    let acceptedOne = new Notification({
+                            type: req.body.message == 'subscriptionAccepted' ? req.body.type : 'confirmation',
+                            isRead: false,
+                            sender: sender.id,
+                            senderUsername: sender.username,
+                            recipients: recipient.id,
+                            recipientUsernames: [recipient.username],
+                            message: req.body.message == 'subscriptionAccepted' ? 'subscriptionAccepted' : 'subscribed'
+                    });
+
+                    //original sender of request
+                    let acceptedTwo = new Notification({
+                            type: req.body.type, //request
+                            isRead: false,
+                            sender: sender.id,
+                            senderUsername: sender.username,
+                            recipients: recipient.id,
+                            recipientUsernames: [recipient.username],
+                            message: 'subscribed'
+                    });
+
+                    (async ()=> {
+                            let updateSenderList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(sender.id),
+                                {$push: {"notifications": acceptedOne}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log(`notif of acceptance added to ${sender.userName}'s list`)
+                                }else {
+                                    console.log("error in adding notif to sender's list")
+                                }
+                            })
+
+                            let updateRecipientList = await User.findByIdAndUpdate(
+                                mongoose.Types.ObjectId(recipient.id),
+                                {$push: {"notifications": acceptedTwo}},
+                                [{upsert: true}, {useFindandModify: false}],
+                            ).then((res) => {
+                                if(res) {
+                                    console.log(`notif of acceptance added to ${recipient.userName}'s list`)
+                                }else {
+                                    console.log("error in adding notif to recipient's list")
+                                }
+                            })
+                    })();
+
+                    acceptedOne.save()
+                    acceptedTwo.save()
+
+                    //update user's interaction count
+                    let ids = [sender.id, recipient.id];
+                    let newPoint = await User.updateMany({ _id: {$in: ids }}, {$inc: {interactionCount: 1}});
+
+                    console.log( `${sender.username} is now subscribed to ${recipient.username}` );
+                    res.status(200).send({
+                        confirm: true, 
+                        message: req.body.message == 'subscriptionAccepted' ? 'subscriptionAccepted' : 'subscribed',
+                        _id: acceptedTwo._id 
+                    });
+                } //message: subscriptionAccepted
             }
-
-            else if(req.body.message == "accessRequested") {
-
-                /**
-                 * A L G O
-                 * create and add invite notif to the invited's notif list
-                 * 
-                 * requester -> owner
-                 * or
-                 * owner -> invitee
-                 */
-
-                //09. 26. 2024
-                // for preexisting check
-                // need: senderID, message as accessRequested and isRead as false
-                console.log(req.body)
-                let request = new Notification({
-                        type: req.body.type, //invite
-                        isRead: false,
-                        sender: _id,
-                        senderUsername: _username,
-                        recipients: [req.body.recipients], 
-                        recipientUsername: [recipient.username],
-                        message: 'accessRequested',
-                        details: {
-                            groupID: req.body.groupID,
-                            groupName: req.body.groupName
-                        }
-                    });
-
-                //if
-                (async()=> {
-                    let updateRecipientNotifs = await User.update(
-                        { _id: { $in: [req.body.recipients]}}, //in order to update multiple recipients / admins
-                        {$push: {"notifications": request}},
-                        [{upsert: true}, {useFindandModify: false}, {multi: true}],
-                    ).then((res) => {
-                        if(res) {
-                            console.log("notification of request added to recipient's list")
-                        }
-                    });
-                })();
-
-                res.status(200).send({confirmation: true});
-            }
-
-            else if(req.body.message == "accessGranted") {
-
-                /**
-                 * A L G O
-                 * create and add invite notif to invitee-user's notif list
-                 * 
-                 * owner doesn't recieve notification of acceptance,
-                 * only invitee or requester
-                 */
-
-                let request = new Notification({
-                        type: req.body.type, //invite
-                        isRead: false,
-                        sender: _id,
-                        senderUsername: _username,
-                        recipients: req.body.recipients[0], //original requester 
-                        recipientUsername: recipient.username,
-                        message: 'accessGranted',
-                        details: {
-                            groupID: req.body.groupID,
-                            groupName: req.body.groupName
-                        }
-                    });
-
-                (async()=> {
-                    let updateSenderList = await User.findByIdAndUpdate(
-                        mongoose.Types.ObjectId(req.body.recipients[0]),
-                        {$push: {"notifications": request}},
-                        [{upsert: true}, {useFindandModify: false}],
-                    ).then((res) => {
-                        if(res) {
-                            console.log("notification of access added to recipient's list")
-                        }
-                    });
-                })();
-
-                console.log(req.body)
-                let group = await Groups.findOne({_id: req.body.groupID})
-                console.log(group);
-                group.hasAccess.push(req.body.recipients[0]);
-                await group.save();
-
-                let user = await User.findById(_id);
-                let notif = user.notifications.filter((notif) => {
-                    if(notif[0]._id == req.body.originalID) {
-                        return notif;
-                    }
-                })
-                notif[0][0].isRead = true;
-                await user.save({ suppressWarning: true });
-
-                res.status(200).send({confirmation: true, data: request});
-            }
-
-            // else if(req.body.message == "accessIgnored") {
-                
-            //     /**
-            //      * A L G O
-            //      * marks recipient notification as read 
-            //      */
-
-            //     // (async()=> {
-
-            //     //     let user = await User.findById(_id);
-            //     //     let notifs = user.notifications;
-
-            //     //     let indexOfEditted = notifs.findIndex((notif)=> notif._id == req.body.notifID);
-            //     //     notifs[indexOfEditted].isRead = true;
-            //     //     user.save();
-            //     // })();
-            //     console.log('route user/notif/message=accessIgnored')
-            //     await Notification.findByIdAndUpdate(mongoose.Types.ObjectId(req.body.notifID), 
-            //         {message: 'ignored', isRead: true},
-            //         (err, doc)=> {
-            //             if(err) {
-            //                 console.log(err)
-            //                 console.log('unable to find original notification to modify');
-            //             }
-            //             else {
-            //                 console.log('connection request ignored')
-            //             }
-            //         })
-
-            //     res.status(200).send({confirmation: true});
-            // }
         }
            
         /* notif of being tagged in post or comment */
@@ -850,9 +1052,13 @@ app.post('/notif/:type', verify, async(req, res)=> {
                             sender: req.body.senderID,
                             senderUsername: req.body.senderUsername,
                             url: req.body.postURL,
-                            message: 'initial',
+                            message: req.body.message,
                             recipients: [recip.id],
-                            details: req.body.details
+                            details: {
+                                postTitle: req.body.postTitle,
+                                postOwner: req.body.postOwner,
+                                commentID: req.body.commentID
+                            }
                         });
 
                         newNotif.save();
@@ -915,26 +1121,6 @@ app.post('/notif/:type', verify, async(req, res)=> {
             );
             res.status(200).send(notifID);
         }
-
-        // else if(type == 'request') {
-
-        //     /***
-        //      * Necessary Variables
-        //      * type: request, accepted, ignore
-        //      * sender: userID of requester
-        //      * senderUsername: userName
-        //      * recipients: array has one owner or many admins
-        //      * groupName:
-        //      * groupID:
-        //      * 
-        //      * acceptance or ignore done on by group owner on frontEnd
-        //      * 
-        //      * for ignore:
-        //      * req.body.details = original request notif ID
-        //      */
-
-                            
-        // }
         
     } catch(err) {
 

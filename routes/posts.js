@@ -58,6 +58,11 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     newPost.isPrivate = req.body.isPrivate;
     newPost.profilePhoto = req.body.profilePhoto;
     newPost.privacyToggleable = req.body.privacyToggleable;
+
+    if(req.body.geoLon) {
+      newPost.location.lon = req.body.geoLon;
+      newPost.location.lat = req.body.geoLat;
+    }
     
     if(req.body.usePostedByDate == 'true') {
         newPost.postedOn_month = month;
@@ -71,26 +76,32 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
     }
 
     if(req.body.taggedUsers) {
+
+      let recipients = []
       let taggedUsers = JSON.parse(req.body.taggedUsers);
       taggedUsers.forEach(user => {
+
         newPost.taggedUsers.push({
           _id: user._id,
           username: user.username
         })
+        recipients.push(user._id)
       })
+
+      await User.updateMany({ _id: {$in: recipients }}, {$inc: {interactionCount: 1}});
     }
 
-    if(req.body.geoLon) {
-      newPost.location.lon = req.body.geoLon;
-      newPost.location.lat = req.body.geoLat;
+    if(req.body.originalPost) {
+      newPost.originalPost = req.body.originalPost;
     }
     
+    
 
-    /* media processing stuff */
-      /*  
-          loops though all media files originally in req.body,
-          sends to GCS then gets their cdnURL, adds url to req.body 
-      */
+    /* 
+      For media processing   
+      loops though all media files originally in req.body,
+      sends to GCS then gets their cdnURL, adds url to req.body 
+    */
     for (let i = 0; i < req.files.length; i++) {
 
         const fileNumber = req.files[i].fieldname;
@@ -127,16 +138,16 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
         req.body[title] = cdnUrl;
     }
 
-    // /* 05. 01. 2023
-    //    Loop through all numbered entries within the req.body,
-    //    add urls and content to new array of objects,
-    //    have said array be post.Content
-    //    organizes data in order user originally intended
-    // */
+    /* 
+       FOR ADDING CONTENT
+       Loop through all numbered entries within the req.body,
+       add urls and content to new array of objects,
+       have said array be post.Content
+       organizes data in order user originally intended
+    */
 
     let body = {}
     Object.assign(body, req.body);
-
     for (let value in body) { //must use for ... in regarding objects
 
       if( Number.isInteger( parseInt(value) )) {
@@ -208,9 +219,11 @@ app.post('/createPost', verify, upload.any(), async (req,res) => {
                               {$push: {"posts": newPost._id}});
     }
 
+    //increment user's interactionCount
+    let newPoint = await User.updateOne( { _id: _id}, { $inc: { interactionCount: 1 } });
+
     newPost.save();
-    console.log(newPost);
-    console.log(`"${newPost.title}" uploaded successfully`);
+    console.log(`"${newPost.title}" from @${_username} uploaded successfully`);
     res.status(200).send({postURL: newPost._id, postTitle: newPost.title, confirm: true});
 
   }
@@ -242,8 +255,11 @@ app.get('/log', verify, async (req,res) => {
         */
 
         let socialPosts = await Posts.find(
-          {'owner': {$in: connections}, 'type': {$ne: "draft"}}
-        ).sort({createdAt: -1})
+          {'owner': {$in: connections}, 
+           'type': {$ne: "draft"}}
+        ).sort(
+          {createdAt: -1}
+        ).populate('owner', 'username profilePhoto')
 
         console.log('Retrieved social posts for ' +user.userName+ " " +socialPosts.length);
 
@@ -307,11 +323,40 @@ app.get('/log', verify, async (req,res) => {
       }
     else if (type == 'user') {
 
-      let posts = await Posts.find(
-        {owner: _id, type: {$ne: "draft"}}, 
-      ).sort({createdAt: -1})
+      // let posts = await Posts.find(
+      //   {owner: _id, type: {$ne: "draft"}}, 
+      // ).sort(
+      //   {createdAt: -1}
+      // ).populate('owner', 'username profilePhoto').populate('taggedUsers.id', 'username');
 
-        // console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
+      let posts;
+      if(req.body.userID) {
+
+        posts = await Posts.find({
+          owner: mongoose.Types.ObjectId(req.body.userID),
+          type: { $ne: "draft" }
+        }).sort(
+          { createdAt: -1 }
+        ).populate({
+          path: 'originalPost',
+          populate: {path: 'owner', select: 'username profilePhoto'}
+        });
+
+      } else {
+
+        posts = await Posts.find({
+          owner: mongoose.Types.ObjectId(_id),
+          type: { $ne: "draft" },
+          isPrivate: false
+        }).sort(
+          { createdAt: -1 }
+        ).populate({
+          path: 'originalPost',
+          populate: {path: 'owner', select: 'username profilePhoto'}
+        });
+      }
+
+      console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
           let d = new Date(),
               currentYear = d.getFullYear(),
@@ -628,6 +673,12 @@ app.delete('/deletePost', verify, async(req,res) => {
 
 app.use('/comment/:type', verify, async(req, res)=> {
 
+  const auth = req.header('auth-token');
+  const base64url = auth.split('.')[1];
+  const decoded = JSON.parse(Buffer.from(base64url, 'base64'));
+  const {_id, _username} = decoded;
+  const user = await User.findById(_id);
+
   try {
 
     const type = req.params.type;
@@ -660,7 +711,7 @@ app.use('/comment/:type', verify, async(req, res)=> {
     }
 
     else if(type == 'initial') {
-
+      console.log(req.body)
       let newComment = new Comment({
         ownerUsername: req.body.ownerUsername,
         ownerID: req.body.ownerID,
@@ -677,17 +728,16 @@ app.use('/comment/:type', verify, async(req, res)=> {
       })
       newComment.save();
 
-      // await Posts.findOneAndUpdate(
-      //   {_id:mongoose.Types.ObjectId(req.body.parentID)},
-      //   {$push: {comments: newComment}},
-      //   [{upsert: true}, {useFindandModify: false}]).then((data) => {
-      //     if(data) {
-      //       console.log(`comment ${newComment._id} was made to post ${newComment.parentID}`);
-      //       res.status(200).send(newComment._id);
-      //     } else {
-      //       console.log(`error in adding comment ${newComment._id} to post ${newComment.parentID}`);
-      //     }
-      // })
+      //update user's interactionCount....
+      //if post owner isn't also the commentor
+      if(req.body.ownerID != req.body.postOwner) {
+        await User.updateOne( { _id: _id}, { $inc: { interactionCount: 1 } });
+      }
+      //if postOwner isn't current user, update their count
+      if(req.body.postOwner != _id) {
+        await User.updateOne( { _id: req.body.postOwner}, { $inc: { interactionCount: 1 } });
+      }
+
       res.status(200).send(newComment._id);
     }
 
@@ -708,22 +758,6 @@ app.use('/comment/:type', verify, async(req, res)=> {
         replies: []
       });
       newComment.save();
-      
-      // let post = await Posts.findById(req.body.parentPost);
-      // let comments = post.comments,
-      //     commentPlace = req.body.commentNumber.split("-");
-      // let parentComment = comments[parseInt(commentPlace[0]) - 1];
-
-      // console.log(commentPlace)
-      // console.log(parentComment)
-
-      // let i = 1;
-      // while(i <= commentPlace.length - 2) { //should stop before last number
-      //     parentComment = parentComment.replies[parseInt(commentPlace[i]) - 1];
-      //     i++;
-      // }
-      // parentComment.replies.push(newComment);
-      // post.save();
 
       await Comment.findOneAndUpdate(
         {_id: mongoose.Types.ObjectId(req.body.parentComment)},
@@ -735,6 +769,12 @@ app.use('/comment/:type', verify, async(req, res)=> {
             console.log(`error in adding reply ${newComment._id} to parent ${newComment.parentID}`);
           }
       })
+
+      //increment users interactionPoints
+      let ids = [_id, req.body.respondeeId, req.body.postOwner];
+      if(req.body.respondeeId != _id) {
+        await User.updateMany({ _id: {$in: ids }}, {$inc: {interactionCount: 1}});
+      }
 
       res.status(200).send(newComment._id);
     }

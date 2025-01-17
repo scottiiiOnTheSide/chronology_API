@@ -38,9 +38,12 @@ const NotificationSchema = new mongoose.Schema({
   details: { 
     postTitle: String,
     postID: mongoose.Schema.Types.ObjectID,
+    postOwner: mongoose.Schema.Types.ObjectID,
+    ownerUsername: String,
     groupName: String,
     groupID: mongoose.Schema.Types.ObjectID,
-    info: String
+    info: String,
+    commentID: mongoose.Schema.Types.ObjectID
   }
 });
 
@@ -105,6 +108,7 @@ const UserSchema = new mongoose.Schema({
     notifications: [{
       type: [NotificationSchema]
     }],
+    interactionCount: Number,
     privacySetting: String,
     invites: [{
         type: mongoose.Schema.Types.ObjectID,

@@ -53,16 +53,46 @@ app.ws('/', (ws, req)=> {
                         connections[user].send(notif)
                         console.log(notif);
                     }
-                    else if (data.type == 'request' && data.message == 'accept') {
+                    else if (data.type == 'request' && data.message == 'accepted') {
                         let notif = JSON.stringify({
                             type: 'request',
                             senderUsername: data.senderUsername,
-                            message: 'accept',
+                            message: 'accepted',
                             senderID: data.senderID,
                             recipients: data.recipients,
                         })
                         connections[user].send(notif);
                         console.log(notif);
+                    }
+                    else if(data.type == 'request' && data.message == 'subscriptionRequestRecieved') {
+                        let notif = JSON.stringify(data);
+                            // type: 'request',
+                            // senderID: userID,
+                            // senderUsername: username,
+                            // recipients: [recipientID],
+                            // recipientUsername: userInfo.userName,
+                            // message: 'subscriptionRequestRecieved'
+                        connections[user].send(notif);
+                    }
+                    else if(data.type == 'request' && data.message == 'subscriptionAccepted') {
+                        let notif = JSON.stringify({
+                            type: 'request',
+                            senderUsername: data.senderUsername,
+                            message: 'subscriptionAccepted',
+                            senderID: data.senderID,
+                            recipients: data.recipients,
+                        })
+                        connections[user].send(notif);
+                    }
+                    else if(data.type == 'request' && data.message == 'subscribed') {
+                        let notif = JSON.stringify({
+                            type: 'request',
+                            senderUsername: data.senderUsername,
+                            message: 'subscribed',
+                            senderID: data.senderID,
+                            recipients: data.recipients,
+                        })
+                        connections[user].send(notif);
                     }
                     else if(data.type == 'comment' && data.message == 'initial') {
                         let notif = data;
