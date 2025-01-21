@@ -41,23 +41,23 @@ app.ws('/', (ws, req)=> {
                         notif.type = 'updateNotifs';
                         connections[user].send(JSON.stringify(notif));
                     }
-                    else if(data.type == 'request' && data.message == 'sent') {
+                    else if(data.type == 'request' && data.message == 'connectionRequestRecieved') {
                         let notif = JSON.stringify({
                             type: 'request',
                             senderID: data.senderID,
                             senderUsername: data.senderUsername,
                             recipient: data.recipients[0],
-                            message: 'initial',
+                            message: 'connectionRequestRecieved',
                             originalID: data.originalID,
                         })
                         connections[user].send(notif)
                         console.log(notif);
                     }
-                    else if (data.type == 'request' && data.message == 'accepted') {
+                    else if (data.type == 'request' && data.message == 'connectionAcceptedRecieved') {
                         let notif = JSON.stringify({
                             type: 'request',
                             senderUsername: data.senderUsername,
-                            message: 'accepted',
+                            message: 'connectionAcceptedRecieved',
                             senderID: data.senderID,
                             recipients: data.recipients,
                         })

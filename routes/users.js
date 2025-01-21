@@ -344,10 +344,11 @@ app.get('/user/:userID', async (req,res) => {
         }
 
         else if(req.query.query == 'singleUser') {
+
             if(req.params.userID == _id) {
 
-                let isSubscribed = singleUser.subscribers.includes(_id);
-                let isConnected = singleUser.connections.includes(_id);
+                // let isSubscribed = singleUser.subscribers.includes(_id);
+                // let isConnected = singleUser.connections.includes(_id);
 
                 let posts = await Posts.find({ _id: {$in: singleUser.pinnedPosts}}).sort({createdAt: -1});
                 let postCount = await Posts.countDocuments({'owner': _id, 'type': {$ne: "draft"}});
@@ -361,13 +362,13 @@ app.get('/user/:userID', async (req,res) => {
                     pinnedPosts: posts,
                     collections: collections,
                     postCount: postCount,
-                    isConnected: isConnected,
-                    isSubscribed: isSubscribed
+                    // isConnected: isConnected,
+                    // isSubscribed: isSubscribed
                 });
             }
             else {
                 let user = await User.findById(req.params.userID);
-                let isSubscribed = user.subscriptions.includes(_id);
+                let isSubscribed = user.subscribers.includes(_id);
                 let isConnected = user.connections.includes(_id);
                 let posts = await Posts.find({ _id: {$in: user.pinnedPosts}}).sort({createdAt: -1});
                 let postCount = await Posts.countDocuments({'owner': req.params.userID, 'type': {$ne: "draft"}})
@@ -574,10 +575,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
             let userToCheck = await User.findById(req.body.recipients[0]);
             let notif = userToCheck.notifications.filter((notif) => {
                 if(notif[0].sender == _id && notif[0].type == 'request') {
-                    // if(notif[0].isRead == false) {
-                    //     check = true;
-                    //     return notif;
-                    // }
+                  
                     if(notif[0].message.includes('sub') || notif[0].isRead == true) {
                         return;
                     }
@@ -620,26 +618,26 @@ app.post('/notif/:type', verify, async(req, res)=> {
                  */
 
                 /* initial request */
-                if(req.body.message == "sent") {
+                if(req.body.message == "connectionRequestSent") {
 
-                    // try {
                         let requestTwo = new Notification({
                             senderUsername: sender.username,
                             recipients: [recipient.id],
                             type: req.body.type,
                             isRead: false,
                             sender: sender.id,
-                            message: 'recieved'
+                            message: 'connectionRequestRecieved'
                         });
 
+                        //requester's notification
                         let requestOne = new Notification({
                             type: req.body.type,
-                            isRead: true,
+                            isRead: false,
                             sender: sender.id,
                             senderUsername: sender.username,
                             recipients: [recipient.id],
                             recipientUsernames: [recipient.username],
-                            message: 'sent'
+                            message: 'connectionRequestSent'
                         });
 
                         
@@ -670,11 +668,11 @@ app.post('/notif/:type', verify, async(req, res)=> {
                         // console.log('line 324');
                         // console.log(requestTwo);
                         // res.status(200).send(requestOne);
-                        res.status(200).send({confirm: true, message: 'request'});
+                        res.status(200).send({confirm: true, message: 'connectionRequestSent', originalID: requestTwo._id});
                 } //message: request
 
                  /* if accepted */
-                else if(req.body.message == 'accepted') {
+                else if(req.body.message == 'connectionAcceptedSent') {
 
                     console.log('accepting connection...')
 
@@ -713,7 +711,7 @@ app.post('/notif/:type', verify, async(req, res)=> {
                             senderUsername: sender.username,
                             recipients: recipient.id,
                             recipientUsernames: [recipient.username],
-                            message: 'accept'
+                            message: 'connectionAcceptedRecieved'
                     });
                     let acceptedTwo = new Notification({
                             type: req.body.type,
@@ -721,8 +719,8 @@ app.post('/notif/:type', verify, async(req, res)=> {
                             sender: sender.id,
                             senderUsername: sender.username,
                             recipients: recipient.id,
-                            recipientUsernames: [sender.username],
-                            message: 'accept'
+                            recipientUsernames: [recipient.username],
+                            message: 'connectionAcceptedSent'
                     });
 
                     (async ()=> {
@@ -759,9 +757,9 @@ app.post('/notif/:type', verify, async(req, res)=> {
                     let newPoint = await User.updateMany({ _id: {$in: ids }}, {$inc: {interactionCount: 1}});
 
                     console.log( `${sender.username} is now connected with ${recipient.username}` );
-                    res.status(200).send({confirm: true, message: 'accepted'});
+                    res.status(200).send({confirm: true, message: 'connectionAcceptedSent', originalID: acceptedOne._id});
                     }
-                } //message: accepted
+                } //message: connectionAccepted
 
                 else if(req.body.message == "accessRequested") {
 
@@ -953,18 +951,21 @@ app.post('/notif/:type', verify, async(req, res)=> {
 
                     //original recipient of initial request
                     let acceptedOne = new Notification({
-                            type: req.body.message == 'subscriptionAccepted' ? req.body.type : 'confirmation',
+                            // type: req.body.message == 'subscriptionAccepted' ? req.body.type : 'confirmation',
+                            type: 'request', //should be the same regardless whether auto sub or not
                             isRead: false,
                             sender: sender.id,
                             senderUsername: sender.username,
                             recipients: recipient.id,
                             recipientUsernames: [recipient.username],
-                            message: req.body.message == 'subscriptionAccepted' ? 'subscriptionAccepted' : 'subscribed'
+                            // message: req.body.message == 'subscriptionAccepted' ? 'subscriptionAccepted' : 'subscribed'
+                            message: 'subscriptionAccepted'
                     });
 
                     //original sender of request
                     let acceptedTwo = new Notification({
-                            type: req.body.type, //request
+                            //type: req.body.type, //request
+                            type: 'confirmation',
                             isRead: false,
                             sender: sender.id,
                             senderUsername: sender.username,
