@@ -47,6 +47,7 @@ app.ws('/', (ws, req)=> {
                             senderID: data.senderID,
                             senderUsername: data.senderUsername,
                             recipient: data.recipients[0],
+                            recipientUsername: data.recipientUsername,
                             message: 'connectionRequestRecieved',
                             originalID: data.originalID,
                         })

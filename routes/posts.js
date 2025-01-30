@@ -330,10 +330,10 @@ app.get('/log', verify, async (req,res) => {
       // ).populate('owner', 'username profilePhoto').populate('taggedUsers.id', 'username');
 
       let posts;
-      if(req.body.userID) {
+      if (req.query.userID == 'undefined'){
 
         posts = await Posts.find({
-          owner: mongoose.Types.ObjectId(req.body.userID),
+          owner: mongoose.Types.ObjectId(_id),
           type: { $ne: "draft" }
         }).sort(
           { createdAt: -1 }
@@ -341,11 +341,13 @@ app.get('/log', verify, async (req,res) => {
           path: 'originalPost',
           populate: {path: 'owner', select: 'username profilePhoto'}
         });
+      }
+      else if(req.query.userID) {
 
-      } else {
+        console.log("retreving posts for user" +req.query.userID);
 
         posts = await Posts.find({
-          owner: mongoose.Types.ObjectId(_id),
+          owner: mongoose.Types.ObjectId(req.query.userID),
           type: { $ne: "draft" },
           isPrivate: false
         }).sort(
@@ -354,9 +356,10 @@ app.get('/log', verify, async (req,res) => {
           path: 'originalPost',
           populate: {path: 'owner', select: 'username profilePhoto'}
         });
+
       }
 
-      console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
+      // console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
           let d = new Date(),
               currentYear = d.getFullYear(),
