@@ -280,7 +280,7 @@ app.get('/user/:userID', async (req,res) => {
                     _id: userInfo._id,
                     profilePhoto: userInfo.profilePhoto,
                     isConnection: true,
-                    isSubsciber: false,
+                    isSubscriber: false,
                     isSubscription: false
                 }
 
@@ -294,7 +294,7 @@ app.get('/user/:userID', async (req,res) => {
                     _id: userInfo._id,
                     profilePhoto: userInfo.profilePhoto,
                     isConnection: false,
-                    isSubsciber: true,
+                    isSubscriber: true,
                     isSubscription: false
                 }
 
@@ -308,7 +308,7 @@ app.get('/user/:userID', async (req,res) => {
                     _id: userInfo._id,
                     profilePhoto: userInfo.profilePhoto,
                     isConnection: false,
-                    isSubsciber: false,
+                    isSubscriber: false,
                     isSubscription: true
                 }
 
@@ -355,7 +355,7 @@ app.get('/user/:userID', async (req,res) => {
             })();    
         } 
 
-        else if (req.query.query == 'removeSub') {
+        else if (req.query.query == 'removeSubTo') {
 
             (async() => {
                 let one = User.updateOne(
@@ -378,6 +378,36 @@ app.get('/user/:userID', async (req,res) => {
                     function(err, val) {
                         if(val) {
                             console.log('remover disconnected from removee');
+                        } else {
+                            console.log(err)
+                        }
+                    }
+                )
+            })();
+        }
+
+        else if (req.query.query == 'removeSubFrom') {
+            (async() => {
+                let one = User.updateOne(
+                  { _id: _id},
+                  {$pull: { 'subscribers': `${removalID}` }},
+                  function(err, val) {
+                    if(val) {
+                      console.log(singleUser.connections);
+                      console.log('user removed subscriber');
+                      res.status(200).send({confirm: true});
+                    } else {
+                      console.log(err)
+                    }
+                  }
+                )
+
+                let two = User.updateOne(
+                    { _id:  mongoose.Types.ObjectId(removalID)},
+                    {$pull: {'subscriptions': `${_id}`}},
+                    function(err, val) {
+                        if(val) {
+                            console.log('subscription removed from targeted user');
                         } else {
                             console.log(err)
                         }
