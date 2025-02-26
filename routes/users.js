@@ -1219,7 +1219,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
     let user = await User.findById(_id);
 
     console.log(req.body)
-    console.log(req.files)
+    // console.log(req.files)
 
     try {
 
@@ -1367,6 +1367,71 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
         else if(req.body.option == 'invitationCount') {
         }
 
+        else if(req.body.option == 'updateLocation') {
+
+            await User.update(
+                {_id: _id},
+                { $set: {
+                    "settings.preferredlocation.city": req.body.name,
+                    "settings.preferredlocation.lonLat": req.body.lonLat
+                    }
+                },
+                {multi: true}
+            );
+            res.status(200).send({confirmation: true})
+        }
+
+        else if(req.body.option == 'searchLocationDetails') {
+
+            const placeId = req.body.placeID;
+            const apiKey = process.env.GCS_PLACES_API_KEY;
+            const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${apiKey}&fields=geometry`;            
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            console.log(data);
+
+            let lonLat;
+
+            if(data.status === 'OK' && data.result.geometry) {
+                lonLat = [data.result.geometry.location.lng, data.result.geometry.location.lat]
+            }
+
+            res.status(200).send({lonLat: lonLat});
+        }
+
+        else if(req.body.option == 'searchLocation') {
+
+            //subroute proxy for GCS Places API
+            const query = req.body.query;
+            const apiKey = process.env.GCS_PLACES_API_KEY;
+            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${apiKey}&types=(regions)`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            const filtered = data.predictions.map(place => {
+                const placeParts = place.description.split(','); // Split "New York, NY, USA"
+                const cleanedName = placeParts.length > 2
+                  ? `${placeParts[0]}, ${placeParts[placeParts.length - 1]}` // Keep city & country only
+                  : place.description; // If no state abbreviation, keep as-is
+
+                return {
+                    description: cleanedName.trim(),
+                    place_id: place.place_id
+                }
+            })
+
+                
+
+            if (data.status !== 'OK') {
+                return res.status(500).json({ error: 'Google API error', details: data });
+            }
+
+            res.status(200).send(filtered);
+        }
+
         else if(req.body.option == 'pinnedPosts') {
 
             if(req.body.type == 'check') {
@@ -1440,6 +1505,7 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
             });
             res.status(200).send({confirmation: true});
         }
+
         else if(req.body.action == 'removeTopics') {
             await User.updateOne(
                 {_id: _id},

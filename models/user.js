@@ -89,8 +89,7 @@ const UserSchema = new mongoose.Schema({
       topics: [String],
       preferredLocation: [{
         lonLat: [String], //longitude, latitude - convert on frontEnd
-        city: String,
-        state: String
+        city: String
       }]
     },
     connections: [{
