@@ -87,10 +87,10 @@ const UserSchema = new mongoose.Schema({
     settings: {
       referralCode: String,
       topics: [String],
-      preferredLocation: [{
-        lonLat: [String], //longitude, latitude - convert on frontEnd
-        city: String
-      }]
+      preferredLocation: {
+        lonLat: [Number],
+        city: String //
+      }
     },
     connections: [{
         type: mongoose.Schema.Types.ObjectID,

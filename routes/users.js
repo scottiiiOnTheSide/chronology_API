@@ -1369,12 +1369,15 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
 
         else if(req.body.option == 'updateLocation') {
 
-            await User.update(
+            let newData = {
+                city: req.body.name,
+                lonLat: req.body.lonLat
+            }
+
+            await User.updateOne(
                 {_id: _id},
-                { $set: {
-                    "settings.preferredlocation.city": req.body.name,
-                    "settings.preferredlocation.lonLat": req.body.lonLat
-                    }
+                {
+                    $set: {'settings.preferredLocation': newData }
                 },
                 {multi: true}
             );
