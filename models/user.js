@@ -80,6 +80,7 @@ const UserSchema = new mongoose.Schema({
       type: String,
       required: [true, "This field is necessary "]
     },
+    isAvailable: Boolean,
     profilePhoto: String,
     bio: String,
     pinnedPosts: [String],
@@ -92,6 +93,9 @@ const UserSchema = new mongoose.Schema({
         city: String //
       }
     },
+    notifications: [{
+      type: [NotificationSchema]
+    }],
     connections: [{
         type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
@@ -104,9 +108,30 @@ const UserSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectID,
         ref: 'Users',
     }],
-    notifications: [{
-      type: [NotificationSchema]
-    }],
+    customLogs: {
+        currentLog: Boolean, //0 is userOnly
+        log: [{
+          title: String,
+          connections: [{
+              type: mongoose.Schema.Types.ObjectID,
+              ref: 'Users',
+          }],
+          subscriptions: [{
+              type: mongoose.Schema.Types.ObjectID,
+              ref: 'Users',
+          }],
+          groups: [{
+              type: mongoose.Schema.Types.ObjectID,
+              ref: 'Groups',
+          }],
+          topics: [String],
+          tags: [{
+              type: mongoose.Schema.Types.ObjectID,
+              ref: 'Groups',
+          }],
+          locations: [String]
+        }]
+    },
     interactionCount: Number,
     privacySetting: String,
     invites: [{

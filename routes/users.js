@@ -1234,6 +1234,8 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
             res.status(200).send(settings);
         }
 
+        else if(req.body.option == 'logout') {}
+
         else if(req.body.option == 'username') {
 
                 let check = await User.findOne({userName: req.body.newUsername});
@@ -1516,6 +1518,86 @@ app.post('/settings', verify, upload.any(), async(req, res)=> {
             });
             res.status(200).send({confirmation: true});
         }
+
+        else if(req.body.action == 'saveCustomLog') {
+
+            //adds log to user's list if it's array location doesn't exist
+            //replaces log in array if it's prexisting
+
+
+            //if this is a NEW log
+            if(user.settings.customLogs.log[req.body.logNumber].hasOwnProperty(req.body.number) == false) {
+
+                Users.updateOne(
+                    {_id: _id},
+                    {
+                        $push: {"settings.customLogs.log": {
+                            title: req.body.title,
+                            logNumber: req.body.logNumber,
+                            connections: req.body.selectedConnections,
+                            subscriptions: req.body.selectedSubscriptions,
+                            topics: req.body.selectedTopics,
+                            tags: req.body.selectedTags,
+                            locations: req.body.selectedLocations
+                        } }
+                    }
+                )
+
+                res.status(200).send({confirmation: true})
+            }
+
+            //if this is a prexisting log
+            else if(user.settings.customLogs.log[req.body.logNumber] !== undefined) {
+
+                Users.updateOne(
+                    {_id: _id},
+                    {
+                        $set: { [`settings.customLogs.log.${req.body.logNumber}`]: {
+                            title: req.body.title,
+                            connections: req.body.selectedConnections,
+                            subscriptions: req.body.selectedSubscriptions,
+                            topics: req.body.selectedTopics,
+                            tags: req.body.selectedTags,
+                            locations: req.body.selectedLocations
+                        }}
+                    }
+                )
+
+                res.status(200).send({confirmation: true})
+            }
+        } 
+
+        else if(req.body.action == 'getCustomLog') {
+
+            let customLog = user.settings.customLogs.log[req.body.logNumber];
+            res.status(200).send({customLog: customLog});
+        }
+
+        else if(req.body.action == 'setCurrentLog') {
+
+            User.updateOne(
+                {_id: _id},
+                {
+                    $set: {"settings.customLogs.currentLog": req.body.currentLog}
+                }
+            )
+
+            res.status(200).send({confirmation: true});
+        }   
+
+        else if(req.body.action == 'deleteCustomLog') {
+
+            user.settings.customLogs.logs.splice(req.body.indexToDelete, 1);
+            await user.save();
+            res.status(200).send({confirmation: true});
+        }
+
+        else if(req.body.action == 'getLogAmount') {
+
+            let length = user.settings.customLogs.logs.length;
+            res.status(200).send(length ? length : 0);
+
+        }     
     }
     catch(err) {
         console.log(err);

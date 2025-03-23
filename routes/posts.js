@@ -320,7 +320,7 @@ app.get('/log', verify, async (req,res) => {
           // reorder.splice(0, 1);
 
           res.status(200).send(results)
-      }
+    }
     else if (type == 'user') {
 
       // let posts = await Posts.find(
@@ -358,8 +358,6 @@ app.get('/log', verify, async (req,res) => {
         });
 
       }
-
-      // console.log('Retrieved ' +posts.length+ ' user posts for ' +user.userName);
 
           let d = new Date(),
               currentYear = d.getFullYear(),
@@ -405,7 +403,98 @@ app.get('/log', verify, async (req,res) => {
           // console.log(results);
 
         res.status(200).send(results)
+    }
+
+    else if(type == 'customLog') {
+
+      console.log('customLog ' +req.query.logNumber);
+      let posts;
+
+      if(req.query.logNumber == 0) { //user only
+
+        posts = await Posts.find({
+          owner: mongoose.Types.ObjectId(_id),
+          type: { $ne: "draft" }
+        }).sort(
+          { createdAt: -1 }
+        ).populate({
+          path: 'originalPost',
+          populate: {path: 'owner', select: 'username profilePhoto'}
+        }).sort(
+          { createdAt: -1 }
+        ).populate({
+          path: 'originalPost',
+          populate: {path: 'owner', select: 'username profilePhoto'}
+        });
       }
+      else {
+        let user = await User.findById(_id);
+        let customLog = user.settings.customLogs.log[req.body.logNumber];
+
+        posts = await Posts.find({
+          type: { $ne: 'draft' },
+          isPrivate: false,
+          $or: [
+            { owner: { $in: customLog.connections } }, 
+            { owner: { $in: customLog.subscriptions } }, 
+            { tags: { $in: customLog.tags } }, 
+            { topics: { $in: customLog.topics } },
+            { 'location.city': { $in: customLog.locations } }
+          ]
+        }).sort(
+          { createdAt: -1 }
+        ).populate({
+          path: 'originalPost',
+          populate: {path: 'owner', select: 'username profilePhoto'}
+        });
+      }
+
+      let d = new Date(),
+          currentYear = d.getFullYear(),
+          currentMonth = d.getMonth(),
+          currentDay = d.getDate();
+
+      let results = posts.filter((post) => {
+
+            /*all posts made within or before current year*/
+            if (post.postedOn_year <= currentYear) {
+
+
+              /* removes posts within current year, beyond current month */
+              if(post.postedOn_year == currentYear && post.postedOn_month > currentMonth) {
+                 return null;
+              }
+                  
+              if(post.postedOn_day > currentDay && post.postedOn_month == currentMonth) {
+                 return null;
+              }
+
+              else {
+                return post;
+              }
+            }
+      });
+
+      let sortByDate = (posts) => {
+
+            posts.sort((a,b) => {
+
+              const dateA = new Date(a.postedOn_year, a.postedOn_month, a.postedOn_day),
+                    dateB = new Date(b.postedOn_year, b.postedOn_month, b.postedOn_day);
+
+              if (dateA > dateB) return -1;
+              if (dateA < dateB) return 1;
+              return 0;
+            })
+      }
+
+      sortByDate(results);
+      console.log("Results reordered");
+
+      res.status(200).send(results)
+
+    }
+
     else if (type == 'drafts') {
 
       let posts = await Posts.find(
@@ -689,10 +778,35 @@ app.use('/comment/:type', verify, async(req, res)=> {
     if (type == 'getComments') {
 
       console.log('Getting comments for ' +req.query.postID);
-      let comments = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID), topLevel: true }).populate({
-        path: 'replies',
-        populate: { path: 'replies'}
-      });
+      // let comments = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID), topLevel: true }).populate({
+      //   path: 'replies',
+      //   populate: { path: 'replies'}
+      // });
+
+      const populateRepliesRecursively = async (comment) => {
+          if (!comment.replies || comment.replies.length === 0) {
+              return comment; // No more replies to populate
+          }
+
+          // Populate replies for the current comment
+          comment.replies = await Comment.find({ _id: { $in: comment.replies } }).lean();
+
+          // Recursively populate each reply
+          for (let i = 0; i < comment.replies.length; i++) {
+              comment.replies[i] = await populateRepliesRecursively(comment.replies[i]);
+          }
+
+          return comment;
+      };
+
+      let comments = await Comment.find({ parentPost: mongoose.Types.ObjectId(req.query.postID), topLevel: true }).lean();
+
+      // Recursively populate all replies
+      for (let i = 0; i < comments.length; i++) {
+          comments[i] = await populateRepliesRecursively(comments[i]);
+      }
+
+      console.log(comments);
 
       res.status(200).send(comments);
     }
@@ -780,6 +894,32 @@ app.use('/comment/:type', verify, async(req, res)=> {
       }
 
       res.status(200).send(newComment._id);
+    }
+
+    else if(type == 'delete') {
+
+      let commentID = req.query.commentID;
+
+      let comment = await Comment.findById(commentID);
+
+      if(comment.replies.length > 0) {
+        await Comment.updateOne(
+          {_id: commentID},
+          {$set: {
+            content: 'This comment has been deleted',
+            ownerUsername: '',
+            ownerID: '',
+            profilePhoto: ''
+          }}
+        )
+      }
+      else {
+        await Comment.findByIdAndRemove(commentID);
+      }
+
+      
+
+      res.status(200).send({confirm: true});
     }
   } 
   catch(err) {
